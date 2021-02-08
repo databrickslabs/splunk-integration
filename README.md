@@ -4,7 +4,7 @@ The Databricks add-on for Splunk allows Splunk Enterprise and Splunk Cloud users
 - Execute actions in Databricks, such as notebook runs and jobs, from Splunk
 - Push events, summary, alerts to Splunk from Databricks
 - Pull events, alerts data from Splunk into Databricks
-<img src="/docs/functional_architecture.png" height="70%" width="70%">
+<img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
 
 #### Bidirection Splunk Connector documentation:
 
