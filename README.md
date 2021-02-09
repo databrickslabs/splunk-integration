@@ -15,10 +15,10 @@ The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) allo
   * Documenation:  [[markdown](/docs/markdown/Splunk%20DB%20Connect%20guide%20for%20Databricks.md), [pdf](/docs/pdf/Splunk%20DB%20Connect%20Guide%20for%20Databricks.pdf), [word](/docs/word/Splunk%20DB%20Connect%20Guide%20for%20Databricks.docx)]
 * Push Data to Splunk from Databricks.docx: 
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20Push%20to%20Splunk.md), [pdf](/docs/pdf/Push%20Data%20to%20Splunk%20from%20Databricks.pdf), [word](/docs/word/Push%20Data%20to%20Splunk%20from%20Databricks.docx)]
-  * [Notebook](/notebooks/dbc/push_to_splunk.dbc)
+  * Notebook - push_to_splunk: [source](/notebooks/source/push_to_splunk.py), [html](/notebooks/html/push_to_splunk.html), [dbc](/notebooks/dbc/push_to_splunk.dbc)
 * Pull Data from Splunk into Databricks.docx:
   * Documenation:  [[markdown](/docs/markdown/Databricks%20-%20Pull%20from%20Splunk.md), [pdf](/docs/pdf/Push%20Data%20to%20Splunk%20from%20Databricks.pdf), [word](/docs/word/Push%20Data%20to%20Splunk%20from%20Databricks.docx)]
-  * [Notebook](/notebooks/dbc/pull_from_splunk.dbc)
+  * Notebook - pull_from_splunk: [source](/notebooks/source/pull_from_splunk.py), [html](/notebooks/html/pull_from_splunk.html), [dbc](/notebooks/dbc/pull_from_splunk.dbc)
 
 ### Data collection sources with Notebooks and documentation are included for the following sources: 
 
@@ -28,13 +28,13 @@ This project also provides documentation and notebooks to show case specifics on
 
 * Cloudtrail logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20%20-%20AWS%20CloudTrail.md), [pdf](/docs/pdf/Databricks%20%20-%20AWS%20CloudTrail.pdf), [word](/docs/word/Databricks%20%20-%20AWS%20CloudTrail.docx)]
-  * [Notebook 1](/notebooks/dbc/cloudtrail_ingest.dbc)
-  * [Notebook 2](/notebooks/dbc/cloudtrail_insights_ingest.dbc)
+  * Notebook 1 - cloudtrail_ingest: [source](/notebooks/source/cloudtrail_ingest.py), [html](/notebooks/html/cloudtrail_ingest.html), [dbc](/notebooks/dbc/cloudtrail_ingest.dbc)
+  * Notebook 2 - cloudtrail_insights_ingest: [source](), [html](), [dbc](/notebooks/dbc/cloudtrail_insights_ingest.dbc)
 * VPC flow logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20AWS%20VPC%20Logs.md), [pdf](/docs/pdf/Databricks%20-%20AWS%20VPC%20Logs.pdf), [word](/docs/word/Databricks%20-%20AWS%20VPC%20Logs.docx)]
-  * [Notebook](/notebooks/dbc/vpc_flowlogs_ingest.dbc)
+  * Notebook - vpc_flowlogs_ingest: [source](/notebooks/source/vpc_flowlogs_ingest.py), [html](/notebooks/html/vpc_flowlogs_ingest.html), [dbc](/notebooks/dbc/vpc_flowlogs_ingest.dbc)
 * syslogs
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20Syslog.md), [pdf](/docs/pdf/Databricks%20-%20Syslog.pdf), [word](/docs/word/Databricks%20-%20Syslog.docx)]
-  * [Notebook 1](/notebooks/dbc/syslog_rfc3164.dbc) 
-  * [Notebook 2](/notebooks/dbc/syslog_rfc5424.dbc) 
+  * Notebook 1 - syslog_rfc3164: [source](/notebooks/source/syslog_rfc3164.py), [html](/notebooks/html/syslog_rfc3164.html), [dbc](/notebooks/dbc/syslog_rfc3164.dbc) 
+  * Notebook 2 - syslog_rfc5424: [source](/notebooks/source/syslog_rfc5424.dbc), [html](/notebooks/html/syslog_rfc5424.html), [dbc](/notebooks/dbc/syslog_rfc5424.dbc) 
 
