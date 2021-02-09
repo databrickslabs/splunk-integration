@@ -5,9 +5,9 @@
 # MAGIC <br>Before using the notebook, please go through the user documentation of this notebook to use the notebook effectively.
 # MAGIC 1. **Splunk Ip/Hostname** ***(Mandatory Field)*** : The Splunk Ip/Hostname to pull data from.
 # MAGIC <br>**Example:** Splunk Ip/Hostname : `123.123. 123.123` or `mysplunkhost-1`
-# MAGIC 2. **Splunk Management Port** ***(Mandatory Field)*** : The Splunk Management port. Default Splunk Management port is `8089`.You can get this value from Splunk Admin.
-# MAGIC 3. **Verify Certificate** ***(Mandatory Field)*** : Specify if SSL server certificate verification is required for communication with Splunk.If you set Verify Certificate as True, you may have to import a custom certificate from the Splunk server into Databricks. For this refer ***section : Import custom certificate to Databricks*** from the user documentation for this notebook.  You can get the custom certificate from Splunk Admin.
-# MAGIC 4. **Splunk Username** ***(Mandatory Field)*** : The Splunk username used to authenticate an user with Splunk.This is the username used by a user to log into Splunk.
+# MAGIC 2. **Splunk Management Port** ***(Mandatory Field)*** : The Splunk Management port. Default Splunk Management port is `8089`. You can get this value from Splunk Admin.
+# MAGIC 3. **Verify Certificate** ***(Mandatory Field)*** : Specify if SSL server certificate verification is required for communication with Splunk. If you set Verify Certificate as True, you may have to import a custom certificate from the Splunk server into Databricks. For this refer ***section : Import custom certificate to Databricks*** from the user documentation for this notebook. You can get the custom certificate from Splunk Admin.
+# MAGIC 4. **Splunk Username** ***(Mandatory Field)*** : The Splunk username used to authenticate an user with Splunk. This is the username used by a user to log into Splunk.
 # MAGIC 5. **Databricks Secret Scope** ***(Mandatory Field)*** : The Databricks Secret Scope created using Databricks CLI to store the Splunk password corresponding to splunk username in a Databricks Secret Key.
 # MAGIC <br>Refer : [Databricks-CLI Installation and setup](https://docs.databricks.com/dev-tools/cli/index.html#install-the-cli) to install and setup Databricks-CLI on a local system.
 # MAGIC <br>Refer : [Scope creation](https://docs.databricks.com/security/secrets/secret-scopes.html#create-a-databricks-backed-secret-scope) to create a Databricks scope.
@@ -16,12 +16,12 @@
 # MAGIC <br>Refer : [Storing secret](https://docs.databricks.com/security/secrets/secrets.html#create-a-secret) to store the Splunk user password value in the Databricks scope and key.
 # MAGIC <br>**Example:** Secret Key : `key1`
 # MAGIC 7. **Splunk Query** ***(Mandatory Field)*** : Splunk search query whose results you want to pull from Splunk. Specify the timerange for search using `earliest` and `latest` time modifiers. If the time range is not specified, the default timerange will be used.
-# MAGIC <br>Refer : [Time modifiers](https://docs.splunk.com/Documentation/Splunk/8.1.2/Search/Changethesearchmode) to understand how to use time modifiers.
-# MAGIC <br>**Example:** `index="<my-index>" earliest=<-24h@h> latest="now()" | table *`
+# MAGIC <br>Refer : [Time modifiers](https://docs.splunk.com/Documentation/Splunk/8.1.1/Search/Specifytimemodifiersinyoursearch) to understand how to use time modifiers.
+# MAGIC <br>**Example:** `index="<my-index>" earliest=-24h@h latest=now() | table *`
 # MAGIC 8. **Search Mode** ***(Mandatory Field)*** : Search mode for Splunk search query execution. They include verbose, fast and smart modes.
 # MAGIC <br>Refer : [Search Modes](https://docs.splunk.com/Documentation/Splunk/8.1.2/Search/Changethesearchmode) to understand the three Splunk search modes.
-# MAGIC 9. **Splunk App Namespace** ***(Optional Field)*** : The splunk application namespace in which to restrict searches, that is, the app context.You can obtain this from Splunk Admin or Splunk user.If not specified the default application namespace is used.
-# MAGIC 10. **Table Name** ***(Optional Field)*** : A Table name to create table based on the splunk search results.
+# MAGIC 9. **Splunk App Namespace** ***(Optional Field)*** : The splunk application namespace in which to restrict searches, that is, the app context. You can obtain this from Splunk Admin or Splunk user. If not specified the default application namespace is used.
+# MAGIC 10. **Table Name** ***(Optional Field)*** : A Table name to create table based on the splunk search results. A table name can contain only lowercase alphanumeric characters and underscores and must start with a lowercase letter or underscore
 
 # COMMAND ----------
 
@@ -67,8 +67,6 @@ if not secretKey :
 splunkPassword=dbutils.secrets.get(secretScope,secretKey)
 if not splunkQuery :
   dbutils.notebook.exit("Splunk Query is required.Provide a Search Query value.")
-if not tableName :
-  dbutils.notebook.exit("Table Name is required.Provide a Table Name value.")  
 
 
 # COMMAND ----------
@@ -145,7 +143,9 @@ class Client:
                 raise e
               
     def create_search(self,query,search_level,splunk_namespace):
-        search_query="search "+query
+        pattern=r"^search\s+"
+        query=query.strip()
+        search_query= query if query.startswith("|") else query if re.search(pattern,query) else "search "+query
         try:
             response = requests.post(
                 self.mgmt_segment +JOBS_ENDPOINT,
@@ -218,6 +218,7 @@ class Client:
 
             except HTTPError as e:
                     raise e
+                
     def process_search_results(self,sid):
         print("Fetching results in chunks from Splunk Instance ....")
         OFFSET=0
@@ -246,7 +247,7 @@ class Client:
                   df=pd.DataFrame(json_response_results) 
                   df_sp=spark.createDataFrame(df)
                   # Add logic to process the data frame obtained in chunks here.
-                  display(df_sp)  
+                    
                 COUNT=len(json_response_results)
                 OFFSET=OFFSET+COUNT
 
