@@ -28,13 +28,13 @@ This project also provides documentation and notebooks to show case specifics on
 
 * Cloudtrail logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20%20-%20AWS%20CloudTrail.md), [pdf](/docs/pdf/Databricks%20%20-%20AWS%20CloudTrail.pdf), [word](/docs/word/Databricks%20%20-%20AWS%20CloudTrail.docx)]
-  * [Notebook 1](/dbc/cloudtrail_ingest.dbc)
-  * [Notebook 2](/dbc/cloudtrail_insights_ingest.dbc)
+  * [Notebook 1](/notebooks/dbc/cloudtrail_ingest.dbc)
+  * [Notebook 2](/notebooks/dbc/cloudtrail_insights_ingest.dbc)
 * VPC flow logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20AWS%20VPC%20Logs.md), [pdf](/docs/pdf/Databricks%20-%20AWS%20VPC%20Logs.pdf), [word](/docs/word/Databricks%20-%20AWS%20VPC%20Logs.docx)]
-  * [Notebook](dbc/vpc_flowlogs_ingest.dbc)
+  * [Notebook](/notebooks/dbc/vpc_flowlogs_ingest.dbc)
 * syslogs
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20Syslog.md), [pdf](/docs/pdf/Databricks%20-%20Syslog.pdf), [word](/docs/word/Databricks%20-%20Syslog.docx)]
-  * [Notebook 1](dbc/syslog_rfc3164.dbc) 
-  * [Notebook 2](dbc/syslog_rfc5424.dbc) 
+  * [Notebook 1](/notebooks/dbc/syslog_rfc3164.dbc) 
+  * [Notebook 2](/notebooks/dbc/syslog_rfc5424.dbc) 
 
