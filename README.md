@@ -29,7 +29,7 @@ This project also provides documentation and notebooks to show case specifics on
 * Cloudtrail logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20%20-%20AWS%20CloudTrail.md), [pdf](/docs/pdf/Databricks%20%20-%20AWS%20CloudTrail.pdf), [word](/docs/word/Databricks%20%20-%20AWS%20CloudTrail.docx)]
   * Notebook 1 - cloudtrail_ingest: [source](/notebooks/source/cloudtrail_ingest.py), [html](/notebooks/html/cloudtrail_ingest.html), [dbc](/notebooks/dbc/cloudtrail_ingest.dbc)
-  * Notebook 2 - cloudtrail_insights_ingest: [source](), [html](), [dbc](/notebooks/dbc/cloudtrail_insights_ingest.dbc)
+  * Notebook 2 - cloudtrail_insights_ingest: [source](/notebooks/source/cloudtrail_insights_ingest.py), [html](/notebooks/html/cloudtrail_insights_ingest.html), [dbc](/notebooks/dbc/cloudtrail_insights_ingest.dbc)
 * VPC flow logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20-%20AWS%20VPC%20Logs.md), [pdf](/docs/pdf/Databricks%20-%20AWS%20VPC%20Logs.pdf), [word](/docs/word/Databricks%20-%20AWS%20VPC%20Logs.docx)]
   * Notebook - vpc_flowlogs_ingest: [source](/notebooks/source/vpc_flowlogs_ingest.py), [html](/notebooks/html/vpc_flowlogs_ingest.html), [dbc](/notebooks/dbc/vpc_flowlogs_ingest.dbc)
