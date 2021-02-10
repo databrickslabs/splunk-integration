@@ -4,12 +4,15 @@ The Bidirection Splunk Integration project consists of 3 main components as dipi
 2) Splunk SQL database extension (Splunk DB Connect) configratuion for Databricks connectivity
 3) Notebooks for Push and Pull events and alerts from Splunk Databricks.
 <br/>
+Architecture:<br/>
+<img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
+
+<br/>
 We also provided extensive documentation for Log Collection to ingest, store, and process logs on economical and performant Delta lake.
 
 ### Features
 
-Architecture:<br/>
-<img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
+
 
 
 - Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI  (Ref: Fig 1)
