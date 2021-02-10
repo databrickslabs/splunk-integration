@@ -1,10 +1,10 @@
 The Bidirection Splunk Integration project consists of 3 main components as dipicted in the below digagram (Ref : Architecture):
 <br/>
-1) The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) an app that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. 
+1) The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/), an app, that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. 
 2) Splunk SQL database extension (Splunk DB Connect) configratuion for Databricks connectivity
 3) Notebooks for Push and Pull events and alerts from Splunk Databricks.
 <br/>
-We also provided extensive documentation on Log Collection to ingest and build logs on economical and performant Delta lake.
+We also provided extensive documentation for Log Collection to ingest, store, and process logs on economical and performant Delta lake.
 
 ### Features
 
