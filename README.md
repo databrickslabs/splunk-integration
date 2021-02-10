@@ -1,19 +1,21 @@
-The Bidirection Splunk Integration project consists of 3 main components as dipicted in the below digagram (Ref : Architecture):
+# Databricks Labs AutoML
+[Features](#Features) |
+[Architecture](#Architecture) |
+[Documentation](#Documentation)
+[Log ingestion](Log-ingestion) |
+
+
+
+The Splunk Integration project is a non-supported bidirectional connector consisting of three main components as dipicted in the architecture diagram :
 <br/>
 1) The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/), an app, that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. 
 2) Splunk SQL database extension (Splunk DB Connect) configratuion for Databricks connectivity
 3) Notebooks for Push and Pull events and alerts from Splunk Databricks.
 <br/>
-Architecture:<br/>
-<img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
 
-<br/>
 We also provided extensive documentation for Log Collection to ingest, store, and process logs on economical and performant Delta lake.
 
-### Features
-
-
-
+## Features
 
 - Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI  (Ref: Fig 1)
 - Execute actions in Databricks, such as notebook runs and jobs, from Splunk (Ref: Fig 2 & Fig 3)
@@ -37,7 +39,12 @@ Fig 7: Pull events, alerts data from Splunk into Databricks
 <br/><br/>
 Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
 
-#### Bidirection Splunk Connector "how to" documentation:
+## Architecture
+
+<img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
+
+
+## Documentation
 
 * Databricks Add-on for Splunk Integration Installation And Usage Guide:
    * Documenation:  [[markdown](/docs/markdown/Splunk%20Integration%20Installation%20And%20Usage%20Guide.md), [pdf](/docs/pdf/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.pdf), [word](/docs/word/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.docx)]
@@ -51,11 +58,13 @@ Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" wid
   * Documenation:  [[markdown](/docs/markdown/Databricks%20-%20Pull%20from%20Splunk.md), [pdf](/docs/pdf/Push%20Data%20to%20Splunk%20from%20Databricks.pdf), [word](/docs/word/Push%20Data%20to%20Splunk%20from%20Databricks.docx)]
   * Notebook - pull_from_splunk: [source](/notebooks/source/pull_from_splunk.py), [html](/notebooks/html/pull_from_splunk.html), [dbc](/notebooks/dbc/pull_from_splunk.dbc)
 
-### Data collection sources with Notebooks and documentation are included for the following sources: 
+## Log ingestion
+
+Data collection sources with notebooks and documentation are included for the following sources: 
 
 This project also provides documentation and notebooks to show case specifics on how to use Databricks for collecting varous logs (a comprehensive list is provided below) via stream ingest and batch-ingest using Databricks autoloader and Spark streaming into cloud Data lakes for durable storage on S3. The included documentation and notebooks also provide methods and code detials for each log type: parsing, schematizing, ETL/Aggregation, and storing in Delta format to make them available for analytics. 
 
-#### Log Collection documentation:
+### Log Collection documentation:
 
 * Cloudtrail logs
   * Documenation: [[markdown](/docs/markdown/Databricks%20%20-%20AWS%20CloudTrail.md), [pdf](/docs/pdf/Databricks%20%20-%20AWS%20CloudTrail.pdf), [word](/docs/word/Databricks%20%20-%20AWS%20CloudTrail.docx)]
