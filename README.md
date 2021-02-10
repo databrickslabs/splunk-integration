@@ -1,10 +1,26 @@
 The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. The add-on also makes it easy to send events from Databricks to Splunk via Splunk HEC.
 ### Features
-- Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI
-- Execute actions in Databricks, such as notebook runs and jobs, from Splunk
-- Push events, summary, alerts to Splunk from Databricks
-- Pull events, alerts data from Splunk into Databricks
+
 <img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
+
+
+- Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI  (Ref: Fig 1)
+- Execute actions in Databricks, such as notebook runs and jobs, from Splunk (Ref: Fig 2 & Fig 3)
+- Use Splunk SQL database extension to integrate Databrics information with Splunk queries and reports (Ref: Fig 4 & Fig 5)
+- Push events, summary, alerts to Splunk from Databricks (Ref: Fig 6 and Fig 7)
+- Pull events, alerts data from Splunk into Databricks (Ref: Fig 8)
+
+Fig 1: <img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%">
+Fig 2: <img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%">
+Fig 3: <img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%">
+
+Fig 4: <img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%">
+Fig 5: <img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%">
+
+Fig 6: <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%">
+Fig 7: <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%">
+
+Fig 7: <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%">
 
 #### Bidirection Splunk Connector documentation:
 
