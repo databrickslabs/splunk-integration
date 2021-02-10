@@ -1,4 +1,4 @@
-The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. The add-on also makes it easy to send events from Databricks to Splunk via Splunk HEC.
+The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/)  allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. The add-on also makes it easy to send events from Databricks to Splunk via Splunk HEC.
 ### Features
 
 <img src="/docs/markdown/images/functional_architecture.png" height="70%" width="70%">
@@ -58,3 +58,4 @@ This project also provides documentation and notebooks to show case specifics on
   * Notebook 1 - syslog_rfc3164: [source](/notebooks/source/syslog_rfc3164.py), [html](/notebooks/html/syslog_rfc3164.html), [dbc](/notebooks/dbc/syslog_rfc3164.dbc) 
   * Notebook 2 - syslog_rfc5424: [source](/notebooks/source/syslog_rfc5424.dbc), [html](/notebooks/html/syslog_rfc5424.html), [dbc](/notebooks/dbc/syslog_rfc5424.dbc) 
 
+This connector is not officially supported by Databricks. Please send an email to cybersecurity@databricks.com for help.
