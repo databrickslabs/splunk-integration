@@ -29,18 +29,19 @@ We also provided extensive documentation for Log Collection to ingest, store, an
 #### Fig 2: 
       Execute actions in Databricks, such as notebook runs and jobs, from Splunk
       <br/><img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%"><br/>
-     #### Fig 3:
-    <br/><img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
+#### Fig 3:
+    <img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
 #### Fig 4: 
-      Use Splunk SQL database extension to integrate Databricks information with Splunk queries and reports <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
-      #### Fig 5: 
-      <br/><img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
- #### Fig 6: 
+      Use Splunk SQL database extension to integrate Databricks information with Splunk queries and reports <br/>
+     <img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
+#### Fig 5: 
+      <img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
+#### Fig 6: 
       Push events, summary, alerts to Splunk from Databricks 
       <br/> <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%"><br/>
-      #### Fig 7: 
-      <br/> <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
- #### Fig 8:
+#### Fig 7: 
+      <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
+#### Fig 8:
      Pull events, alerts data from Splunk into Databricks
       <br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
    
