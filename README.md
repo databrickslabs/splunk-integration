@@ -1,8 +1,8 @@
 # Splunk Integration 
 [Features](#Features) |
 [Architecture](#Architecture) |
-[Documentation](#Documentation) |
-[Log ingestion examples](#log-ingestion) 
+[Documentation References](#Documentation) |
+[Log Ingestion Examples](#log-ingestion) 
 
 
 
