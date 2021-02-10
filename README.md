@@ -10,15 +10,19 @@ The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) allo
 - Push events, summary, alerts to Splunk from Databricks (Ref: Fig 6 and Fig 7)
 - Pull events, alerts data from Splunk into Databricks (Ref: Fig 8)
 
-Fig 1: <br/><img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%"><br/>
-Fig 2: <br/><img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%"><br/>
+Fig 1: Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI
+<br/><img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%"><br/>
+Fig 2: Execute actions in Databricks, such as notebook runs and jobs, from Splunk
+<br/><img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%"><br/>
 Fig 3: <br/><img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
 <br/><br/>
-Fig 4: <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
+Fig 4: Use Splunk SQL database extension to integrate Databrics information with Splunk queries and reports <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
 Fig 5: <br/><img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
 <br/><br/>
-Fig 6:<br/> <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%"><br/>
-Fig 7:<br/> <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
+Fig 6: Push events, summary, alerts to Splunk from Databricks 
+<br/> <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%"><br/>
+Fig 7: Pull events, alerts data from Splunk into Databricks
+<br/> <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
 <br/><br/>
 Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
 
