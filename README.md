@@ -26,7 +26,7 @@ Fig 7: Pull events, alerts data from Splunk into Databricks
 <br/><br/>
 Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
 
-#### Bidirection Splunk Connector documentation:
+#### Bidirection Splunk Connector "how to" documentation:
 
 * Databricks Add-on for Splunk Integration Installation And Usage Guide:
    * Documenation:  [[markdown](/docs/markdown/Splunk%20Integration%20Installation%20And%20Usage%20Guide.md), [pdf](/docs/pdf/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.pdf), [word](/docs/word/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.docx)]
