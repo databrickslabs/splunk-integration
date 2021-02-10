@@ -1,4 +1,4 @@
-# Databricks Labs AutoML
+# Splunk Integration 
 [Features](#Features) |
 [Architecture](#Architecture) |
 [Documentation](#Documentation)
