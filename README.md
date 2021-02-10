@@ -10,17 +10,17 @@ The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/) allo
 - Push events, summary, alerts to Splunk from Databricks (Ref: Fig 6 and Fig 7)
 - Pull events, alerts data from Splunk into Databricks (Ref: Fig 8)
 
-Fig 1: <img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%">
-Fig 2: <img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%">
-Fig 3: <img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%">
-
-Fig 4: <img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%">
-Fig 5: <img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%">
-
-Fig 6: <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%">
-Fig 7: <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%">
-
-Fig 7: <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%">
+Fig 1: <br/><img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%"><br/>
+Fig 2: <br/><img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%"><br/>
+Fig 3: <br/><img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
+<br/><br/>
+Fig 4: <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
+Fig 5: <br/><img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
+<br/><br/>
+Fig 6:<br/> <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%"><br/>
+Fig 7:<br/> <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
+<br/><br/>
+Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
 
 #### Bidirection Splunk Connector documentation:
 
