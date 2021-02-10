@@ -6,7 +6,7 @@
 
 
 
-The Splunk Integration project is a non-supported bidirectional connector consisting of three main components as dipicted in the architecture diagram :
+The Splunk Integration project is a non-supported bidirectional connector consisting of three main components as dipicted in the [architecture](#Architecture) diagram :
 <br/>
 1) The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/), an app, that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks. 
 2) Splunk SQL database extension (Splunk DB Connect) configratuion for Databricks connectivity
@@ -17,27 +17,27 @@ We also provided extensive documentation for Log Collection to ingest, store, an
 
 ## Features
 
-- Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI  (Ref: Fig 1)
+- Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI  ([Ref: Fig 1](Fig-1) )
 - Execute actions in Databricks, such as notebook runs and jobs, from Splunk (Ref: Fig 2 & Fig 3)
 - Use Splunk SQL database extension to integrate Databrics information with Splunk queries and reports (Ref: Fig 4 & Fig 5)
 - Push events, summary, alerts to Splunk from Databricks (Ref: Fig 6 and Fig 7)
 - Pull events, alerts data from Splunk into Databricks (Ref: Fig 8)
 
-Fig 1: Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI
+#### Fig 1: Run Databricks SQL queries right from the Splunk search bar and see the results in Splunk UI
 <br/><img src="/docs/markdown/images/databricksquery.png" height="70%" width="70%"><br/>
-Fig 2: Execute actions in Databricks, such as notebook runs and jobs, from Splunk
+#### Fig 2: Execute actions in Databricks, such as notebook runs and jobs, from Splunk
 <br/><img src="/docs/markdown/images/databricksrun.png" height="70%" width="70%"><br/>
-Fig 3: <br/><img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
+#### Fig 3: <br/><img src="/docs/markdown/images/databricksjob.png" height="70%" width="70%"><br/>
 <br/><br/>
-Fig 4: Use Splunk SQL database extension to integrate Databrics information with Splunk queries and reports <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
-Fig 5: <br/><img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
+#### Fig 4: Use Splunk SQL database extension to integrate Databrics information with Splunk queries and reports <br/><img src="/docs/markdown/images/dbconnect1.png" height="70%" width="70%"><br/>
+#### Fig 5: <br/><img src="/docs/markdown/images/dbconnect2.png" height="70%" width="70%"><br/>
 <br/><br/>
-Fig 6: Push events, summary, alerts to Splunk from Databricks 
+#### Fig 6: Push events, summary, alerts to Splunk from Databricks 
 <br/> <img src="/docs/markdown/images/pushtosplunk1.png" height="70%" width="70%"><br/>
-Fig 7: Pull events, alerts data from Splunk into Databricks
+#### Fig 7: Pull events, alerts data from Splunk into Databricks
 <br/> <img src="/docs/markdown/images/pushtosplunk2.png" height="70%" width="70%"><br/>
 <br/><br/>
-Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
+#### Fig 8:<br/> <img src="/docs/markdown/images/pullfromsplunk.png" height="70%" width="70%"><br/>
 
 ## Architecture
 
