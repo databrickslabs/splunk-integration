@@ -2,7 +2,9 @@
 [Features](#Features) |
 [Architecture](#Architecture) |
 [Documentation References](#Documentation) |
-[Log Ingestion Examples](#log-ingestion) 
+[Log Ingestion Examples](#log-ingestion) |
+[Feedback](#feedback) |
+[Legal Information](#legal-information) 
 
 
 
@@ -85,6 +87,16 @@ This project also provides documentation and notebooks to show case specifics on
   * Notebook 1 - syslog_rfc3164: [source](/notebooks/source/syslog_rfc3164.py), [html](/notebooks/html/syslog_rfc3164.html), [dbc](/notebooks/dbc/syslog_rfc3164.dbc) 
   * Notebook 2 - syslog_rfc5424: [source](/notebooks/source/syslog_rfc5424.dbc), [html](/notebooks/html/syslog_rfc5424.html), [dbc](/notebooks/dbc/syslog_rfc5424.dbc) 
 
-This connector is not officially supported by Databricks. Please send an email to cybersecurity@databricks.com for help.
+## Feedback
+
+Issues with the application?  Found a bug?  Have a great idea for an addition?
+Feel free to file an issue.
+
+## Legal Information
+This software is provided as-is and is not officially supported by Databricks through customer technical support channels.
+Support, questions, help, and feature requests can be communicated via email -> cybersecurity@databricks.comor through the Issues page of this repo.
+
+
+
 
 
