@@ -2,6 +2,7 @@
 [Features](#Features) |
 [Architecture](#Architecture) |
 [Documentation References](#Documentation) |
+[Compatibility](#Compatibility)|
 [Log Ingestion Examples](#log-ingestion) |
 [Feedback](#feedback) |
 [Legal Information](#legal-information) 
@@ -66,6 +67,13 @@ Pull events, alerts data from Splunk into Databricks
 * Pull Data from Splunk into Databricks.docx:
   * Documentation:  [[markdown](/docs/markdown/Databricks%20-%20Pull%20from%20Splunk.md), [pdf](/docs/pdf/Push%20Data%20to%20Splunk%20from%20Databricks.pdf), [word](/docs/word/Push%20Data%20to%20Splunk%20from%20Databricks.docx)]
   * Notebook - pull_from_splunk: [source](/notebooks/source/pull_from_splunk.py), [html](/notebooks/html/pull_from_splunk.html), [dbc](/notebooks/dbc/pull_from_splunk.dbc)
+  
+## Compatibility
+Databricks Add-on for Splunk, notebooks and documentation provided in this project are compatible with:
+  * Splunk Enterprise version: 8.0.x and 8.1.x  
+  * Databricks REST API: 1.2 and 2.0 (on Azure Databricks, AWS SaaS,E2 and PVC deployments)
+  * OS: Platform independent
+  * Browser: Safari, Chrome and Firefox
 
 ## Log ingestion
 
