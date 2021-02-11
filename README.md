@@ -94,7 +94,7 @@ Feel free to file an issue.
 
 ## Legal Information
 This software is provided as-is and is not officially supported by Databricks through customer technical support channels.
-Support, questions, help, and feature requests can be communicated via email -> cybersecurity@databricks.comor through the Issues page of this repo.
+Support, questions, help, and feature requests can be communicated via email -> cybersecurity@databricks.comor or through the Issues page of this repo.
 
 
 
