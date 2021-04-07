@@ -1,0 +1,128 @@
+<form>
+  <label>Databricks Job Execution Details</label>
+  <fieldset submitButton="false">
+    <input type="time" token="creation_time_filter">
+      <label>Creation Time Filter</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="command_execution_status_filter">
+      <label>Submission Status</label>
+      <choice value="*">All</choice>
+      <choice value="Failed">Failed</choice>
+      <choice value="Success">Success</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="user_filter">
+      <label>User Filter</label>
+      <fieldForLabel>user</fieldForLabel>
+      <fieldForValue>user</fieldForValue>
+      <search>
+        <query>| inputlookup submit_run_logs | append [| inputlookup execute_job_logs] | dedup user | table user</query>
+        <earliest>$creation_time_filter.earliest$</earliest>
+        <latest>$creation_time_filter.latest$</latest>
+      </search>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Databricks Run Details</title>
+      <table>
+        <search>
+          <query>| inputlookup submit_run_logs | sort -created_time 
+| addinfo
+| where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
+| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") | search user="$user_filter$" command_status="$command_execution_status_filter$"
+| table created_time user param run_id command_status output_url result_url error 
+| rename created_time as "Created Time"
+| rename error as "Error Message"
+| rename output_url as "Output URL"
+| rename result_url as "Result URL"
+| rename param as "Notebook Params"
+| rename run_id as "Run ID"
+| rename command_status as "Submission Status"
+| rename user as "User"</query>
+          <earliest>$creation_time_filter.earliest$</earliest>
+          <latest>$creation_time_filter.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">row</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <condition field="Output URL">
+            <link target="_blank">
+              <![CDATA[ $row.Output URL|n$ ]]>
+            </link>
+          </condition>
+          <condition field="Result URL">
+            <link target="_blank">
+              <![CDATA[ $row.Result URL|n$ ]]>
+            </link>
+          </condition>
+          <condition>
+            <!-- No Action if Columns other than ID and AlertTriggerID is clicked-->
+          </condition>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Databricks Job Details</title>
+      <table>
+        <search>
+          <query>| inputlookup execute_job_logs | sort -created_time
+| addinfo
+| eval info_max_time=if(isnum(info_max_time), info_max_time, now())
+| where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
+| search user="$user_filter$" command_status="$command_execution_status_filter$" | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
+| table created_time user param run_id command_status output_url result_url error 
+| rename created_time as "Created Time"
+| rename error as "Error Message"
+| rename output_url as "Output URL"
+| rename result_url as "Result URL"
+| rename param as "Notebook Params"
+| rename run_id as "Run ID"
+| rename command_status as "Submission Status"
+| rename user as "User"</query>
+          <earliest>$creation_time_filter.earliest$</earliest>
+          <latest>$creation_time_filter.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">row</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <condition field="Output URL">
+            <link target="_blank">
+              <![CDATA[ $row.Output URL|n$ ]]>
+            </link>
+          </condition>
+          <condition field="Result URL">
+            <link target="_blank">
+              <![CDATA[ $row.Result URL|n$ ]]>
+            </link>
+          </condition>
+          <condition>
+            <!-- No Action if Columns other than ID and AlertTriggerID is clicked-->
+          </condition>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</form>
