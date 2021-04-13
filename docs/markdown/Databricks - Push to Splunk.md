@@ -1,4 +1,3 @@
-#
 # Push Data to Splunk from Databricks
 
 **User Guide 1.0.0**
@@ -11,48 +10,33 @@ Databricks and the Databricks logo are trademarks or service marks of Databricks
 
 Technical documentation and support materials include details based on the full set of capabilities and features of a specific release. Access to some functionality requires specific license types (tiers).
 
-#
 # Contents
 
 - [Overview](#Overview)
-
 - [Push Data To Splunk](#Push%20Data%20To%20Splunk)
-
     - [Configure HEC in Splunk Enterprise](#Configure%20HEC%20in%20Splunk%20Enterprise)
-
         - [Enable HEC](#Enable%20HEC)
-
         - [Create HEC token](#Create%20HEC%20token)
-
     - [Configure Sourcetype for the events](#Configure%20Sourcetype%20for%20the%20events)
-
         - [Steps to configure Sourcetype](#Steps%20to%20configure%20Sourcetype)
-
     - [Using Databricks secret scope to store the Splunk HEC token securely](#Using%20Databricks%20secret%20scope%20to%20store%20the%20Splunk%20HEC%20token%20securely)
-
     - [Notebook Parameters](#Notebook%20Parameters)
-
     - [Import Splunk Instance's Certificate in Databricks](#Import%20Splunk%20Instance's%20Certificate%20in%20Databricks)
-
 - [Limitations](#Limitations)
-
 - [References](#References)
 
 
-#
 # Overview
 
 This document provides information on how to get your data from Databricks into Splunk using a Databricks notebook. The notebook is used to execute queries on a table in Databricks and push the result obtained to Splunk using Splunk HTTP Event Collector (HEC).
 
 Splunk HEC lets you send data and application events to a Splunk deployment over the HTTP and Secure HTTP (HTTPS) protocols. HEC uses a token-based authentication model. You can generate a token and then configure a logging library or HTTP client with the token to send data to HEC in a specific format. This process eliminates the need for a Splunk forwarder when you send application events. After you enable HEC, as a developer, you can use HEC tokens in your app to send data to HEC. You do not need to include Splunk credentials in your app or supported files.
 
-#
 # Push Data To Splunk
 
 **Follow the steps below to push data from Databricks table to Splunk.**
 
 ## Configure HEC in Splunk Enterprise 
-----
 
 Follow the below steps to configure HTTP Event Collector.
 
@@ -93,21 +77,21 @@ Follow the below steps to configure HTTP Event Collector.
 Reference: [https://docs.splunk.com/Documentation/Splunk/8.1.1/Data/UsetheHTTPEventCollector](https://docs.splunk.com/Documentation/Splunk/8.1.1/Data/UsetheHTTPEventCollector)
 
 ## Configure Sourcetype for the events
-----
 
 The sourcetype to be associated with the events pushed from this notebook should be configured to have the following properties specified. Note that a user is required to change the below configurations, based on the data that is being pushed to Splunk.
 
-- LINE_BREAKER = ([\r\n]+)
-- SHOULD_LINEMERGE = false
-- KV_MODE = json
+- `LINE_BREAKER = ([\r\n]+)`
+- `SHOULD_LINEMERGE = false`
+- `KV_MODE = json`
 
 ### Steps to configure Sourcetype
 
 - In Splunk web UI go to settings > Data > Source types
 - Select your sourcetype to edit or Click New Sourcetype in the top right-hand corner to create a new sourcetype. In case of a new sourcetype, provide a name for the sourcetype and select the destination app same as the App context specified while configuring the Splunk HEC Token that you will be using, in the dialog box that opens.
 - In the Event Breaks section select Every Line
-- In the Advanced section click New setting and add KV_MODE = JSON as follows.  
+- In the Advanced section click New setting and add `KV_MODE = JSON` as follows.  
 ![](./images/push_to_splunk/img_2.png)  
+
 **Note**: In case you are editing an existing sourcetype, make sure that the changes In the Event Breaks and Advanced section do not affect the events that are already associated with this sourcetype.
 
 - Click Save.
@@ -115,7 +99,6 @@ The sourcetype to be associated with the events pushed from this notebook should
 If the user wants to change the default timestamp extraction from these events, the user can follow the steps specified here [Configure timestamp recognition](https://docs.splunk.com/Documentation/Splunk/latest/Data/Configuretimestamprecognition)
 
 ## Using Databricks secret scope to store the Splunk HEC token securely
-----
 
 In the notebook to push data to Splunk, the Splunk HEC token value needs to be specified. Since the HEC token value is sensitive information, the user can configure Databricks secrets to store the token value securely. This enables the user to store the token value securely and not expose it in the notebook in plain text form.
 
@@ -150,7 +133,6 @@ To securely store the Splunk HEC Token value, follow the following steps:
     Refer [https://docs.databricks.com/security/secrets/secrets.html#create-a-secret](https://docs.databricks.com/security/secrets/secrets.html#create-a-secret) for more details regarding databricks scope creation.
 
 ## Notebook Parameters
-----
 
 The notebook push_to_splunk is used to execute queries on a table in Databricks and push the result obtained to Splunk.
 
@@ -164,7 +146,7 @@ The notebook contains the following parameters ( **\*** denotes mandatory field)
 - **Secret Key** ***(Either Databricks Secret Scope and Secret Key or Splunk HEC Token are Mandatory Fields)***: The secret key associated with specified Databricks Secret Scope which securely stores the Splunk HEC Token value following step 3 here: [Databricks secret scope](#Using%20Databricks%20secret%20scope%20to%20store%20the%20Splunk%20HEC%20token%20securely)
 - **Splunk HEC Token** ***(Either Databricks Secret Scope and Secret Key or Splunk HEC Token are Mandatory Fields)***: The Splunk HEC token value configured in Splunk. It is used when the Databricks Secret Scope and Secret Key are not specified. You can get the value from Splunk Admin or configure as follows: [Configuring Splunk HEC](#Configure%20HEC%20in%20Splunk%20Enterprise)
 - **Index (Optional)**: The Splunk index to push data into. Ensure that the Splunk index specified here is one of the allowed indexes associated with the Splunk HEC Token you are using here. You can get the list of such indexes from the Splunk HEC token Configuration page or from your Splunk Admin.
-- **Source (Optional)**: It indicates the source of an event(in Splunk), that is, where the event originated.
+- **Source (Optional)**: It indicates the source of an event (in Splunk), that is, where the event originated.
 - **Sourcetype (Optional)**: The sourcetype for an event is used to specify the data structure of an event. Ensure that this sourcetype is configured on the Splunk side to parse the events properly. If you do not specify the sourcetype here, ensure that the default sourcetype associated with the Splunk HEC Token being used here is also configured on the Splunk side for proper parsing of events. If you cannot make this configuration, ask your Splunk Admin to make the configuration for the sourcetype. Refer section: [Configure sourcetypes for events](#Configure%20Sourcetype%20for%20the%20events)
 - **Host (Optional)**: The hostname or IP address of the network device that generated an event.
 - **Database** ***(Either Database and Table Name or Advanced Query are Mandatory Fields.)***: The Databricks Database whose table needs to be used.
@@ -175,13 +157,12 @@ The notebook contains the following parameters ( **\*** denotes mandatory field)
 To run the notebook, **attach it to a cluster**, fill in all the required parameters and select the **Run All** option. In case of any error, the error is displayed at the bottom of the notebook cells where it occurred.
 
 ## Import Splunk Instance's Certificate in Databricks
-----
 
 This step is needed only if your Splunk instance has been configured to use a certificate and that certificate is not trusted by your browser/system. Follow the below steps to import the certificate.
 
-- Create an init script that adds the entire CA chain and sets the REQUESTS_CA_BUNDLE property as follows in Databricks. In this example, PEM format CA certificates are added to the file myca.crt which is located at /usr/local/share/ca-certificates/.  
+- Create an init script that adds the entire CA chain and sets the `REQUESTS_CA_BUNDLE` property as follows in Databricks. In this example, PEM format CA certificates are added to the file `myca.crt` which is located at `/usr/local/share/ca-certificates/`.
     `<YOUR CERTIFICATE CONTENT>` can be obtained from Splunk Admin.   
-    The myca.crt and myca.pem filenames used here are just examples. Please use filenames that don't exist already in the locations as it may cause issues.
+    The `myca.crt` and `myca.pem` file names used here are just examples. Please use filenames that don't exist already in the locations as it may cause issues.
 
 
     ```
@@ -223,12 +204,10 @@ Refer [Importing custom certificates to Databricks](https://kb.databricks.com/py
 
 **Now you can use this cluster to run the notebook when you want to use SSL server certificate verification for communication with Splunk.**
 
-#
 # Limitations
 
 - This notebook doesn't provide a way of maintaining a checkpoint since it depends on the data that the user is collecting. Hence, this may cause data duplication in Splunk. If the intention is to run this notebook periodically we highly recommend implementing the checkpointing mechanism to avoid indexing the same data again in Splunk.
 
-#
 # References
 
 - Self-signed certificates Splunk: [https://docs.splunk.com/Documentation/Splunk/8.1.1/Security/Howtoself-signcertificates](https://docs.splunk.com/Documentation/Splunk/8.1.1/Security/Howtoself-signcertificates)

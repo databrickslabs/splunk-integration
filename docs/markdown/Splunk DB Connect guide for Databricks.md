@@ -1,4 +1,3 @@
-#
 # Configuring Splunk DB Connect App For Databricks
 
 **User Guide 1.0.0**
@@ -16,44 +15,26 @@ Technical documentation and support materials include details based on the full 
 
 
 - [Overview](#Overview) 
-
 - [Prerequisites](#Prerequisites)
-
 - [Installing Splunk DB Connect App](#Installing%20Splunk%20DB%20Connect%20App)
-
 - [Configuring Splunk DB Connect App](#Configuring%20Splunk%20DB%20Connect%20App)
-
     - [General Tab](#General%20Tab)
-
     - [Setup Driver](#Setup%20Driver)
-
     - [Establish Connection to Databricks](#Establish%20Connection%20to%20Databricks)
-
         - [Create Identity](#Create%20Identity)
-
         - [Create a Database connection](#Create%20a%20Database%20connection)
-
     - [Restricting Access To Users](#Restricting%20Access%20To%20Users)
-
         - [Create a custom role with limited privileges](#Create%20a%20custom%20role%20with%20limited%20privileges)
-
         - [Create a user with the Databricks-User role](#Create%20a%20user%20with%20the%20Databricks-User%20role)
-
         - [Limit the access of identities and connection to particular users](#Limit%20the%20access%20of%20identities%20and%20connection%20to%20particular%20users)
-
 - [Validate the connection](#Validate%20the%20connection)
-
 - [Troubleshooting](#Troubleshooting)
-
 - [References](#References)
 
-
-#
 # Overview
 
 This document provides instructions on how to install and configure the Splunk DB Connect app version 3.4.1 in Splunk to communicate with Databricks using JDBC driver.
 
-#
 # Prerequisites
 
 Splunk DB Connect has the following system requirements. Please ensure that these prerequisites are met before deploying the app.
@@ -64,11 +45,10 @@ Splunk DB Connect has the following system requirements. Please ensure that thes
   - Java Platform, Java Runtime Environment (JRE) 11 from [Java Platform, Standard Edition](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
   - Java Platform, Open Java Development Kit (OpenJDK) 11 from the [OpenJava Project](http://openjdk.java.net/).
 - After installation, write down the path to the JRE directory, or [$JAVA_HOME](http://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/envvars001.html). This file path will be required to configure the Splunk DB Connect app.
-- Ensure that the logged-in user has the ability to write to the $SPLUNK_HOME/var directory and $SPLUNK_HOME/etc/apps/splunk_app_db_connect and its sub-directories.
+- Ensure that the logged-in user has the ability to write to the `$SPLUNK_HOME/var` directory and `$SPLUNK_HOME/etc/apps/splunk_app_db_connect` and its sub-directories.
 
-**Note:** $SPLUNK_HOME is the location where Splunk is installed.
+**Note:** `$SPLUNK_HOME` is the location where Splunk is installed.
 
-#
 # Installing Splunk DB Connect App
 
 Splunk provides users two options to install any app from the UI.
@@ -96,7 +76,6 @@ Splunk provides users two options to install any app from the UI.
     5. Once installed, a "Restart Required" message will appear. Click on ***Restart Now***.
     6. After the restart, open the app and follow the instructions for [configuring the app](#Configuring%20Splunk%20DB%20Connect%20App).
 
-#
 # Configuring Splunk DB Connect App
 
 This topic explains how to setup DB Connect before you use it to access databases.
@@ -113,7 +92,7 @@ This topic explains how to setup DB Connect before you use it to access database
 
   **JRE Installation Path (JAVA_HOME)**
   
-  DB Connect attempts to detect the JAVA_HOME environment variables as the JRE installation path if possible. You can change it to the Java path you want to use for DB Connect.    
+  DB Connect attempts to detect the `JAVA_HOME` environment variables as the JRE installation path if possible. You can change it to the Java path you want to use for DB Connect.    
     
   **Task Server Port**
   
@@ -125,8 +104,8 @@ Download and install the JDBC Driver. Follow the steps below to setup the driver
 
 1. Configure Databricks JDBC Drivers:
   1. Download the JDBC Databricks driver ([download](https://pages.databricks.com/ODBC-Driver-Download.html))
-  2. From the backend, place the ***SparkJDBC42.jar*** and ***EULA.txt*** (downloaded driver file and EULA file) to ***$SPLUNK_HOME/etc/apps/splunk_app_db_connect/drivers*** directory.
-  3. From the backend, navigate to the ***$SPLUNK_HOME/etc/apps/splunk_app_db_connect/local*** directory and create a file named ,***db_connection_types.conf***, and add the following content in the file. (Create the local directory if not exists)
+  2. From the backend, place the `SparkJDBC42.jar` and `EULA.txt` (downloaded driver file and EULA file) to `$SPLUNK_HOME/etc/apps/splunk_app_db_connect/drivers` directory.
+  3. From the backend, navigate to the `$SPLUNK_HOME/etc/apps/splunk_app_db_connect/local` directory and create a file named `db_connection_types.conf`, and add the following content in the file. (Create the local directory if not exists)
 
       ```
       [databricks_spark_sql]
@@ -149,7 +128,7 @@ Download and install the JDBC Driver. Follow the steps below to setup the driver
 ## Establish Connection to Databricks
 
 
-### Create Identity
+### Create Identity in Splunk
 
 1. From within Splunk DB Connect, navigate to the ***Configuration > Databases > Identities*** tab and click ***New Identity***.
 2. Fill in the appropriate details:
@@ -182,7 +161,7 @@ To create a new connection:
     - Get the JDBC URL in the below form.
       - `jdbc:spark://<host-name>:<port>/<database>;transportMode=<transport-mode>;ssl=1;httpPath=<http-path>;UserAgentEntry=Databricks-Splunk-DBConnect-JDBC`  
       
-      **Note:** Don't include the AuthMech, UID, and PWD. DB Connect supports LDAP connection, you need to specify the LDAP URL in the JDBC URL field. Consult your database vendor,s documentation on how to generate LDAP URLs.  
+      **Note:** Don't include the `AuthMech`, `UID`, and `PWD` parameters. DB Connect supports LDAP connection, you need to specify the LDAP URL in the JDBC URL field. Consult your database vendor's documentation on how to generate LDAP URLs.  
       ![](./images/splunk_db_connect/img_8.png)
 
 5. Advanced Settings:
@@ -200,17 +179,17 @@ To restrict access of the identities and connections among the users, the admin 
 
 1. From within the Splunk, navigate to the ***Settings > Roles***.
 2. On the top right corner, click on the ***New Role***.
-3. Provide name "Databricks-User" and under the Inheritance tab, check the "db_connect_user".  
+3. Provide name "Databricks-User" and under the Inheritance tab, check the `db_connect_user`.
 ![](./images/splunk_db_connect/img_9.png)
 
 4. Under the Capabilities tab, select the following capabilities:
-    - db_connect_create_identity
-    - db_connect_delete_identity
-    - db_connect_update_identity
-    - db_connect_create_connection
-    - db_connect_delete_connection
-    - db_connect_edit_connection_ssl
-    - db_connect_update_connection  
+    - `db_connect_create_identity`
+    - `db_connect_delete_identity`
+    - `db_connect_update_identity`
+    - `db_connect_create_connection`
+    - `db_connect_delete_connection`
+    - `db_connect_edit_connection_ssl`
+    - `db_connect_update_connection  `
     ![](./images/splunk_db_connect/img_10.png)
 
 5. Click on ***Create*** and check if the newly created role has been added.  
@@ -233,7 +212,7 @@ To restrict access of the identities and connections among the users, the admin 
 
 1. From within the Splunk, navigate to the ***Splunk DB Connect App***.
 2. Navigate to the ***Databases > Identities***.
-3. Click on ***New Identity*** to create the new identity.
+3. Click on ***New Identity*** to create a new identity.
 4. Under the ***Settings*** tab, fill the fields with dummy values as only an admin is able to create a connection or identity. Later, users with the role of ***Databricks-User*** can update the already created connection or identity with real values.  
 ![](./images/splunk_db_connect/img_14.png)
 
@@ -250,7 +229,6 @@ To restrict access of the identities and connections among the users, the admin 
 
 Repeat [section 2](#Create%20a%20user%20with%20the%20Databricks-User%20role) (create a user) and [section 3](#Limit%20the%20access%20of%20identities%20and%20connection%20to%20particular%20users) (limit the access) for each new user. The new user will be able to sign in to Splunk with the username and password provided in section 2. Once logged in, all they need to do is edit the existing created connection and identity, and they will be able to use the app.
 
-#
 # Validate the connection
 
 Validate your connections with your query data.
@@ -263,14 +241,12 @@ OR
 
     `| dbxquery query="<your-query>" connection="<connection-name>"`
 
-#
 # Troubleshooting
 
 - "Cannot communicate with task server, please check your settings."
   - Validate that the JAVA_HOME path is set correctly and the provided port is not used by any other service. You can change the port and try saving again. You may need to restart your Splunk.
 - For any other errors, you can refer to the Splunk DB Connect App [troubleshooting documentation](https://docs.splunk.com/Documentation/DBX/3.4.1/DeployDBX/Troubleshooting).
 
-#
 # References
 
 - [https://docs.splunk.com/Documentation/DBX/3.4.1/DeployDBX/AboutSplunkDBConnect](https://docs.splunk.com/Documentation/DBX/3.4.1/DeployDBX/AboutSplunkDBConnect)
