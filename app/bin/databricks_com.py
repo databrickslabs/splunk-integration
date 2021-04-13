@@ -31,9 +31,6 @@ def databricks_api(method, endpoint, splunk_session_key, data=None, args=None):
     # Prepare URL
     request_url = "{}{}{}".format("https://", databricks_instance.strip("/"), endpoint)
 
-    if args:
-        request_url = "?".join([request_url, "&".join(["{}={}".format(k, v) for k, v in args.items()])])
-
     # Getting proxy settings
     proxy_settings = utils.get_proxy_uri(splunk_session_key)
 
@@ -51,14 +48,15 @@ def databricks_api(method, endpoint, splunk_session_key, data=None, args=None):
         if method.lower() == "get":
             _LOGGER.info("Executing REST call: {}.".format(request_url))
             response = requests.get(
-                request_url, headers=headers, proxies=proxy_settings
+                request_url, params=args, headers=headers, proxies=proxy_settings
             )
         elif method.lower() == "post":
             _LOGGER.info("Executing REST call: {} Payload: {}.".format(request_url, str(data)))
             response = requests.post(
                 request_url,
+                params=args,
                 headers=headers,
-                data=json.dumps(data),
+                json=data,
                 proxies=proxy_settings,
             )
 
