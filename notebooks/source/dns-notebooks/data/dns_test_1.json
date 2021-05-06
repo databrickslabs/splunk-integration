@@ -1,0 +1,3 @@
+{"count":7986766,"time_first":1566230345,"time_last":1566936418,"rrname":"ns1.asdklgb.cf.","rrtype":"A","bailiwick":"cf.","rdata":["162.241.29.141"]}
+{"count":223591889,"time_first":1566452466,"time_last":1566509980,"rrname":"google.com","rrtype":"SOA","bailiwick":".","rdata":["a.root-servers.net. nstld.verisign-grs.com. 2019082200 1800 900 604800 86400"]}
+{"count":223591889,"time_first":1566452466,"time_last":1566509980,"rrname":"www.googlee.com","rrtype":"SOA","bailiwick":".","rdata":["a.root-servers.net. nstld.verisign-grs.com. 2019082200 1800 900 604800 86400"]}

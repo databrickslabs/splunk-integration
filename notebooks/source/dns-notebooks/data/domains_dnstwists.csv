@@ -1,0 +1,249 @@
+PERMUTATIONTYPE,domain,meta
+addition,googlea.com,184.168.131.241 NS:ns65.domaincontrol.com MX:mailstore1.secureserver.net
+addition,googleb.com,47.254.33.193 NS:ns3.dns.com
+addition,googlec.com,52.58.78.16 2a05:d014:9da:8c10:306e:3e07:a16f:a552 NS:ns1.dan.com
+addition,googled.com,107.161.23.204 NS:ns1.dnsowl.com
+addition,googlee.com,142.250.73.196 2607:f8b0:4004:811::2004 NS:ns1.google.com MX:
+addition,googlef.com,NS:ns1.googledomains.com
+addition,googleh.com,103.224.182.241 NS:ns1.above.com MX:park-mx.above.com
+addition,googlei.com,107.161.23.204 NS:ns1.dnsowl.com
+addition,googlej.com,54.235.212.68 NS:ns1.pql.net MX:mail.googlej.com
+addition,googlek.com,52.58.78.16 2a05:d014:9da:8c10:306e:3e07:a16f:a552 NS:ns1.dan.com
+addition,googlel.com,NS:ns1.googledomains.com
+addition,googlem.com,107.161.23.204 NS:ns1.dnsowl.com
+addition,googlen.com,103.224.182.239 NS:ns1.above.com MX:park-mx.above.com
+addition,googleo.com,95.211.219.66 NS:ns1.hastydns.com
+addition,googlep.com,54.235.212.68 NS:ns1.pql.net MX:mail.googlep.com
+addition,googleq.com,104.247.82.13 NS:ns1.parkingcrew.net MX:mail.h-email.net
+addition,googler.com,NS:ns1.googledomains.com
+addition,googles.com,34.73.132.53 NS:ns21.domaincontrol.com MX:mailstore1.secureserver.net
+addition,googlet.com,103.224.182.239 NS:ns1.above.com MX:park-mx.above.com
+addition,googleu.com,3.212.82.98 NS:ns3.domainmanager.com MX:mx94.mb1p.com
+addition,googlev.com,NS:ns1.googledomains.com
+addition,googlew.com,107.161.23.204 NS:ns1.dnsowl.com
+addition,googlex.com,NS:ns1.googledomains.com
+addition,googley.com,85.233.160.22 NS:ns0.phase8.net MX:fwd0.hosts.co.uk
+addition,googlez.com,47.74.55.53
+bitsquatting,foogle.com,64.111.126.107 NS:ns1.dreamhost.com MX:ALT1.ASPMX.L.GOOGLE.com
+bitsquatting,eoogle.com,NS:ns1.googledomains.com
+bitsquatting,coogle.com,NS:ns1.googledomains.com
+bitsquatting,ooogle.com,NS:ns1.googledomains.com
+bitsquatting,woogle.com,107.161.23.204 NS:ns1.dnsowl.com
+bitsquatting,gnogle.com,NS:ns1.googledomains.com
+bitsquatting,gmogle.com,NS:ns1.googledomains.com
+bitsquatting,gkogle.com,NS:ns1.googledomains.com
+bitsquatting,ggogle.com,NS:ns1.googledomains.com
+bitsquatting,gongle.com,NS:ns1.googledomains.com
+bitsquatting,gomgle.com,NS:ns1.googledomains.com
+bitsquatting,gokgle.com,NS:ns1.googledomains.com
+bitsquatting,goggle.com,45.55.44.56 NS:ns1.yourdoor.com
+bitsquatting,goofle.com,192.185.39.34 NS:ns8197.hostgator.com MX:mail.goofle.com
+bitsquatting,gooele.com,NS:ns1.googledomains.com
+bitsquatting,goocle.com,NS:ns1.googledomains.com
+bitsquatting,gooole.com,!ServFail !ServFail NS:!ServFail
+bitsquatting,googme.com,184.168.131.241 NS:ns65.domaincontrol.com
+bitsquatting,googne.com,NS:ns1.googledomains.com
+bitsquatting,googhe.com,199.59.242.153 NS:ns1.bodis.com MX:mx76.m2bp.com
+bitsquatting,googde.com,NS:ns1.googledomains.com
+bitsquatting,googld.com,NS:ns1.googledomains.com
+bitsquatting,googlg.com,NS:ns1.googledomains.com
+bitsquatting,googla.com,NS:ns1.googledomains.com
+bitsquatting,googlm.com,123.1.194.2 NS:f1g1ns1.dnspod.net
+bitsquatting,googlu.com,NS:ns1.googledomains.com
+homoglyph,googịe.com,198.185.159.144 NS:ns47.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,góóglę.com,NS:ns-1225.awsdns-25.org
+homoglyph,googīe.com,34.102.136.180 NS:ns47.domaincontrol.com
+homoglyph,qoogle.com,NS:ns1.google.com
+homoglyph,göogle.com,184.168.176.33 NS:ns57.domaincontrol.com
+homoglyph,qooqie.com,109.236.95.88 NS:ns1.openprovider.nl MX:ALT1.ASPMX.L.GOOGLE.com
+homoglyph,googłe.com,46.4.60.204 NS:ns1.iwantmyname.net
+homoglyph,q0ogle.com,154.90.110.15 NS:jm1.dns.com
+homoglyph,googlě.com,34.102.136.180 NS:ns69.domaincontrol.com
+homoglyph,gơogle.com,51.91.236.193 NS:dns10.ovh.net
+homoglyph,ġooġle.com,184.168.131.241 NS:ns47.domaincontrol.com
+homoglyph,qoogie.com,34.102.136.180 NS:ns61.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,go0g1e.com,192.64.119.3 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,gööglë.com,!ServFail !ServFail NS:!ServFail
+homoglyph,googic.com,160.122.57.169 NS:jm1.dns.com
+homoglyph,ɡooɡle.com,184.168.131.241 NS:ns03.domaincontrol.com
+homoglyph,goóglê.com,34.102.136.180 NS:ns15.domaincontrol.com
+homoglyph,googıe.com,162.255.119.140 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,gooģle.com,67.227.226.240 NS:ns1.parklogic.com MX:mx156.hostedmxserver.com
+homoglyph,ɢoogłe.com,184.168.131.241 NS:ns09.domaincontrol.com
+homoglyph,ɢooɡle.com,45.32.100.172 NS:ns01.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,ğoogle.com,104.247.82.70 NS:ns1.parkingcrew.net MX:mail.h-email.net
+homoglyph,googíe.com,198.185.159.144 NS:ns47.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,goóglé.com,34.102.136.180 NS:ns31.domaincontrol.com
+homoglyph,g0ogle.com,98.124.199.83 NS:dns1.name-services.com
+homoglyph,qooglc.com,104.31.182.118 NS:ns1.ecpage.com
+homoglyph,góóglè.com,52.0.217.44 NS:ns1.dynadot.com
+homoglyph,goọgle.com,217.70.184.38 NS:ns-231-b.gandi.net MX:fb.mail.gandi.net
+homoglyph,gooğlé.com,91.195.240.94 NS:ns1psw.name.com
+homoglyph,göögle.com,104.247.82.73 NS:ns1.parkingcrew.net MX:mail.h-email.net
+homoglyph,goögle.com,172.217.9.206 2607:f8b0:4004:803::200e NS:dns1.registrar-servers.com MX:alt1.aspmx.l.google.com
+homoglyph,googlè.com,104.27.154.191 2606:4700:3031::ac43:9760 NS:dara.ns.cloudflare.com
+homoglyph,goȯgle.com,162.255.119.65 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,ǥooɡle.com,45.32.100.172 NS:ns01.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,ɢoogle.com,!ServFail !ServFail NS:!ServFail
+homoglyph,ɢooɢle.com,144.76.235.51 NS:ns-canada.topdns.com
+homoglyph,go0gle.com,NS:ns1.googledomains.com
+homoglyph,gooġle.com,!ServFail !ServFail NS:!ServFail
+homoglyph,gọogle.com,52.58.179.61 NS:ns61.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,gọọglẹ.co,m     217.70.184.38 NS:ns-11-c.gandi.net MX:fb.mail.gandi.net
+homoglyph,ġooglḛ.com,!ServFail !ServFail NS:!ServFail
+homoglyph,goog1e.com,NS:ns1.googledomains.com
+homoglyph,g00gle.com,NS:ns1.googledomains.com
+homoglyph,ɡooɢle.com,45.32.100.172 NS:ns01.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,gȯogle.com,195.248.234.127 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,googlę.com,34.102.136.180 NS:ns29.domaincontrol.com
+homoglyph,g00gie.com,NS:ns1.googledomains.com
+homoglyph,googlê.com,5.135.151.119 2001:41d0:52:200::588 NS:dns10.ovh.net
+homoglyph,goóglë.com,34.102.136.180 NS:ns37.domaincontrol.com
+homoglyph,goóglè.com,34.102.136.180 NS:ns27.domaincontrol.com MX:alt1.aspmx.l.google.com
+homoglyph,googɩe.com,107.170.208.152 NS:ns63.domaincontrol.com MX:xngooge7nc-com0m1c.mail.protection.outlook.com
+homoglyph,ğooğle.com,34.102.136.180 NS:ns75.domaincontrol.com
+homoglyph,gooqle.com,72.52.178.23 NS:ns1.parklogic.com MX:mx156.hostedmxserver.com
+homoglyph,qooqle.com,69.162.80.53 NS:ns1.hastydns.com
+homoglyph,googie.com,209.17.116.2 NS:ns23.worldnic.com MX:inbound.registeredsite.com
+homoglyph,googlȩ.com,34.102.136.180 NS:ns05.domaincontrol.com
+homoglyph,góóglé.com,NS:ns-cloud-a1.googledomains.com
+homoglyph,ǥoogle.com,!ServFail !ServFail NS:!ServFail
+homoglyph,göógle.com,40.86.96.177 NS:ns45.domaincontrol.com
+homoglyph,ɡooɡie.com,104.131.220.130 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,gooɡle.com,64.90.41.174 NS:ns1.dreamhost.com MX:mx1.dreamhost.com
+homoglyph,ģoogle.com,67.227.226.240 NS:ns1.parklogic.com MX:mx156.hostedmxserver.com
+homoglyph,ɡoogle.com,69.172.201.153 NS:ns1.uniregistrymarket.link MX:mx247.in-mx.com
+homoglyph,qooqlc.com,184.168.131.241 NS:ns37.domaincontrol.com
+homoglyph,ɡooġle.com,45.32.100.172 NS:ns01.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,goọgie.com,198.185.159.144 NS:ns47.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,googlē.com,34.98.99.30 NS:ns23.domaincontrol.com
+homoglyph,goơgle.com,103.224.182.214 NS:ns1.above.com MX:park-mx.above.com
+homoglyph,googłė.com,216.239.32.21 2001:4860:4802:32::15 NS:ns73.domaincontrol.com
+homoglyph,gooǥle.com,NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,googlé.com,81.171.22.7 NS:ns1.quokkadns.com
+homoglyph,qoog1e.com,!ServFail !ServFail NS:!ServFail
+homoglyph,g00g1e.com,23.20.239.12 NS:nsg1.namebrightdns.com
+homoglyph,gooqłe.com,107.21.11.91 NS:dns1.registrar-servers.com
+homoglyph,googlc.com,NS:ns1.googledomains.com
+homoglyph,góógle.com,NS:ns-cloud-d1.googledomains.com
+homoglyph,gȯȯgle.com,34.102.136.180 NS:ns59.domaincontrol.com
+homoglyph,g0og1e.com,34.98.99.30 NS:ns55.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,go0gie.com,23.80.188.7 NS:ns1.dns.com
+homoglyph,ǥoogłe.com,34.102.136.180 NS:ns77.domaincontrol.com
+homoglyph,gọọgie.com,34.102.136.180 NS:ns59.domaincontrol.com
+homoglyph,qooq1e.com,104.198.131.112 NS:dns1.registrar-servers.com MX:eforward1.registrar-servers.com
+homoglyph,goóglė.com,34.102.136.180 NS:ns07.domaincontrol.com
+homoglyph,g00qle.com,27.133.148.196 NS:01.dnsv.jp
+homoglyph,q00qle.com,50.255.107.171 NS:ns03.domaincontrol.com
+homoglyph,goógle.com,198.54.117.197 NS:dns101.registrar-servers.com
+homoglyph,googìe.com,198.185.159.144 NS:ns47.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,g0ogie.com,208.91.197.46 NS:sk.s5.ans1.ns148.ztomy.com
+homoglyph,ɢooɢie.com,198.185.159.144 NS:ns47.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,googlė.com,104.247.82.73 NS:ns1.parkingcrew.net MX:mail.h-email.net
+homoglyph,g00glê.com,40.86.96.177 NS:ns45.domaincontrol.com
+homoglyph,googlë.com,NS:ns1.googledomains.com
+homoglyph,ġoogle.com,!ServFail !ServFail NS:!ServFail
+homoglyph,googlĕ.com,NS:ns-cloud-b1.googledomains.com MX:alt1.gmr-smtp-in.l.google.com
+homoglyph,gooɢle.com,34.102.136.180 NS:ns57.domaincontrol.com MX:mailstore1.secureserver.net
+homoglyph,ǥooǥle.com,104.27.140.104 2606:4700:3032::ac43:c87a NS:mira.ns.cloudflare.com
+homoglyph,googlẹ.com,23.236.62.147 NS:ns14.wixdns.net
+homoglyph,gooqie.com,NS:dns13.hichina.com MX:mxn.mxhichina.com
+homoglyph,go0qle.com,104.202.1.198 NS:ns1.dnsdun.com
+homoglyph,gooqlc.com,104.31.188.110 NS:ns1.ecpage.com
+hyphenation,g-oogle.com,198.54.117.197 NS:dns101.registrar-servers.com
+hyphenation,go-ogle.com,66.96.149.22 NS:ns1.mydomain.com MX:mx.go-ogle.com
+hyphenation,goo-gle.com,NS:ns1.google.com
+hyphenation,goog-le.com,74.208.236.69 NS:ns1065.ui-dns.biz MX:mx00.1and1.com
+hyphenation,googl-e.com,!ServFail !ServFail NS:!ServFail
+insertion,googlme.com,104.247.82.50 NS:ns1.parkingcrew.net MX:mail.h-email.net
+insertion,gooigle.com,NS:ns1.googledomains.com
+insertion,gooygle.com,NS:ns1.googledomains.com
+insertion,goiogle.com,NS:ns1.googledomains.com
+insertion,goobgle.com,104.247.82.73 NS:ns1.parkingcrew.net MX:mail.h-email.net
+insertion,gioogle.com,207.174.213.34 NS:info267476.earth.orderbox-dns.com
+insertion,googlke.com,107.161.23.204 NS:ns1.dnsowl.com
+insertion,go9ogle.com,199.59.242.153 NS:ns1.bodis.com MX:mx76.m2bp.com
+insertion,googloe.com,82.192.82.225 NS:ns1.chookdns.com
+insertion,googkle.com,NS:ns1.googledomains.com
+insertion,gpoogle.com,104.171.23.69 NS:myns1.fabulous.com
+insertion,googlpe.com,103.224.182.207 NS:ns1.above.com MX:park-mx.above.com
+insertion,g0oogle.com,109.201.135.39 NS:ns1.koaladns.com
+insertion,goofgle.com,104.247.82.70 NS:ns1.parkingcrew.net MX:mail.h-email.net
+insertion,gloogle.com,NS:ns1.googledomains.com
+insertion,googvle.com,103.224.182.207 NS:ns1.above.com MX:park-mx.above.com
+insertion,goohgle.com,83.64.127.75 NS:curitiba.porkbun.com
+insertion,go0ogle.com,216.157.88.27 NS:ns1.smtmdns.com
+insertion,goo9gle.com,37.48.65.155 NS:ns1.wombatdns.com
+insertion,googple.com,199.59.242.153 NS:ns1.bodis.com MX:mx76.m2bp.com
+insertion,googyle.com,93.115.28.104 NS:ns1.rentondc.com
+insertion,googfle.com,184.168.131.241 NS:ns63.domaincontrol.com
+insertion,goo0gle.com,54.235.212.68 NS:ns1.pql.net MX:mail.goo0gle.com
+insertion,gkoogle.com,185.42.173.248 NS:ns17.domaincontrol.com
+insertion,goozgle.com,103.224.212.219 NS:ns1.above.com MX:park-mx.above.com
+insertion,googtle.com,NS:ns1.googledomains.com
+insertion,g9oogle.com,199.59.242.153 NS:ns1.bodis.com MX:mx76.m2bp.com
+insertion,goopgle.com,69.162.80.56 NS:ns1.hastydns.com
+insertion,googole.com,NS:ns1.googledomains.com
+insertion,gopogle.com,107.161.23.204 NS:ns1.dnsowl.com
+insertion,goolgle.com,NS:ns1.google.com
+insertion,gookgle.com,103.224.182.226 NS:ns1.above.com MX:park-mx.above.com
+insertion,googzle.com,156.232.202.77 NS:ns45.domaincontrol.com
+insertion,gologle.com,NS:ns1.googledomains.com
+insertion,googble.com,NS:ns1.dreamhost.com
+insertion,gokogle.com,104.247.82.50 NS:ns1.parkingcrew.net MX:mail.h-email.net
+insertion,gootgle.com,54.235.212.68 NS:ns1.pql.net MX:mail.gootgle.com
+insertion,goovgle.com,107.161.23.204 NS:ns1.dnsowl.com
+insertion,googmle.com,67.227.226.240 NS:ns1.parklogic.com MX:mx156.hostedmxserver.com
+insertion,googhle.com,93.115.28.104 NS:ns1.rentondc.com
+omission,googe.com,162.243.10.151 NS:ns1.yourdoor.com
+omission,gogle.com,172.217.10.36 2607:f8b0:4006:819::2004 NS:ns1.google.com MX:
+omission,googl.com,172.217.11.4 2607:f8b0:4006:807::2004 NS:ns1.google.com MX:
+omission,oogle.com,104.28.28.162 2606:4700:3032::681c:1ca2 NS:amir.ns.cloudflare.com MX:mx.zoho.com
+omission,goole.com,217.160.0.201 NS:ns1083.ui-dns.biz MX:mx00.1and1.co.uk
+repetition,googlle.com,159.69.186.9 NS:ns1.ndsplitter.com
+repetition,gooogle.com,172.217.10.4 2607:f8b0:4006:802::2004 NS:ns1.google.com MX:
+repetition,googgle.com,NS:ns1.googledomains.com
+repetition,ggoogle.com,172.217.10.132 2607:f8b0:4006:812::2004 NS:ns1.google.com MX:
+replacement,gooble.com,!ServFail !ServFail NS:!ServFail
+replacement,googpe.com,54.235.212.68 NS:ns1.pql.net MX:mail.googpe.com
+replacement,gopgle.com,95.211.219.66 NS:ns1.hastydns.com
+replacement,g9ogle.com,103.224.182.238 NS:ns1.above.com MX:park-mx.above.com
+replacement,zoogle.com,184.168.131.241 NS:ns53.domaincontrol.com MX:mailstore1.secureserver.net
+replacement,go9gle.com,91.195.241.136 NS:ns1.sedoparking.com MX:localhost
+replacement,golgle.com,69.162.80.55 NS:ns1.hastydns.com
+replacement,googls.com,172.93.194.61 NS:ns1.domainmx.com
+replacement,goigle.com,37.48.65.143 NS:ns1.koaladns.com
+replacement,yoogle.com,127.0.0.1 NS:ns1.sedoparking.com MX:localhost
+replacement,giogle.com,3.234.181.234 NS:ns1.namebrightdns.com
+replacement,goozle.com,50.62.97.1 NS:ns29.domaincontrol.com MX:mailstore1.secureserver.net
+replacement,goovle.com,207.244.65.58 NS:ns1.wombatdns.com
+replacement,googl4.com,199.59.242.153 NS:ns1.bodis.com MX:mx76.m2bp.com
+replacement,gootle.com,208.73.210.202 NS:ns1.dsredirection.com
+replacement,boogle.com,44.236.108.15 NS:ns-1497.awsdns-59.org MX:mx.zoho.com
+replacement,googlz.com,141.8.224.195 NS:ns1.dsredirects.com
+replacement,toogle.com,107.161.23.204 NS:ns1.dnsowl.com
+replacement,googke.com,NS:ns1.googledomains.com
+replacement,googlr.com,172.217.10.132 2607:f8b0:4006:813::2004 NS:ns1.google.com MX:
+replacement,googl3.com,NS:ns24.domaincontrol.com MX:mailstore1.secureserver.net
+replacement,goohle.com,47.254.33.193 NS:ns3.dns.com
+replacement,gooyle.com,208.73.210.202 NS:ns1.dsredirection.com
+replacement,googoe.com,208.73.210.202 NS:ns1.dsredirection.com
+replacement,hoogle.com,107.180.25.196 NS:ns41.domaincontrol.com MX:mailstore1.secureserver.net
+replacement,googlw.com,NS:dns1.name-services.com MX:mx.googlw.com.cust.a.hostedemail.com
+replacement,gpogle.com,199.115.115.118 NS:ns1.wombatdns.com
+replacement,glogle.com,208.73.210.202 NS:ns1.dsredirection.com
+subdomain,g.oogle.com,104.236.215.217
+subdomain,goo.gle.com,34.206.12.234 NS:ns3.afternic.com MX:
+transposition,ogogle.com,172.217.7.4 2607:f8b0:4006:813::2004 NS:ns1.google.com MX:
+transposition,gogole.com,172.217.12.196 2607:f8b0:4006:811::2004 NS:ns1.google.com MX:
+transposition,goolge.com,172.217.12.196 2607:f8b0:4006:805::2004 NS:ns1.google.com MX:
+transposition,googel.com,172.217.10.36 2607:f8b0:4006:802::2004 NS:ns1.google.com MX:
+vowel-swap,goagle.com,89.145.66.234 NS:ns1.netnames.net MX:relay1.netnames.net
+vowel-swap,gougle.com,NS:ns1.googledomains.com
+vowel-swap,guogle.com,91.195.241.136 NS:ns1.sedoparking.com MX:localhost
+vowel-swap,googli.com,162.255.119.253 NS:freedns1.registrar-servers.com
+vowel-swap,gaogle.com,107.180.51.12 NS:ns25.domaincontrol.com MX:mail.gaogle.com
+vowel-swap,geogle.com,78.41.204.29 NS:ns1.torresdns.com MX:mail.h-email.net
+vowel-swap,goegle.com,103.224.182.245 NS:ns1.above.com
+vowel-swap,googlo.com,93.115.28.104 NS:ns1.rentondc.com MX:mail.h-email.net
+various,googlecom.com,172.217.7.4 2607:f8b0:4006:807::2004 NS:ns1.google.com MX:
