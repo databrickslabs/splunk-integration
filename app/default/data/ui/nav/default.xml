@@ -1,5 +1,8 @@
 <nav search_view="search" color="#1B3139">
+    <view name="databricks-intro" default="true" />
     <view name="configuration"/>
     <view name="databricks_job_execution_details"/>
+    <view name="databricks-sample-dashboard" />
+    <view name="databricks-launch-notebook" />
     <view name="search" label="Search"/>
 </nav>
