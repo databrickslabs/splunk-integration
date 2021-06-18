@@ -8,9 +8,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install tldextract
-# MAGIC %pip install geoip2
-# MAGIC %pip install dnstwist
+# MAGIC %pip install tldextract geoip2 dnstwist
 
 # COMMAND ----------
 
