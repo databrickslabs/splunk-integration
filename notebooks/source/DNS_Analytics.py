@@ -8,9 +8,12 @@
 
 # COMMAND ----------
 
-# MAGIC %python
-# MAGIC #Set this flag to false if you are not running this notebook in community edition
-# MAGIC community_edition = False
+# MAGIC %pip install tldextract geoip2 dnstwist
+
+# COMMAND ----------
+
+#Set this flag to false if you are not running this notebook in community edition
+community_edition = True
 
 # COMMAND ----------
 
@@ -18,10 +21,6 @@ if community_edition == True:
     default_file_path = '/databricks/driver/data'
 else:
     default_file_path = '/dbfs/FileStore/tables/datasets'
-
-# COMMAND ----------
-
-print(default_file_path)
 
 # COMMAND ----------
 
@@ -49,10 +48,10 @@ print(default_file_path)
 # COMMAND ----------
 
 #install our libraries, you will need to install these manually if you are running mlruntime
-dbutils.library.installPyPI("tldextract")
-dbutils.library.installPyPI("geoip2")
-dbutils.library.installPyPI("dnstwist")
-dbutils.library.installPyPI("mlflow")
+#dbutils.library.installPyPI("tldextract")
+#dbutils.library.installPyPI("geoip2")
+#dbutils.library.installPyPI("dnstwist")
+#dbutils.library.installPyPI("mlflow")
 
 # COMMAND ----------
 
@@ -101,10 +100,6 @@ dbutils.library.installPyPI("mlflow")
 #Copy the downloaded data into the FileStore for this workspace
 dbutils.fs.cp("file:///databricks/driver/data","dbfs:/FileStore/tables/datasets/",True)
 dbutils.fs.cp("file:///databricks/driver/model","dbfs:/FileStore/tables/model/",True)
-
-# COMMAND ----------
-
-# MAGIC %fs ls dbfs:/FileStore/tables/datasets/
 
 # COMMAND ----------
 
@@ -298,7 +293,7 @@ from pyspark import SparkContext, SparkFiles
 #You can upload the GeoLite2_City database file by using the databricks UI. 
 #Databricks Navigator (lefthand bar) -> Data -> Upload File -> Select 
 #Note if you receive an error here,  
-city_db = default_file_path + '/GeoLite2_City.mmdb'
+city_db = '/databricks/driver/data/GeoLite2_City.mmdb'
 
 def get_country_code(ip):
     if ip is None:
@@ -344,9 +339,13 @@ spark.udf.register("get_country_code", get_country_code)
 import mlflow
 import mlflow.pyfunc
 
-model_path = 'dbfs:/FileStore/tables/model'
+model_path = 'file:///databricks/driver/model'
 loaded_model = mlflow.pyfunc.load_model(model_path)
 spark.udf.register("ioc_detect", loaded_model.predict)
+
+# COMMAND ----------
+
+dbutils.fs.ls("/FileStore/tables/model")
 
 # COMMAND ----------
 
@@ -444,9 +443,10 @@ dns_table_enriched.write.format("delta").mode('overwrite').option("mergeSchema",
 
 # MAGIC %md
 # MAGIC # 4. ML Training and Analytics
-# MAGIC In this section we will build the DGA model and the typosquatting model. Slides below have some high level discussion on DGA.  
-# MAGIC - A detailed discussion on DGA is here: http://www.covert.io/getting-started-with-dga-research/
-# MAGIC - A more detailed discussion on typosquatting is here: https://www.mcafee.com/blogs/consumer/what-is-typosquatting/
+# MAGIC In this section we will build a simple DGA model and the typosquatting model. Slides below have some high level discussion on DGA.  
+# MAGIC - A detailed discussion on DGA is [here:](http://www.covert.io/getting-started-with-dga-research/)
+# MAGIC - In this example we only implement one DGA model, but multiple DGA models can be implemented in our enrichment pipeline, some examples of other DGA models trained with Neural Networks are available [here:](http://www.covert.io/auxiliary-loss-optimization-for-hypothesis-augmentation-for-dga-domain-detection/)
+# MAGIC - A more detailed discussion on typosquatting is [here:](https://www.mcafee.com/blogs/consumer/what-is-typosquatting/)
 # MAGIC 
 # MAGIC At a high level we will:
 # MAGIC - Extract the domain names from the data removing gTLD (e.g. .com, .org) and ccTLD (e.g. .ru, cn, .uk, .ca)
@@ -686,16 +686,11 @@ class vc_transform(mlflow.pyfunc.PythonModel):
 
 # COMMAND ----------
 
-# MAGIC %fs rm -r dbfs:/FileStore/tables/model
-
-# COMMAND ----------
-
 # Save our predict function
 # NOTE - known bug: This command will only execute once - you can ignore errors when running it twice
 from mlflow.exceptions import MlflowException
+model_path = 'dbfs:/FileStore/tables/new_model/dga_model'
 
-dbutils.fs.rm(model_path, True)
-model_path = 'dbfs:/FileStore/tables/model3'
 vc_model = vc_transform(alexa_vc, dict_vc, clf)
 mlflow.pyfunc.save_model(path=model_path.replace("dbfs:", "/dbfs"), python_model=vc_model)
 
@@ -736,7 +731,7 @@ df=spark.readStream.format("json").schema(schema).load(f"dbfs:/FileStore/tables/
 # COMMAND ----------
 
 #Create a temporary table of the test dataset 
-df.createOrReplaceTempView("dns_latest")
+df.createOrReplaceTempView("dnslatest")
 
 # COMMAND ----------
 
@@ -749,8 +744,8 @@ display(df)
 # MAGIC --This is where we do the DGA detection
 # MAGIC --Create a view to score the dns data
 # MAGIC 
-# MAGIC CREATE OR REPLACE TEMPORARY VIEW  dns_latest 
-# MAGIC AS SELECT rdata, count, rrname, bailiwick, rrtype, time_last, time_first, ioc_detect(domain_extract(rrname)) as isioc, domain_extract(dns_latest.rrname) domain  from dns_latest
+# MAGIC CREATE OR REPLACE TEMPORARY VIEW  dns_latest_new
+# MAGIC AS SELECT rdata, count, rrname, bailiwick, rrtype, time_last, time_first, ioc_detect(domain_extract(rrname)) as isioc, domain_extract(dnslatest.rrname) domain  from dnslatest
 
 # COMMAND ----------
 
@@ -761,7 +756,7 @@ display(df)
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC Select * from dns_latest  where isioc = 'ioc'
+# MAGIC Select * from dns_latest_new  where isioc = 'ioc'
 
 # COMMAND ----------
 
@@ -769,41 +764,16 @@ display(df)
 # MAGIC --Phishing or Typosquating?
 # MAGIC --This is where we do typosquatting detection
 # MAGIC --By using dnstwist, we find the suspicious domain, googlee
-# MAGIC Select silver.EnrichedTwistedDomainBrand.*  FROM dns_latest, silver.EnrichedTwistedDomainBrand Where silver.EnrichedTwistedDomainBrand.dnstwisted_domain = dns_latest.domain
-
-# COMMAND ----------
-
-dns_stream_iocs = spark.sql("Select * from dns_latest  where isioc = 'ioc'")
+# MAGIC Select silver.EnrichedTwistedDomainBrand.*  FROM dns_latest_new, silver.EnrichedTwistedDomainBrand Where silver.EnrichedTwistedDomainBrand.dnstwisted_domain = dns_latest_new.domain
 
 # COMMAND ----------
 
 #The next few lines we will be applying our models:
 # - To detect the bad domains
 # - Create an alerts table
-dns_stream_iocs = spark.sql("Select * from dns_latest  where isioc = 'ioc'")
-#dbutils.fs.rm('dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest', True)
-dns_stream_iocs.writeStream.format("delta").outputMode("append").option("checkpointLocation", "dbfs:/tmp/datasets/gold/delta/_checkpoints/DNS_IOC_Latest_Alert").start("dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest_Alert")
-
-# COMMAND ----------
-
-# MAGIC %fs ls dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest_Alert
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC CREATE DATABASE IF NOT EXISTS gold;
-# MAGIC CREATE TABLE IF NOT EXISTS gold.DNS_IOC_Latest 
-# MAGIC USING DELTA LOCATION 'dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest_Alert'
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT * from gold.DNS_IOC_Latest 
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC select * from silver.DNS where rrname ="ns1.asdklgb.cf."
+dns_stream_iocs = spark.sql("Select * from dns_latest_new  where isioc = 'ioc'")
+dbutils.fs.rm('dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest', True)
+dns_stream_iocs.writeStream.format("delta").outputMode("append").option("checkpointLocation", "dbfs:/tmp/datasets/gold/delta/_checkpoints/DNS_IOC_Latest").start("dbfs:/tmp/datasets/gold/delta/DNS_IOC_Latest")
 
 # COMMAND ----------
 
@@ -820,3 +790,7 @@ dns_stream_iocs.writeStream.format("delta").outputMode("append").option("checkpo
 # MAGIC %sql
 # MAGIC --We found the bad domain - lets see if our enriched threat feeds have intel on this domain? 
 # MAGIC select * from silver.EnrichedThreatFeeds where  silver.EnrichedThreatFeeds.domain = domain_extract('ns1.asdklgb.cf.')
+
+# COMMAND ----------
+
+
