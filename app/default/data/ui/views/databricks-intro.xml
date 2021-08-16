@@ -1,0 +1,32 @@
+<dashboard>
+  <label>Intro</label>
+  <row>
+    <panel>
+      <title>Overview</title>
+      <html>
+        <img style="float: right;" src="/splunkd/__raw/servicesNS/nobody/TA-Databricks/static/appIconAlt_2x.png"></img>
+        <p>The Databricks Add-on for Splunk allows Splunk teams to take advantage of the effective cost model of Databricks along with the power of AI without asking users to leave the comforts of their Splunk interface. 
+        </p>
+        <p>Users can run ad-hoc queries against Databricks from within a Splunk dashboard or search bar with the add-on. Those who have notebooks or jobs in Databricks can launch them through a Splunk dashboard or in response to a Splunk search. The Databricks integration is also bi-directional, letting customers summarize noisy data or run detections in Databricks that show up in Splunk Enterprise Security. Customers can even run Splunk searches from within a Databricks notebook so that they don’t need to duplicate all of their data to get the job done.</p>
+        <p>The Splunk and Databricks integration allows customers to reduce their cost, expand the data sources they analyze, and provide the results of a more robust analytics engine, all without changing the tools used all day by their staff.</p>
+
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Integration Points</title>
+      <html>
+        <div>
+          <img style="width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/slide-splunk-databricks-integration.png" title="Screenshot of slide showing the integration methods" ></img>
+        </div>
+<p>There are three main integration points, as shown in the slide above:</p>
+        <ol>
+          <li>This app enables running queries from Splunk against Databricks by configuring a personal access token for a service account within Databricks (<a href="databricks-sample-dashboard">example</a>). Additionally, you can launch ephemeral notebook runs or jobs. See the <a href="https://splunkbase.splunk.com/app/5416/#/details" target="_blank">app docs</a> for more detail.</li>
+          <li>You can also configure the Splunk DB Connect app to run searches against Databricks via JDBC. The API used for this add-on is limited to 1000 results when running a simple query, but JDBC can pull back almost infinite amount of data. Additionally, as DB Connect supports multiple profiles, you can configure multiple connections with different levels of access. See our <a href="https://github.com/databrickslabs/splunk-integration/blob/master/docs/markdown/Splunk%20DB%20Connect%20guide%20for%20Databricks.md" target="_blank">integration docs</a> for configuration instructions.</li>
+          <li>You can also send data from Databricks to Splunk via Splunk's HTTP Event Collector. This could be small sets of data, such as security alerts detected via AI on Databricks, or large sets of data such as aggregated or filtered high volume datasets. You can also use the Splunk REST API to run queries against data stored in Splunk from Databricks.</li>
+        </ol>
+      </html>
+    </panel>
+  </row>
+</dashboard>
