@@ -56,7 +56,7 @@ else:
 # COMMAND ----------
 
 # MAGIC %scala
-# MAGIC //In this section we are telling AutoLoader what kind of shcema to expect
+# MAGIC //In this section we are telling AutoLoader what kind of schema to expect
 # MAGIC import org.apache.spark.sql.functions._
 # MAGIC import org.apache.spark.sql.types._
 # MAGIC 
@@ -212,7 +212,7 @@ dbutils.fs.cp("file:///databricks/driver/model","dbfs:/FileStore/tables/model/",
 
 # MAGIC %python
 # MAGIC #NOTE: domain_dnstwists.csv needs to be created outside of this notebook, using instructions from dnstwist. 
-# MAGIC #Load the domain_dnstwists.csv into a dataframe, brand_domains_monitored_raw. Note the csv and header, true opetions.
+# MAGIC #Load the domain_dnstwists.csv into a dataframe, brand_domains_monitored_raw. Note the csv and header, true options.
 # MAGIC brand_domains_monitored_raw = spark.read.format("csv").option("header", "true").load("dbfs:/FileStore/tables/datasets/domains_dnstwists.csv") 
 
 # COMMAND ----------
@@ -409,7 +409,7 @@ dns_table_enriched.write.format("delta").mode('overwrite').option("mergeSchema",
 
 # MAGIC %sql
 # MAGIC -- ioc is a field we've created as a result of running the DGA model. If the ioc field has a value of ioc, it means that the DGA model has determeined the domain to be an ioc (indicator of compromise)
-# MAGIC -- The query below is for a total count of rows where the DGA algorithm has detected an ioc. But excludes an domains that have the string 'ip' in it and has a domain name length of more than 10 characters
+# MAGIC -- The query below is for a total count of rows where the DGA algorithm has detected an ioc. But excludes an domains that have the string 'ip' in it and has a domain name length of more than 8 characters
 # MAGIC select count(*), domain_name, country from silver.dns where ioc = 'ioc' and domain_name not like '%ip%' and char_length(domain_name) > 8 group by domain_name, country order by count(*) desc
 
 # COMMAND ----------
@@ -667,7 +667,7 @@ run_id
 
 # COMMAND ----------
 
-# Build a predict function to be used laterto do DGA predictions
+# Build a predict function to be used later to do DGA predictions
 # Add in pre and post processing for our predict function
 
 import mlflow.pyfunc
