@@ -1,4 +1,10 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC This is a companion notebook to <a href ="https://databricks.com/blog/2020/10/05/detecting-criminals-and-nation-states-through-dns-analytics.html"> Detecting Criminals and Nation States through DNS Analytics </a> blog.  
+# MAGIC We invite your feedback at cybersecurity@databricks.com .
+
+# COMMAND ----------
+
 # MAGIC %md 
 # MAGIC ###How to run this notebook. 
 # MAGIC - Go to the Clusters pull down, towards the top left corner
@@ -790,7 +796,3 @@ dns_stream_iocs.writeStream.format("delta").outputMode("append").option("checkpo
 # MAGIC %sql
 # MAGIC --We found the bad domain - lets see if our enriched threat feeds have intel on this domain? 
 # MAGIC select * from silver.EnrichedThreatFeeds where  silver.EnrichedThreatFeeds.domain = domain_extract('ns1.asdklgb.cf.')
-
-# COMMAND ----------
-
-
