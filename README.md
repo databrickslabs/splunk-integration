@@ -12,7 +12,7 @@
 
 The Splunk Integration project is a non-supported bidirectional connector consisting of three main components as depicted in the [architecture](#Architecture) diagram:
 
-1. The [Databricks add-on for Splunk](https://splunkbase.splunk.com/app/5416/), an app, that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks
+1. The [Databricks Add-on for Splunk](https://splunkbase.splunk.com/app/5416/), an app, that allows Splunk Enterprise and Splunk Cloud users to run queries and execute actions, such as running notebooks and jobs, in Databricks
 1. Splunk SQL database extension (Splunk DB Connect) configuration for Databricks connectivity
 1. Notebooks for Push and Pull events and alerts from Splunk Databricks.
 
