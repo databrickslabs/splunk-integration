@@ -299,7 +299,7 @@ from pyspark import SparkContext, SparkFiles
 #You can upload the GeoLite2_City database file by using the databricks UI. 
 #Databricks Navigator (lefthand bar) -> Data -> Upload File -> Select 
 #Note if you receive an error here,  
-city_db = '/databricks/driver/data/GeoLite2_City.mmdb'
+city_db = default_file_path+'/GeoLite2_City.mmdb'
 
 def get_country_code(ip):
     if ip is None:
