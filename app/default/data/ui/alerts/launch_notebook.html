@@ -1,0 +1,37 @@
+<style>
+    /* To avoid rendering of help-block outside the main UI box */
+    .ModularAlertManager .alert-actions .form-complex .help-block {
+        margin-left: 0px !important;
+    }
+</style>
+
+<form class="form-horizontal form-complex">
+<div class="control-group">
+	<label class="control-label" for="launch_notebook_notebook_path">Notebook path <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.launch_notebook.param.notebook_path" id="launch_notebook_notebook_path"/>
+    <span class="help-block">Absolute path of notebook to be run in Databricks. eg: /Users/user_1/notebook_1</span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="launch_notebook_revision_timestamp">Revision timestamp  </label>
+    <div class="controls">
+	<input type="text" name="action.launch_notebook.param.revision_timestamp" id="launch_notebook_revision_timestamp"/>
+    <span class="help-block">The timestamp of the revision of the notebook.</span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="launch_notebook_notebook_parameters">Notebook parameters  </label>
+    <div class="controls">
+	<input type="text" name="action.launch_notebook.param.notebook_parameters" id="launch_notebook_notebook_parameters"/>
+    <span class="help-block">Parameters to pass while executing the notebook. eg: key1=value1||key2=value2</span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="launch_notebook_cluster_name">Cluster name  </label>
+    <div class="controls">
+	<input type="text" name="action.launch_notebook.param.cluster_name" id="launch_notebook_cluster_name"/>
+    <span class="help-block">Name of Databricks cluster to use for execution.</span>
+    </div>
+</div>
+</form>

@@ -1,0 +1,19 @@
+[run]
+omit =
+	**/site-packages/**
+	**/ta-databricks/**
+	**/tests/**
+	TA-Databricks/bin/log_manager.py
+	TA-Databricks/bin/ta_databricks/*
+	TA-Databricks/bin/launch_notebook.py
+	TA-Databricks/bin/databricks_const.py
+	TA-Databricks/bin/databricksrun.py
+	TA-Databricks/bin/databricksquery.py
+	TA-Databricks/bin/databricksjob.py
+	TA-Databricks/bin/databricksretiredrun.py
+	TA-Databricks/bin/*_declare.py
+	TA-Databricks/bin/*_rh_*.py
+	
+
+[report]
+fail_under = 70
