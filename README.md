@@ -57,7 +57,7 @@ Pull events, alerts data from Splunk into Databricks
 ## Documentation
 
 * Databricks Add-on for Splunk Integration Installation And Usage Guide:
-   * Documentation:  [[markdown](/docs/markdown/Splunk%20Integration%20Installation%20And%20Usage%20Guide.md), [pdf](/docs/pdf/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.pdf), [word](/docs/word/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.0.0.docx)]
+   * Documentation:  [[markdown](/docs/markdown/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.1.0.md), [pdf](/docs/pdf/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.1.0.pdf), [word](/docs/word/Splunk%20Integration%20Installation%20And%20Usage%20Guide%20-%201.1.0.docx)]
    * [Link to Databricks add-on for Splunk on Splunkbase](https://splunkbase.splunk.com/app/5416)
 * Splunk DB Connect Guide for Databricks:
   * Documentation:  [[markdown](/docs/markdown/Splunk%20DB%20Connect%20guide%20for%20Databricks.md), [pdf](/docs/pdf/Splunk%20DB%20Connect%20Guide%20for%20Databricks.pdf), [word](/docs/word/Splunk%20DB%20Connect%20Guide%20for%20Databricks.docx)]
@@ -71,7 +71,7 @@ Pull events, alerts data from Splunk into Databricks
 ## Compatibility
 
 Databricks Add-on for Splunk, notebooks and documentation provided in this project are compatible with:
-  * Splunk Enterprise version: 8.0.x and 8.1.x
+  * Splunk Enterprise version: 8.1.x and 8.2.x
   * Databricks REST API: 1.2 and 2.0:
     * Azure Databricks
     * AWS SaaS, E2 and PVC deployments

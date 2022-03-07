@@ -1,0 +1,9 @@
+flake8
+flake8-docstrings
+pytest
+pytest-cov
+mock
+black==19.10b0
+pre-commit==1.21.0
+requests
+splunklib
