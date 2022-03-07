@@ -1,4 +1,5 @@
 
+from email.policy import default
 import ta_databricks_declare
 from databricks_validators import ValidateDatabricksInstance
 from splunktaucclib.rest_handler.endpoint import (
@@ -103,11 +104,45 @@ fields_databricks_credentials = [
         )
     ),
     field.RestField(
-        'databricks_access_token',
+        'auth_type',
         required=True,
-        encrypted=True,
+        encrypted=False,
         default='',
         validator=ValidateDatabricksInstance()
+    ),
+    field.RestField(
+        'client_id',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=validator.String(
+            min_len=0,
+            max_len=500,
+        )
+    ),
+    field.RestField(
+        'tenant_id',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=validator.String(
+            min_len=0,
+            max_len=500,
+        )
+    ),
+    field.RestField(
+        'client_secret',
+        required=False,
+        encrypted=True,
+        default='',
+        validator=None
+    ),
+    field.RestField(
+        'databricks_access_token',
+        required=False,
+        encrypted=True,
+        default='',
+        validator=None
     ),
     field.RestField(
         'cluster_name',
@@ -118,6 +153,11 @@ fields_databricks_credentials = [
             min_len=0,
             max_len=500,
         )
+    ),
+    field.RestField(
+        'access_token',
+        required=False,
+        encrypted=True
     )
 ]
 model_databricks_credentials = RestModel(fields_databricks_credentials, name='databricks_credentials')

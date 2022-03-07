@@ -1,4 +1,4 @@
-<dashboard>
+<dashboard version="1.1">
   <label>Intro</label>
   <row>
     <panel>
@@ -22,11 +22,157 @@
         </div>
 <p>There are three main integration points, as shown in the slide above:</p>
         <ol>
-          <li>This app enables running queries from Splunk against Databricks by configuring a personal access token for a service account within Databricks (<a href="databricks-sample-dashboard">example</a>). Additionally, you can launch ephemeral notebook runs or jobs. See the <a href="https://splunkbase.splunk.com/app/5416/#/details" target="_blank">app docs</a> for more detail.</li>
+          <li>This app enables running queries from Splunk against Databricks by configuring a personal access token for a service account within Databricks. Additionally, you can launch ephemeral notebook runs or jobs. See the <a href="https://splunkbase.splunk.com/app/5416/#/details" target="_blank">app docs</a> for more detail.</li>
           <li>You can also configure the Splunk DB Connect app to run searches against Databricks via JDBC. The API used for this add-on is limited to 1000 results when running a simple query, but JDBC can pull back almost infinite amount of data. Additionally, as DB Connect supports multiple profiles, you can configure multiple connections with different levels of access. See our <a href="https://github.com/databrickslabs/splunk-integration/blob/master/docs/markdown/Splunk%20DB%20Connect%20guide%20for%20Databricks.md" target="_blank">integration docs</a> for configuration instructions.</li>
           <li>You can also send data from Databricks to Splunk via Splunk's HTTP Event Collector. This could be small sets of data, such as security alerts detected via AI on Databricks, or large sets of data such as aggregated or filtered high volume datasets. You can also use the Splunk REST API to run queries against data stored in Splunk from Databricks.</li>
         </ol>
       </html>
     </panel>
   </row>
+  <row>
+    <panel>
+      <title>Configuring the Databricks Add-on</title>
+      <html>
+        <div>
+          <img style="width: 100%; max-width: 1496px !important" src="/static/app/TA-Databricks/img/DB_config.png" alt="Add Screenshot here"/>
+        </div>
+        <p>To configure the Databricks Add-on, Navigate to the configuration page from the navigation bar above and then follow these steps:</p>
+        <ol>
+          <li>Enter the databricks instance url in the "Databricks Instance" field without a schema (http or https)</li>
+          <li>Select the authentication type from the dropdown.</li>
+          <li>Based on the authentication type, enter the required credentials. (Refer the image above)</li>
+          <li>If you select the "Personal Access Token" Authentication Type then, enter the personal access token for the same instance in the "Databricks Access Token" field. Else provide the "Client Id", "Tenant Id" and "Client Secret".</li>
+          <li>*optional* Enter the cluster you want to associate to every query and notebook execution. It can be overridden later.</li>
+          <li>Click "Save" button to save the configuration.</li>
+        </ol>
+        </html>
+      </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Launching a Notebook through a dashboard</title>
+            <html>
+              <style>
+          table,
+          th,
+          td {
+            border: 1px solid black;
+          }
+        </style>
+              <div>
+                <video style="width: 100%; max-width: 1496px !important;" autoplay="true" muted="true" loop="true">
+          <source src="/static/app/TA-Databricks/img/launch_notebook_dashboard.webm"
+                  type="video/webm" />
+    Sorry, your browser doesn't support embedded videos.
+                </video>
+              </div>
+              <p>To launch a notebook, navigate to the "Launch Notebook" page from the navigation bar above. Then,</p>
+              <ol>
+                <li>Copy the absolute file path of your notebook</li>
+                <li>Paste the path in the "Notebook path" field</li>
+                <li>*optional* Enter the cluster name in the "Cluster Name" field if not already configured.</li>
+                <li>Click Submit and wait for the command to execute. After some time, a link to the job will be displayed.</li>
+                <li>Click on "click here" to redirect to the job results on the databricks site.</li>
+              </ol>
+              <table>
+              <tr>
+                <th>Input Name</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>Notebook path</td>
+                <td>Yes</td>
+                <td>The timestamp of the revision of the notebook.</td>
+              </tr>
+              <tr>
+                <td>Notebook revision timestamp</td>
+                <td>No</td>
+                <td>The absolute path of the notebook to be run in the Databricks workspace. This path must begin with a slash.</td>
+              </tr>
+              <tr>
+                <td>Notebook parameters</td>
+                <td>No</td>
+                <td>Parameters to pass while executing the notebook. In the form of “key1=value1||key2=value2||...”</td>
+              </tr>
+              <tr>
+                <td>Cluster Name</td>
+                <td>No</td>
+                <td>Name of cluster to use for execution</td>
+              </tr>
+              <tr>
+                <td>Autoforward</td>
+                <td>Yes</td>
+                <td><ul><li>Yes - if directly redirect to databricks result url</li><li>No - if manually redirect to databricks result url by clicking link</li></ul></td>
+              </tr>
+            </table>
+            </html>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Launching a Notebook through Adaptive Response</title>
+            <html>
+              <div>
+                <video style="width: 100%; max-width: 1496px !important;" autoplay="true" muted="true" loop="true">
+          <source src="/static/app/TA-Databricks/img/launch_notebook_ar.webm"
+                  type="video/webm" />
+    Sorry, your browser doesn't support embedded videos.
+                </video>
+              </div>
+              <p>To launch a notebook through Adaptive Response in Splunk Enterprise Security Suite, follow these steps:</p>
+              <ol>
+                <li>Navigate to the Incident Review dashboard in your Splunk Enterprise Security App.</li>
+                <li>Find the "Incident Review Events" panel in the dashboard and look for notable threats in the table.</li>
+                <li>Click on the chaperone icon ">" on any one of the events which will expand the event for actions.</li>
+                <li>Find the "Actions" column on the top-right corner of the panel and click on the "down" arrow to expand and then select "Run Adaptive Response Actions"</li>
+                <li>This will open a dialog box in which, there will be a button to "Add a new Response Action". Click it and then select "Launch Notebook" from the dropdown.</li>
+                <li>Provide the absolute path of the notebook and provide notebook parameters (if required) and the cluster to which the notebook is associated and then hit "Run".</li>
+                <li>Close the dialog box and keep refreshing the "Adaptive Responses" field as shown in the video until the link to the notebook results appears with Status as "Success".</li>
+                <li>Then click on the "Launch Notebook" drilldown/link as shown which will redirect you to the "Launch Notebook" page of the Databricks Add-on</li>
+                <li>Finally, click "click here" to get redirected to the URL of the results of the notebook execution on your databricks instance.</li>
+              </ol>
+            </html>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Launching a Notebook through Splunk search</title>
+            <html>
+              <div>
+                <img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/dbrun_cc_example.png" alt="Add Screenshot here"/>
+              </div>
+              <p>To launch a notebook via Splunk search, follow these steps:</p>
+              <ol>
+                <li>Navigate to Splunk Seach app either from the "Apps" dropdown or the Navigation bar.</li>
+                <li>Enter the custom command "databricksrun" as shown in the image with the required parameters and hit enter.</li>
+              </ol>
+            </html>
+        </panel>
+    </row>
+    <row>
+      <panel>
+      <title>Custom Commands</title>
+      <html>
+        <p>The app provides three custom commands. Users can open the Splunk search bar and can execute the commands. Below are the command details.
+          <ol>
+            <li><b>databricksquery:</b> used to query data present in the Databricks table from Splunk. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#1-databricksquery" target="_blank">docs</a> for the command parameter details.
+            <br/><b>Syntax: </b>| databricksquery cluster="&lt;cluster_name&gt;" query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; | table *
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksquery.png"/>
+            <br/>
+            </li>
+            <li><b>databricksrun:</b> used to submit a one-time run for a notebook without creating a job. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#2-databricksrun" target="_blank">docs</a> for the command parameter details.
+            <br/><b>Syntax: </b>| databricksrun notebook_path="&lt;path_to_notebook&gt;" run_name="&lt;run_name&gt;" cluster="&lt;cluster_name&gt;" revision_timestamp=&lt;revision_timestamp&gt; notebook_params="&lt;params_for_job_execution&gt;" | table *
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksrun.png"/>
+            </li>
+            <li><b>databricksjob:</b> used to run an already created job now from Splunk. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#3-databricksjob" target="_blank">docs</a> for the command parameter details.
+            <br/><b>Syntax: </b>| databricksjob job_id=&lt;job_id&gt; notebook_params="&lt;params_for_job_execution&gt;" | table *
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksjob.png"/>
+            </li>
+          </ol>
+        </p>
+      </html>
+    </panel>
+  </row>
+
 </dashboard>

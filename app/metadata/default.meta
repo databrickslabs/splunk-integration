@@ -6,3 +6,7 @@ export = system
 [views]
 access = read : [ * ], write : [ admin ]
 export = none
+
+[views/databricks-launch-notebook]
+access = read : [ * ], write : [ admin ]
+export = system

@@ -1,4 +1,4 @@
-<form>
+<form version="1.1">
   <label>Databricks Job Execution Details</label>
   <fieldset submitButton="false">
     <input type="time" token="creation_time_filter">
