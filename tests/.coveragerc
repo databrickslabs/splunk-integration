@@ -17,4 +17,4 @@ omit =
 	
 
 [report]
-fail_under = 70
+fail_under = 80
