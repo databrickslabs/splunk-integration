@@ -27,9 +27,9 @@ class DatabricksJobCommand(GeneratingCommand):
     job_id = Option(require=True, validate=validators.Integer(0))
     notebook_params = Option(require=False)
 
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksjob command")
+    def process_job(self):
+        """Process job."""
+        updated_kv_info = None
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
             "created_time": time.time(),
@@ -45,14 +45,14 @@ class DatabricksJobCommand(GeneratingCommand):
 
         try:
             # Get job details
-            databricks_connect = com.DatabricksCommunication(session_key)
+            client = com.DatabricksClient(session_key)
 
             payload = {
                 "job_id": self.job_id,
             }
 
             _LOGGER.info("Fetching job details before submitting the execution.")
-            response = databricks_connect.databricks_api("get", const.GET_JOB_ENDPOINT, args=payload)
+            response = client.databricks_api("get", const.GET_JOB_ENDPOINT, args=payload)
 
             job_settings = response["settings"]
             tasks_list = list(set(job_settings.keys()))
@@ -75,7 +75,7 @@ class DatabricksJobCommand(GeneratingCommand):
             payload["notebook_params"] = utils.format_to_json_parameters(self.notebook_params)
 
             _LOGGER.info("Submitting job for execution.")
-            response = databricks_connect.databricks_api(
+            response = client.databricks_api(
                 "post", const.EXECUTE_JOB_ENDPOINT, data=payload
             )
 
@@ -86,7 +86,7 @@ class DatabricksJobCommand(GeneratingCommand):
             # Request to get the run_id details
             _LOGGER.info("Fetching details for run ID: {}.".format(run_id))
             args = {"run_id": run_id}
-            response = databricks_connect.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
+            response = client.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
 
             output_url = response.get("run_page_url")
             if output_url:
@@ -111,7 +111,13 @@ class DatabricksJobCommand(GeneratingCommand):
                 kv_log_info,
             )
 
-        yield updated_kv_info
+        return updated_kv_info
+
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksjob command")
+        result = self.process_job()
+        yield result
 
 
 dispatch(DatabricksJobCommand, sys.argv, sys.stdin, sys.stdout, __name__)

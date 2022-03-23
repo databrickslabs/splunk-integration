@@ -30,9 +30,9 @@ class DatabricksRunCommand(GeneratingCommand):
     notebook_params = Option(require=False)
     identifier = Option(require=False)
 
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksrun command")
+    def process_run(self):
+        """Process notebook run."""
+        updated_kv_info = None
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
             "created_time": time.time(),
@@ -62,11 +62,11 @@ class DatabricksRunCommand(GeneratingCommand):
                     "Provide a cluster parameter or configure the cluster in the TA's configuration page."
                 )
 
-            databricks_connect = com.DatabricksCommunication(session_key)
+            client = com.DatabricksClient(session_key)
 
             # Request to get cluster ID
             _LOGGER.info("Requesting cluster ID for cluster: {}".format(self.cluster))
-            cluster_id = databricks_connect.get_cluster_id(self.cluster)
+            cluster_id = client.get_cluster_id(self.cluster)
             _LOGGER.info("Cluster ID received: {}".format(cluster_id))
 
             # Request to submit the run
@@ -84,7 +84,7 @@ class DatabricksRunCommand(GeneratingCommand):
             }
 
             _LOGGER.info("Submitting the run")
-            response = databricks_connect.databricks_api(
+            response = client.databricks_api(
                 "post", const.RUN_SUBMIT_ENDPOINT, data=payload
             )
 
@@ -95,7 +95,7 @@ class DatabricksRunCommand(GeneratingCommand):
             # Request to get the run_id details
             _LOGGER.info("Fetching details for run ID: {}".format(run_id))
             args = {"run_id": run_id}
-            response = databricks_connect.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
+            response = client.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
 
             output_url = response.get("run_page_url")
             if output_url:
@@ -119,8 +119,13 @@ class DatabricksRunCommand(GeneratingCommand):
                 session_key,
                 kv_log_info,
             )
+        return updated_kv_info
 
-        yield updated_kv_info
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksrun command")
+        result = self.process_run()
+        yield result
 
 
 dispatch(DatabricksRunCommand, sys.argv, sys.stdin, sys.stdout, __name__)

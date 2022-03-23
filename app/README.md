@@ -52,7 +52,7 @@ Databricks Add-on for Splunk can be installed through UI using "Manage Apps" > "
 Users will be required to have admin_all_objects capability in order to configure Databricks Add-on for Splunk. This integration allows a user to configure only one pair of Databricks Instance, its credentials, and Databricks Cluster Name at a time. In case a user is using the integration in search head cluster environment, configuration on all the search cluster nodes will be overwritten as and when a user changes some configuration on any one of the search head cluster members. Hence a user should configure the integration on only one of the search head cluster members.
 
 **Configuration pre-requisites**: 
-To configure the Add-on with Azure Active Directory, you need to provision a service principal in Azure Portal and add it to the target Azure Databricks workspace.
+To configure the Add-on with Azure Active Directory token authentication, you need to provision a service principal in Azure Portal and add it to the target Azure Databricks workspace.
 
 * To provision a service principal, follow [these steps](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/api/latest/aad/service-prin-aad-token#--provision-a-service-principal-in-azure-portal)
 * When creating a client secret, the default Expiry time for the secret is six months. Six months after the creation of the secret, it will expire and no longer be functional. In this case, the user needs to create a new client secret and configure the Add-on again. Users can also set a custom expiration time larger than the default value while creating the secret. Example: 12 months

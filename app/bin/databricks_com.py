@@ -11,11 +11,11 @@ from requests.adapters import HTTPAdapter
 _LOGGER = setup_logging("ta_databricks_com")
 
 
-class DatabricksCommunication(object):
+class DatabricksClient(object):
     """A class to establish connection with Databricks and get data using REST API."""
 
     def __init__(self, session_key):
-        """Intialize DatabricksCommunication object to get data from Databricks platform.
+        """Intialize DatabricksClient object to get data from Databricks platform.
 
         Args:
             session_key (object): Splunk session key
@@ -93,7 +93,7 @@ class DatabricksCommunication(object):
                 if status_code == 403 and self.auth_type == 'AAD' and run_again:
                     response = None
                     run_again = False
-                    _LOGGER.info("Refreshing databricks token.")
+                    _LOGGER.info("Refreshing AAD token.")
                     db_token = utils.get_aad_access_token(
                         self.session_key, self.request_headers['User-Agent'], self.session.proxies, retry=const.RETRIES)
                     if isinstance(db_token, tuple):

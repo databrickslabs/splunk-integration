@@ -28,9 +28,8 @@ class DatabricksQueryCommand(GeneratingCommand):
     query = Option(require=True)
     command_timeout = Option(require=False, validate=validators.Integer(minimum=1))
 
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksquery command")
+    def process_query(self):
+        """Process query."""
         command_timeout_in_seconds = self.command_timeout or const.COMMAND_TIMEOUT_IN_SECONDS
         _LOGGER.info("Setting command timeout to {} seconds.".format(command_timeout_in_seconds))
 
@@ -46,17 +45,17 @@ class DatabricksQueryCommand(GeneratingCommand):
                     "Provide a cluster parameter or configure the cluster in the TA's configuration page."
                 )
 
-            databricks_connect = com.DatabricksCommunication(session_key)
+            client = com.DatabricksClient(session_key)
 
             # Request to get cluster ID
             _LOGGER.info("Requesting cluster ID for cluster: {}.".format(self.cluster))
-            cluster_id = databricks_connect.get_cluster_id(self.cluster)
+            cluster_id = client.get_cluster_id(self.cluster)
             _LOGGER.info("Cluster ID received: {}.".format(cluster_id))
 
             # Request to create context
             _LOGGER.info("Creating Context in cluster.")
             payload = {"language": "sql", "clusterId": cluster_id}
-            response = databricks_connect.databricks_api(
+            response = client.databricks_api(
                 "post", const.CONTEXT_ENDPOINT, data=payload
             )
 
@@ -67,7 +66,7 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.info("Submitting SQL query for execution.")
             payload["contextId"] = context_id
             payload["command"] = self.query
-            response = databricks_connect.databricks_api(
+            response = client.databricks_api(
                 "post", const.COMMAND_ENDPOINT, data=payload
             )
 
@@ -85,7 +84,7 @@ class DatabricksQueryCommand(GeneratingCommand):
 
             total_wait_time = 0
             while total_wait_time <= command_timeout_in_seconds:
-                response = databricks_connect.databricks_api(
+                response = client.databricks_api(
                     "get", const.STATUS_ENDPOINT, args=args
                 )
 
@@ -119,9 +118,7 @@ class DatabricksQueryCommand(GeneratingCommand):
 
                     # Fetch Data
                     data = response["results"]["data"]
-
-                    for d in data:
-                        yield dict(zip(schema, d))
+                    yield schema, data
 
                     _LOGGER.info("Data parsed successfully.")
                     break
@@ -156,7 +153,7 @@ class DatabricksQueryCommand(GeneratingCommand):
             if context_id:
                 _LOGGER.info("Deleting context.")
                 payload = {"contextId": context_id, "clusterId": cluster_id}
-                _ = databricks_connect.databricks_api(
+                _ = client.databricks_api(
                     "post", const.CONTEXT_DESTROY_ENDPOINT, data=payload
                 )
                 _LOGGER.info("Context deleted successfully.")
@@ -165,6 +162,15 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.error(e)
             _LOGGER.error(traceback.format_exc())
             self.write_error(str(e))
+
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksquery command")
+        resp_gen = self.process_query()
+        for schema, data in resp_gen:
+            for d in data:
+                yield dict(zip(schema, d))
+        
 
 
 dispatch(DatabricksQueryCommand, sys.argv, sys.stdin, sys.stdout, __name__)
