@@ -13,7 +13,8 @@ def setUpModule():
         'solnlib.server_info',
         'splunk_aoblib',
         'splunk_aoblib.rest_migration',
-        'solnlib.splunkenv'
+        'solnlib.splunkenv',
+        "splunklib"
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
