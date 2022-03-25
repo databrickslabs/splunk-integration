@@ -28,8 +28,9 @@ class DatabricksQueryCommand(GeneratingCommand):
     query = Option(require=True)
     command_timeout = Option(require=False, validate=validators.Integer(minimum=1))
 
-    def process_query(self):
-        """Process query."""
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksquery command")
         command_timeout_in_seconds = self.command_timeout or const.COMMAND_TIMEOUT_IN_SECONDS
         _LOGGER.info("Setting command timeout to {} seconds.".format(command_timeout_in_seconds))
 
@@ -118,7 +119,9 @@ class DatabricksQueryCommand(GeneratingCommand):
 
                     # Fetch Data
                     data = response["results"]["data"]
-                    yield schema, data
+
+                    for d in data:
+                        yield dict(zip(schema, d))
 
                     _LOGGER.info("Data parsed successfully.")
                     break
@@ -162,15 +165,6 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.error(e)
             _LOGGER.error(traceback.format_exc())
             self.write_error(str(e))
-
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksquery command")
-        resp_gen = self.process_query()
-        for schema, data in resp_gen:
-            for d in data:
-                yield dict(zip(schema, d))
-        
 
 
 dispatch(DatabricksQueryCommand, sys.argv, sys.stdin, sys.stdout, __name__)

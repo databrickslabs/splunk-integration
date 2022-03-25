@@ -27,9 +27,9 @@ class DatabricksJobCommand(GeneratingCommand):
     job_id = Option(require=True, validate=validators.Integer(0))
     notebook_params = Option(require=False)
 
-    def process_job(self):
-        """Process job."""
-        updated_kv_info = None
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksjob command")
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
             "created_time": time.time(),
@@ -111,13 +111,7 @@ class DatabricksJobCommand(GeneratingCommand):
                 kv_log_info,
             )
 
-        return updated_kv_info
-
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksjob command")
-        result = self.process_job()
-        yield result
+        yield updated_kv_info
 
 
 dispatch(DatabricksJobCommand, sys.argv, sys.stdin, sys.stdout, __name__)

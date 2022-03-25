@@ -30,9 +30,9 @@ class DatabricksRunCommand(GeneratingCommand):
     notebook_params = Option(require=False)
     identifier = Option(require=False)
 
-    def process_run(self):
-        """Process notebook run."""
-        updated_kv_info = None
+    def generate(self):
+        """Generating custom command."""
+        _LOGGER.info("Initiating databricksrun command")
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
             "created_time": time.time(),
@@ -119,13 +119,8 @@ class DatabricksRunCommand(GeneratingCommand):
                 session_key,
                 kv_log_info,
             )
-        return updated_kv_info
 
-    def generate(self):
-        """Generating custom command."""
-        _LOGGER.info("Initiating databricksrun command")
-        result = self.process_run()
-        yield result
+        yield updated_kv_info
 
 
 dispatch(DatabricksRunCommand, sys.argv, sys.stdin, sys.stdout, __name__)
