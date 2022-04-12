@@ -89,6 +89,15 @@ Navigate to Databricks Add-on for Splunk, click on "Configuration", go to the "P
 
 **Note**: `*` denotes required fields
 
+**Steps to configure an HTTPS proxy**
+
+* Select Proxy Type as "http" and provide the other required details for proxy configuration.
+* To install proxy certificate in the Add-on , Go to folder $SPLUNK_HOME/etc/apps/TA-Databricks/bin/ta_databricks/aob_py3/certifi
+* Put the proxy certificate at the end of the file named cacert.pem
+Once the above steps are completed, all the folllowing requests would be directed through the proxy.
+
+**Note**: $SPLUNK_HOME denotes the path where Splunk is installed. Ex: /opt/splunk
+
 After enabling proxy, re-visit the "Databricks Credentials" tab, fill in the details, and click on "Save" to verify if the proxy is working.
 
 ## 3. Configure Logging (Optional)
