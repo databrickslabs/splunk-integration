@@ -1,0 +1,28 @@
+name: Run Python Unittest tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [master]
+
+jobs:
+  tests:
+    env:
+        PYTHON: '3.9'
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+        - name: Install Python 3
+          uses: actions/setup-python@v1
+          with:
+            python-version: 3.9
+        - name: Install dependencies
+          run: pip install -r requirements-dev.txt
+        - name: Run tests and generate coverage
+          working-directory: ./
+          run: pytest --cov-config=tests/.coveragerc --cov=app/bin --cov-report=xml:coverage.xml --cov-fail-under=80 tests
+        - name: Publish test coverage
+          uses: codecov/codecov-action@v1
+

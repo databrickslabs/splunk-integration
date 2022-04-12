@@ -20,7 +20,7 @@ def setup_logging(log_name):
     :return: logger object
     """
     # Make path till log file
-    log_file = make_splunkhome_path(["var", "log", "splunk", APP_NAME, "%s.log" % log_name])
+    log_file = make_splunkhome_path(["var", "log", "splunk", "%s.log" % log_name])
     # Get directory in which log file is present
     log_dir = os.path.dirname(log_file)
     # Create directory at the required path to store log file, if not found

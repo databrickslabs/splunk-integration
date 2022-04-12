@@ -16,7 +16,7 @@ from splunklib.searchcommands import (
     validators,
 )
 
-_LOGGER = setup_logging("databricksquery_command")
+_LOGGER = setup_logging("ta_databricksquery_command")
 
 
 @Configuration(type="events")
@@ -46,16 +46,18 @@ class DatabricksQueryCommand(GeneratingCommand):
                     "Provide a cluster parameter or configure the cluster in the TA's configuration page."
                 )
 
+            client = com.DatabricksClient(session_key)
+
             # Request to get cluster ID
             _LOGGER.info("Requesting cluster ID for cluster: {}.".format(self.cluster))
-            cluster_id = com.get_cluster_id(session_key, self.cluster)
+            cluster_id = client.get_cluster_id(self.cluster)
             _LOGGER.info("Cluster ID received: {}.".format(cluster_id))
 
             # Request to create context
             _LOGGER.info("Creating Context in cluster.")
             payload = {"language": "sql", "clusterId": cluster_id}
-            response = com.databricks_api(
-                "post", const.CONTEXT_ENDPOINT, session_key, data=payload
+            response = client.databricks_api(
+                "post", const.CONTEXT_ENDPOINT, data=payload
             )
 
             context_id = response.get("id")
@@ -65,8 +67,8 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.info("Submitting SQL query for execution.")
             payload["contextId"] = context_id
             payload["command"] = self.query
-            response = com.databricks_api(
-                "post", const.COMMAND_ENDPOINT, session_key, data=payload
+            response = client.databricks_api(
+                "post", const.COMMAND_ENDPOINT, data=payload
             )
 
             command_id = response.get("id")
@@ -83,8 +85,8 @@ class DatabricksQueryCommand(GeneratingCommand):
 
             total_wait_time = 0
             while total_wait_time <= command_timeout_in_seconds:
-                response = com.databricks_api(
-                    "get", const.STATUS_ENDPOINT, session_key, args=args
+                response = client.databricks_api(
+                    "get", const.STATUS_ENDPOINT, args=args
                 )
 
                 status = response.get("status")
@@ -154,8 +156,8 @@ class DatabricksQueryCommand(GeneratingCommand):
             if context_id:
                 _LOGGER.info("Deleting context.")
                 payload = {"contextId": context_id, "clusterId": cluster_id}
-                _ = com.databricks_api(
-                    "post", const.CONTEXT_DESTROY_ENDPOINT, session_key, data=payload
+                _ = client.databricks_api(
+                    "post", const.CONTEXT_DESTROY_ENDPOINT, data=payload
                 )
                 _LOGGER.info("Context deleted successfully.")
 

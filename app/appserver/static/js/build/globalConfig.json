@@ -2,7 +2,7 @@
     "meta": {
         "name": "TA-Databricks",
         "displayName": "Databricks Add-on For Splunk",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "apiVersion": "3.0.0",
         "restRoot": "TA_Databricks"
     },
@@ -10,20 +10,21 @@
         "configuration": {
             "title": "Configuration",
             "description": "Set up your add-on",
-            "tabs": [
-                {
+            "tabs": [{
                     "name": "databricks_credentials",
                     "title": "Databricks Credentials",
-                    "entity": [
-                        {
+                    "hook": {
+                        "src": "auth_select_hook",
+                        "type": "external"
+                    },
+                    "entity": [{
                             "field": "databricks_instance",
                             "label": "Databricks Instance",
                             "type": "text",
                             "help": "Enter Databricks instance without http:// or https://",
                             "required": true,
                             "defaultValue": "",
-                            "validators": [
-                                {
+                            "validators": [{
                                     "type": "string",
                                     "minLength": 0,
                                     "maxLength": 500,
@@ -31,7 +32,7 @@
                                 },
                                 {
                                     "pattern": "^(?!\\w+:\\/\\/).*",
-                                    "errorMsg": "Instance URL should not start with scheme",
+                                    "errorMsg": "Please enter Databricks Instance without 'http://' or 'https://'",
                                     "type": "regex"
                                 }
                             ],
@@ -40,45 +41,117 @@
                             }
                         },
                         {
-                            "field": "databricks_access_token",
-                            "label": "Databricks Access Token",
-                            "type": "text",
-                            "help": "Enter Databricks personal access token of the user.",
-                            "required": true,
-                            "defaultValue": "",
-                            "encrypted": true,
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "minLength": 0,
-                                    "maxLength": 200,
-                                    "errorMsg": "Max length of password is 200"
-                                }
-                            ]
-                        },
-                        {
                             "field": "cluster_name",
                             "label": "Databricks Cluster Name",
                             "type": "text",
                             "help": "Name of the Databricks cluster to use for query and notebook execution. A user can override this value while executing the custom command.",
                             "required": false,
                             "defaultValue": "",
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "minLength": 0,
-                                    "maxLength": 500,
-                                    "errorMsg": "Max length of text input is 500"
-                                }
-                            ]
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 500,
+                                "errorMsg": "Max length of text input is 500"
+                            }]
+                        },
+                        {
+                            "field": "auth_type",
+                            "label": "Authentication Method",
+                            "type": "singleSelect",
+                            "required": true,
+                            "options": {
+                                "disableSearch": true,
+                                "placeholder": "Select a value",
+                                "autoCompleteFields": [{
+                                        "label": "Personal Access Token",
+                                        "value": "PAT"
+                                    },
+                                    {
+                                        "label": "Azure Active Directory",
+                                        "value": "AAD"
+                                    }
+                                ]
+                            },
+                            "defaultValue": "PAT"
+                        },
+                        {
+                            "field": "client_id",
+                            "label": "Client Id",
+                            "type": "text",
+                            "help": "Enter Azure App Client Id.",
+                            "required": false,
+                            "defaultValue": "",
+                            "encrypted": false,
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 200,
+                                "errorMsg": "Max length of Client Id is 200"
+                            }],
+                            "options": {
+                                "placeholder": "required"
+                            }
+                        },
+                        {
+                            "field": "tenant_id",
+                            "label": "Tenant Id",
+                            "type": "text",
+                            "help": "Enter Azure App Tenant Id.",
+                            "required": false,
+                            "defaultValue": "",
+                            "encrypted": false,
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 200,
+                                "errorMsg": "Max length of Tenant Id is 200"
+                            }],
+                            "options": {
+                                "placeholder": "required"
+                            }
+                        },
+                        {
+                            "field": "client_secret",
+                            "label": "Client Secret",
+                            "type": "text",
+                            "help": "Enter Azure App Client Secret.",
+                            "required": false,
+                            "defaultValue": "",
+                            "encrypted": true,
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 200,
+                                "errorMsg": "Max length of Client Secret is 200"
+                            }],
+                            "options": {
+                                "placeholder": "required"
+                            }
+                        },
+                        {
+                            "field": "databricks_access_token",
+                            "label": "Databricks Access Token",
+                            "type": "text",
+                            "help": "Enter Databricks personal access token of the user.",
+                            "required": false,
+                            "defaultValue": "",
+                            "encrypted": true,
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 200,
+                                "errorMsg": "Max length of password is 200"
+                            }],
+                            "options": {
+                                "placeholder": "required"
+                            }
                         }
                     ]
                 },
                 {
                     "name": "proxy",
                     "title": "Proxy",
-                    "entity": [
-                        {
+                    "entity": [{
                             "field": "proxy_enabled",
                             "label": "Enable",
                             "type": "checkbox"
@@ -88,13 +161,12 @@
                             "label": "Proxy Type",
                             "type": "singleSelect",
                             "options": {
+                                "placeholder": " ",
                                 "disableSearch": true,
-                                "autoCompleteFields": [
-                                    {
-                                        "label": "http",
-                                        "value": "http"
-                                    }
-                                ]
+                                "autoCompleteFields": [{
+                                    "label": "http",
+                                    "value": "http"
+                                }]
                             },
                             "defaultValue": "http"
                         },
@@ -102,55 +174,59 @@
                             "field": "proxy_url",
                             "label": "Host",
                             "type": "text",
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "minLength": 0,
-                                    "maxLength": 4096,
-                                    "errorMsg": "Max host length is 4096"
-                                }
-                            ]
+                            "options": {
+                                "placeholder": " "
+                            },
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 4096,
+                                "errorMsg": "Max host length is 4096"
+                            }]
                         },
                         {
                             "field": "proxy_port",
                             "label": "Port",
                             "type": "text",
-                            "validators": [
-                                {
-                                    "type": "number",
-                                    "range": [
-                                        1,
-                                        65535
-                                    ]
-                                }
-                            ]
+                            "options": {
+                                "placeholder": " "
+                            },
+                            "validators": [{
+                                "type": "number",
+                                "range": [
+                                    1,
+                                    65535
+                                ]
+                            }]
                         },
                         {
                             "field": "proxy_username",
                             "label": "Username",
                             "type": "text",
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "minLength": 0,
-                                    "maxLength": 50,
-                                    "errorMsg": "Max length of username is 50"
-                                }
-                            ]
+                            "options": {
+                                "placeholder": " "
+                            },
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 50,
+                                "errorMsg": "Max length of username is 50"
+                            }]
                         },
                         {
                             "field": "proxy_password",
                             "label": "Password",
                             "type": "text",
+                            "options": {
+                                "placeholder": " "
+                            },
                             "encrypted": true,
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "minLength": 0,
-                                    "maxLength": 8192,
-                                    "errorMsg": "Max length of password is 8192"
-                                }
-                            ]
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 8192,
+                                "errorMsg": "Max length of password is 8192"
+                            }]
                         },
                         {
                             "field": "proxy_rdns",
@@ -159,45 +235,46 @@
                         }
                     ],
                     "options": {
-                        "saveValidator": "function(formData) { if(!formData.proxy_enabled || formData.proxy_enabled === '0') {return true; } if(!formData.proxy_url) { return 'Proxy Host can not be empty'; } if(!formData.proxy_port) { return 'Proxy Port can not be empty'; } return true; }"
+                        "saveValidator": "function(formData) { if(!formData.proxy_enabled || formData.proxy_enabled === '0') {return true; } if(!formData.proxy_url) { return 'Proxy Host can not be empty'; } if(!formData.proxy_port) { return 'Proxy Port can not be empty'; } if(!formData.proxy_type) { return 'Proxy Type cannot be empty'; } return true; }"
                     }
                 },
                 {
                     "name": "logging",
                     "title": "Logging",
-                    "entity": [
-                        {
-                            "field": "loglevel",
-                            "label": "Log level",
-                            "type": "singleSelect",
-                            "options": {
-                                "disableSearch": true,
-                                "autoCompleteFields": [
-                                    {
-                                        "label": "DEBUG",
-                                        "value": "DEBUG"
-                                    },
-                                    {
-                                        "label": "INFO",
-                                        "value": "INFO"
-                                    },
-                                    {
-                                        "label": "WARNING",
-                                        "value": "WARNING"
-                                    },
-                                    {
-                                        "label": "ERROR",
-                                        "value": "ERROR"
-                                    },
-                                    {
-                                        "label": "CRITICAL",
-                                        "value": "CRITICAL"
-                                    }
-                                ]
-                            },
-                            "defaultValue": "INFO"
-                        }
-                    ]
+                    "entity": [{
+                        "field": "loglevel",
+                        "label": "Log level",
+                        "type": "singleSelect",
+                        "options": {
+                            "disableSearch": true,
+                            "placeholder": "Select a value",
+                            "autoCompleteFields": [{
+                                    "label": "DEBUG",
+                                    "value": "DEBUG"
+                                },
+                                {
+                                    "label": "INFO",
+                                    "value": "INFO"
+                                },
+                                {
+                                    "label": "WARNING",
+                                    "value": "WARNING"
+                                },
+                                {
+                                    "label": "ERROR",
+                                    "value": "ERROR"
+                                },
+                                {
+                                    "label": "CRITICAL",
+                                    "value": "CRITICAL"
+                                }
+                            ]
+                        },
+                        "defaultValue": "INFO"
+                    }],
+                    "options": {
+                        "saveValidator": "function(formData) {if(!formData.loglevel) { return 'Log level cannot be empty'; } return true; }"
+                    }
                 }
             ]
         }

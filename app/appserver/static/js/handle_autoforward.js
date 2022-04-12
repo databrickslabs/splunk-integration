@@ -1,47 +1,59 @@
 require([
-     "splunkjs/mvc",
-     ], function(mvc) {
- mvc.setFilter("dbquote", function(inputValue) {
-     return inputValue.replace(/"/g, '\\"').replace(/'/g, "\\'");
-   });
- });
+    'splunkjs/mvc',
+    'splunkjs/mvc/simplexml/ready!',
+], function(mvc) {
+    var submitted_model = mvc.Components.getInstance("submitted")
 
+    const retry_button = document.getElementById("retryButton")
 
+    function rerun() {
+        mvc.Components.get("notebookrun").startSearch()
+    }
 
+    retry_button.addEventListener('click', rerun, false);
 
-require(
-    [
-        'jquery',
-        'underscore',
-        'backbone',
-        "splunk.util"
-    ],
-    function(
-        $,
-        _,
-        Backbone,
-        splunkUtil
-    ) {
-        $("#retryButton").click(function(){
-            splunkjs.mvc.Components.getInstance("notebookrun").startSearch()
-        })
-                
-        splunkjs.mvc.Components.getInstance("submitted").on("change", function(changeEvent) {
-            //console.log("Got a token change", changeEvent)
-            if (typeof changeEvent.changed.url != "undefined") {
-                //console.log("Got a change of the URL", changeEvent.changed.url)
-                if(splunkjs.mvc.Components.getInstance("submitted").toJSON()['autoforward'] && splunkjs.mvc.Components.getInstance("submitted").toJSON()['autoforward'] == "Yes"){
-                    //console.log("Redirecting to ", changeEvent.changed.url)
-                    window.location.href = changeEvent.changed.url
-                }
-            }
-            if (typeof changeEvent.changed.autoforward != "undefined") {
-                //console.log("Got a change of the Token Forwarding", changeEvent.changed.autoforward)
-                if(splunkjs.mvc.Components.getInstance("submitted").toJSON()['url'] && splunkjs.mvc.Components.getInstance("submitted").toJSON()['url'] != ""){
-                  //  console.log("Redirecting to ", changeEvent.changed.url)
-                    window.location.href = changeEvent.changed.url
-                }
-            }
-        })
+    function redirect_to_result_url(){
+        var autoforward = submitted_model.get("autoforward")
+        var url = submitted_model.get("url",null)
+        if (url && autoforward == "Yes") {
+            window.open(url, "_blank");
+        }
+    }
+    function token_handling(param_name){
+        var param_value = submitted_model.get(param_name,null)
+        var redirected = submitted_model.get("redirected",null)
+        if (param_value == "True"){
+            submitted_model.unset("url")
+            submitted_model.unset("redirected")
+        }
+        else if(redirected == "True"){
+            submitted_model.set(param_name, "True")
+        }
+        else{
+            submitted_model.unset("url")
+        }
+    }
 
+    submitted_model.on("change:notebook", function() {
+        token_handling("notebook_changed")
     })
+
+    submitted_model.on("change:revision_timestamp", function() {
+        token_handling("revision_changed")
+    })
+
+    submitted_model.on("change:params", function() {
+        token_handling("params_changed")
+    })
+
+    submitted_model.on("change:cluster", function() {
+        token_handling("cluster_changed")
+    })
+
+    submitted_model.on("change:url", function() {
+        redirect_to_result_url()
+    })
+    submitted_model.on("change:autoforward", function() {
+        redirect_to_result_url()
+    })
+});

@@ -1,13 +1,16 @@
-<form script="js/handle_autoforward.js">
+<form version="1.1" script="js/handle_autoforward.js">
   <label>Launch Notebook</label>
-  <search id="notebookrun">
-    <query>| databricksrun notebook_path=$notebookname|s$ notebook_params="$param$=$paramvalue|dbquote$"</query>
-    <earliest>-24h@h</earliest>
-    <latest>now</latest>
-    <sampleRatio>1</sampleRatio>
+  <search id="notebookrun" rejects="$form.identifier$,$redirected$">
+    <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$</query>
     <progress>
+      <unset token="redirected"></unset>
+      <unset token="normal_change_notebook"></unset>
+      <unset token="normal_change_revision"></unset>
+      <unset token="normal_change_params"></unset>
+      <unset token="normal_change_cluster"></unset>
       <unset token="url"></unset>
       <unset token="failedJob"></unset>
+      <unset token="failedAlertJob"></unset>
     </progress>
     <done>
       <condition match="'job.resultCount' == 1">
@@ -21,15 +24,74 @@
       <set token="failedJob">1</set>
     </fail>
   </search>
-  <fieldset submitButton="false">
-    <input type="text" token="notebookname">
-      <label>Notebook Name</label>
+  <search id="redirected_notebookrun" depends="$form.identifier$">
+    <query>|inputlookup submit_run_logs where identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time</query>
+    <progress>
+      <unset token="url"></unset>
+      <unset token="failedAlertJob"></unset>
+    </progress>
+    <done>
+      <condition match="'job.resultCount' == 1 and  $result.error$==&quot;-&quot;">
+        <set token="split_params">$result.param$</set>
+        <eval token="notebook_index">mvfind(split($split_params$,","),"notebook_path=")</eval>
+        <eval token="revision_index">mvfind(split($split_params$,","),"revision_timestamp=")</eval>
+        <eval token="param_index">mvfind(split($split_params$,","),"notebook_params=")</eval>
+        <eval token="cluster_index">mvfind(split($split_params$,","),"cluster=")</eval>
+        <eval token="notebook_value">mvindex(split($split_params$,","),$notebook_index$)</eval>
+        <eval token="param_value">mvindex(split($split_params$,","),$param_index$)</eval>
+        <eval token="revision_value">mvindex(split($split_params$,","),$revision_index$)</eval>
+        <eval token="cluster_value">mvindex(split($split_params$,","),$cluster_index$)</eval>
+        <eval token="form.notebook">substr($notebook_value$,15)</eval>
+        <eval token="form.revision_timestamp">substr($revision_value$,20)</eval>
+        <eval token="form.params">substr($param_value$,17)</eval>
+        <eval token="form.cluster">substr($cluster_value$,9)</eval>
+        <unset token="form.identifier"></unset>
+        <set token="url">$result.result_url$</set>
+      </condition>
+      <condition match="'job.resultCount' == 0">
+        <unset token="form.identifier"></unset>
+        <set token="failedAlertJob">Could not find the Alert response. Could be because you have redirected before the Successful completion of the Alert action or for a Failed alert. Please check the logs.</set>
+        <unset token="redirected"></unset>
+      </condition>
+      <condition>
+        <set token="split_params">$result.param$</set>
+        <eval token="notebook_index">mvfind(split($split_params$,","),"notebook_path=")</eval>
+        <eval token="revision_index">mvfind(split($split_params$,","),"revision_timestamp=")</eval>
+        <eval token="param_index">mvfind(split($split_params$,","),"notebook_params=")</eval>
+        <eval token="cluster_index">mvfind(split($split_params$,","),"cluster=")</eval>
+        <eval token="notebook_value">mvindex(split($split_params$,","),$notebook_index$)</eval>
+        <eval token="param_value">mvindex(split($split_params$,","),$param_index$)</eval>
+        <eval token="revision_value">mvindex(split($split_params$,","),$revision_index$)</eval>
+        <eval token="cluster_value">mvindex(split($split_params$,","),$cluster_index$)</eval>
+        <eval token="form.notebook">substr($notebook_value$,15)</eval>
+        <eval token="form.revision_timestamp">substr($revision_value$,20)</eval>
+        <eval token="form.params">substr($param_value$,17)</eval>
+        <eval token="form.cluster">substr($cluster_value$,9)</eval>
+        <unset token="form.identifier"></unset>
+        <set token="failedAlertJob">$result.error$</set>
+      </condition>
+    </done>
+    <fail>
+      <unset token="form.identifier"></unset>
+      <set token="failedAlertJob">Some unexpected error occured. Please check the logs.</set>
+      <unset token="redirected"></unset>
+    </fail>
+  </search>
+  <fieldset submitButton="true">
+    <input type="text" token="notebook" searchWhenChanged="false">
+      <label>Notebook path</label>
     </input>
-    <input type="text" token="param">
-      <label>Parameter Name</label>
+    <input type="text" token="revision_timestamp" searchWhenChanged="false">
+      <label>Notebook revision timestamp</label>
+      <default></default>
     </input>
-    <input type="text" token="paramvalue">
-      <label>Parameter Value</label>
+    <input type="text" token="params" searchWhenChanged="false">
+      <label>Notebook Parameters</label>
+      <default></default>
+    </input>
+    <input type="text" token="cluster" searchWhenChanged="false">
+      <label>Cluster Name</label>
+      <default></default>
     </input>
     <input type="dropdown" token="autoforward">
       <label>Auto Forward?</label>
@@ -44,29 +106,44 @@
       <single>
         <search base="notebookrun"></search>
       </single>
+      <html>
+        <p>
+        The job failed -- this is usually because the cluster in Databricks is not working, credentials are expired, or other similar issues. Please see the red error icon to the right.
+        </p>
+        <button id="retryButton">Retry</button>
+      </html>
     </panel>
+  </row>
+  <row depends="$failedAlertJob$">
     <panel>
       <html>
         <p>
-        The job failed -- this is usually because the cluster in Databricks is not working, credentials are expired, or other similar issues. Please see the red error icon to the left.
+        Failure : $failedAlertJob$
       </p>
-      <button id="retryButton">Retry</button>
       </html>
     </panel>
   </row>
-  <row depends="$notebookname$,$param$,$paramvalue$" rejects="$url$,$failedJob$">
+  <row depends="$notebook$" rejects="$url$,$failedJob$">
     <panel>
-      <title>Processing...</title>
+      <title></title>
       <html>
-        <center>Processing</center>
+        <center>Processing...</center>
       </html>
     </panel>
   </row>
-  <row depends="$notebookname$,$param$,$paramvalue$,$url$" rejects="$failedJob$">
+  <row depends="$form.identifier$" rejects="$url$,$failedAlertJob$">
     <panel>
-      <title>Click</title>
+      <title></title>
       <html>
-        <center>Job running, <a href="$url$">click here</a> to proceed.</center>
+        <center>Processing...</center>
+      </html>
+    </panel>
+  </row>
+  <row depends="$url$" rejects="$failedJob$,$failedAlertJob$">
+    <panel>
+      <title>Result URL</title>
+      <html>
+        <center>Job running, <a href="$url$" target="_blank">click here</a> to redirect.</center>
       </html>
     </panel>
   </row>

@@ -16,7 +16,7 @@ from splunklib.searchcommands import (
     validators,
 )
 
-_LOGGER = setup_logging("databricksjob_command")
+_LOGGER = setup_logging("ta_databricksjob_command")
 
 
 @Configuration(type="events")
@@ -45,12 +45,14 @@ class DatabricksJobCommand(GeneratingCommand):
 
         try:
             # Get job details
+            client = com.DatabricksClient(session_key)
+
             payload = {
                 "job_id": self.job_id,
             }
 
             _LOGGER.info("Fetching job details before submitting the execution.")
-            response = com.databricks_api("get", const.GET_JOB_ENDPOINT, session_key, args=payload)
+            response = client.databricks_api("get", const.GET_JOB_ENDPOINT, args=payload)
 
             job_settings = response["settings"]
             tasks_list = list(set(job_settings.keys()))
@@ -73,8 +75,8 @@ class DatabricksJobCommand(GeneratingCommand):
             payload["notebook_params"] = utils.format_to_json_parameters(self.notebook_params)
 
             _LOGGER.info("Submitting job for execution.")
-            response = com.databricks_api(
-                "post", const.EXECUTE_JOB_ENDPOINT, session_key, data=payload
+            response = client.databricks_api(
+                "post", const.EXECUTE_JOB_ENDPOINT, data=payload
             )
 
             kv_log_info.update(response)
@@ -84,7 +86,7 @@ class DatabricksJobCommand(GeneratingCommand):
             # Request to get the run_id details
             _LOGGER.info("Fetching details for run ID: {}.".format(run_id))
             args = {"run_id": run_id}
-            response = com.databricks_api("get", const.GET_RUN_ENDPOINT, session_key, args=args)
+            response = client.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
 
             output_url = response.get("run_page_url")
             if output_url:
