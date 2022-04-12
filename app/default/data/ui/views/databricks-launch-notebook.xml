@@ -17,7 +17,6 @@
         <set token="url">$result.result_url$</set>
       </condition>
       <condition match="'job.resultCount' == 0">
-        <set token="test">1</set>
         <set token="failedJob">1</set>
       </condition>
     </done>
