@@ -1,6 +1,10 @@
 name: Run Python Unittest tests
 
-on: [push]
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [master]
 
 jobs:
   tests:
@@ -19,8 +23,6 @@ jobs:
         - name: Run tests and generate coverage
           working-directory: ./
           run: pytest --cov-config=tests/.coveragerc --cov=app/bin --cov-report=xml:coverage.xml --cov-fail-under=80 tests
-
-            
-
-
+        - name: Publish test coverage
+          uses: codecov/codecov-action@v1
 
