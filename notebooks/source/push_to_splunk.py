@@ -1,6 +1,12 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC 
+# MAGIC ## Introduction
+# MAGIC 
+# MAGIC This notebook demonstrates how to push data to Splunk using Splun's HTTP Event Collector. ***Please note that it's intended only for sending a limited number of events (dozens/hundreds) to Splunk, not to send big amounts of data, as it collects all data to the driver node!***
+# MAGIC 
 # MAGIC ## Input parameters from the user
+# MAGIC 
 # MAGIC This gives a brief description of each parameter.
 # MAGIC <br>Before using the notebook, please go through the user documentation of this notebook to use the notebook effectively.
 # MAGIC 1. **Protocol** ***(Mandatory Field)*** : The protocol on which Splunk HTTP Event Collector(HEC) runs. Splunk HEC runs on `https` if Enable SSL checkbox is selected while configuring Splunk HEC Token in Splunk, else it runs on `http` protocol. If you do not have access to the Splunk HEC Configuration page, you can ask your Splunk Admin if the `Enable SSL checkbox` is selected or not.
@@ -165,8 +171,8 @@ class HttpEventCollector:
   @property
   def server_uri(self):
     # splunk HEC url used to push data
-    endpoint="/raw?channel="+str(uuid.uuid1())
-    server_uri = '%s://%s:%s/services/collector%s' % (self.protocol, self.splunk_address, self.splunk_port, endpoint)
+    endpoint=f"/raw?channel={uuid.uuid1()}"
+    server_uri = f'{self.protocol}://{self.splunk_address}:{self.splunk_port}/services/collector{endpoint}'
     return (server_uri)
   
   @property
@@ -205,8 +211,6 @@ class HttpEventCollector:
     if not (response.status_code==200 or response.status_code==201) :
       raise Exception("Response status : {} .Response message : {}".format(str(response.status_code),response.text))
 
-
-
 # COMMAND ----------
 
 from pyspark.sql.functions import *
@@ -214,7 +218,7 @@ from pyspark.sql.functions import *
 if(advancedQuery):
   full_query=advancedQuery
 elif (table and database):
-  basic_query="select * from "+database+"."+table+" "
+  basic_query=f"select * from {database}.{table} "
   if (filterQuery == None or filterQuery == "" ) :
     full_query=basic_query
   else :
@@ -225,9 +229,9 @@ try :
   read_data=spark.sql(full_query)
   events_list=read_data.toJSON().collect()
 except Exception as e:
-  print ("Some error occurred while running query. The filter may be incorrect  : ".format(e))
+  print(f"Some error occurred while running query. The filter may be incorrect  : {e}")
   traceback.print_exc()
-  exit()
+  raise ex
   
 try :
   http_event_collector_instance=HttpEventCollector(protocol,splunkAddress,splunkPort,splunkHecToken,index,source,sourcetype,host,ssl_verify=sslVerify)
@@ -243,4 +247,4 @@ try :
 except Exception as ex:
   print ("Some error occurred.")
   traceback.print_exc()
-  exit()
+  raise ex
