@@ -125,13 +125,23 @@ import time
 import traceback
 import os
 import uuid
+import copy
+from datetime import date, datetime
 requests.packages.urllib3.disable_warnings()
-  
+
+
+
+def json_serializer(obj):
+  if isinstance(obj, (date, datetime)):
+    return obj.isoformat()
+  return str(obj)
+
 class HttpEventCollector:
   
   maxByteLength = 1000000
   
-  def __init__(self,protocol,splunk_address,splunk_port,splunk_hec_token,index,source,sourcetype,host,ssl_verify="false"):
+  def __init__(self, protocol, splunk_address, splunk_port, splunk_hec_token,
+               index, source, sourcetype, host, ssl_verify="false"):
     
     self.protocol = protocol
     if (splunk_address=="" or splunk_address==None):
@@ -159,7 +169,15 @@ class HttpEventCollector:
     self.host = host
     self.batch_events = []
     self.current_byte_length = 0
-      
+    self.parameters = {}
+    if self.sourcetype:
+      parameters["sourcetype"] = self.sourcetype
+    if self.source:
+      parameters["source"] = self.source
+    if self.index:
+      parameters["index"] = self.index
+    if self.host:
+      parameters["host"] = self.host
     
   def requests_retry_session(self,retries=3):
     session = requests.Session()
@@ -171,43 +189,37 @@ class HttpEventCollector:
   @property
   def server_uri(self):
     # splunk HEC url used to push data
-    endpoint=f"/raw?channel={uuid.uuid1()}"
+    endpoint=f"?channel={uuid.uuid1()}"
     server_uri = f'{self.protocol}://{self.splunk_address}:{self.splunk_port}/services/collector{endpoint}'
-    return (server_uri)
-  
-  @property
-  def parameters(self):
-    params={}
-    if not( self.sourcetype == None or self.sourcetype == ""):
-      params.update({"sourcetype":self.sourcetype})
-    if not( self.source == None or self.source == ""):
-      params.update({"source":self.source})
-    if not( self.index == None or self.index == ""):
-      params.update({"index":self.index})
-    if not( self.host == None or self.host == ""):
-      params.update({"host":self.host})
-    return (params)    
+    return (server_uri) 
   
   def batch_and_push_event(self,event):
     # divide the resut payload into batches and push to splunk HEC
-    payload_string = str(event)
-    if not payload_string.endswith("\n"):
-      payload_string=payload_string+"\n"
+    data = copy.copy(parameters)
+    data["event"] = event.asDict(True)
+    payload_string = json.dumps(data, default=json_serializer)
     payload_length = len(payload_string)
 
     if ((self.current_byte_length+payload_length) > self.maxByteLength ):
-      self.push_event()
-      self.batch_events = []
-      self.current_byte_length = 0
+      self.push_events_and_cleanup()
 
     self.batch_events.append(payload_string)
     self.current_byte_length += payload_length
   
-  def push_event(self):
+  def push_events_and_cleanup(self):
+    self.push_events()
+    self.batch_events = []
+    self.current_byte_length = 0
+  
+  def push_events(self):
+    if len(self.batch_events) == 0:
+      # Nothing to push
+      return 
+    
     # Function to push data to splunk
-    payload = " ".join(self.batch_events)
+    payload = "\n".join(self.batch_events)
     headers = {'Authorization':'Splunk '+self.token}
-    response = self.requests_retry_session().post(self.server_uri, data=payload, headers=headers,params=self.parameters, verify=self.ssl_verify)
+    response = self.requests_retry_session().post(self.server_uri, data=payload, headers=headers, verify=self.ssl_verify)
     if not (response.status_code==200 or response.status_code==201) :
       raise Exception("Response status : {} .Response message : {}".format(str(response.status_code),response.text))
 
@@ -218,31 +230,31 @@ from pyspark.sql.functions import *
 if(advancedQuery):
   full_query=advancedQuery
 elif (table and database):
-  basic_query=f"select * from {database}.{table} "
+  basic_query = f"select * from {database}.{table} "
   if (filterQuery == None or filterQuery == "" ) :
-    full_query=basic_query
+    full_query = basic_query
   else :
     full_query = basic_query+filterQuery
 else:
   dbutils.notebook.exit("Advanced Query or Table name and Database name are required.Please check input values.")
 try :
   read_data=spark.sql(full_query)
-  events_list=read_data.toJSON().collect()
+  events_list=read_data.collect()
+  
 except Exception as e:
   print(f"Some error occurred while running query. The filter may be incorrect  : {e}")
   traceback.print_exc()
   raise ex
   
 try :
-  http_event_collector_instance=HttpEventCollector(protocol,splunkAddress,splunkPort,splunkHecToken,index,source,sourcetype,host,ssl_verify=sslVerify)
+    http_event_collector_instance=HttpEventCollector(protocol,splunkAddress,splunkPort,
+                                                     splunkHecToken,index,source,sourcetype,
+                                                     host,ssl_verify=sslVerify)
   
   for each in events_list:
     http_event_collector_instance.batch_and_push_event(each)
-  if(len(http_event_collector_instance.batch_events)>0):
-    http_event_collector_instance.push_event()
-    http_event_collector_instance.batch_events = []
-    http_event_collector_instance.current_byte_length = 0
-  
+    
+  http_event_collector_instance.push_events_and_cleanup()
 
 except Exception as ex:
   print ("Some error occurred.")
