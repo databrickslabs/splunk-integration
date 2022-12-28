@@ -25,6 +25,7 @@ class DatabricksRunCommand(GeneratingCommand):
     # Take input from user using parameters
     notebook_path = Option(require=True)
     run_name = Option(require=False)
+    account_name = Option(require=True)
     cluster = Option(require=False)
     revision_timestamp = Option(require=False)
     notebook_params = Option(require=False)
@@ -35,6 +36,7 @@ class DatabricksRunCommand(GeneratingCommand):
         _LOGGER.info("Initiating databricksrun command")
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
+            "account_name": self.account_name,
             "created_time": time.time(),
             "param": self._metadata.searchinfo.args,
             "run_id": "-",
@@ -42,10 +44,10 @@ class DatabricksRunCommand(GeneratingCommand):
             "result_url": "-",
             "command_status": "Failed",
             "error": "-",
-            "identifier": "-"
+            "identifier": "-",
         }
         if not (self.notebook_path and self.notebook_path.strip()):
-            self.write_error("Please provide value for the parameter \"notebook_path\"")
+            self.write_error('Please provide value for the parameter "notebook_path"')
             exit(1)
         if self.identifier and self.identifier.strip():
             kv_log_info["identifier"] = self.identifier.strip()
@@ -54,15 +56,24 @@ class DatabricksRunCommand(GeneratingCommand):
         self.run_name = self.run_name or const.APP_NAME
 
         try:
+            # Check User role
+            if not utils.check_user_roles(session_key):
+                error_msg = ('Lack of "databricks_user" role for the current user.'
+                             ' Refer "Provide Required Access" section in the Intro page.')
+                _LOGGER.error(error_msg)
+                raise Exception(error_msg)
+
             # Fetching cluster name
-            self.cluster = (self.cluster and self.cluster.strip()) or utils.get_databricks_configs().get("cluster_name")
+            self.cluster = (self.cluster and self.cluster.strip()) or utils.get_databricks_configs(
+                session_key, self.account_name
+            ).get("cluster_name")
             if not self.cluster:
                 raise Exception(
                     "Databricks cluster is required to execute this custom command. "
                     "Provide a cluster parameter or configure the cluster in the TA's configuration page."
                 )
 
-            client = com.DatabricksClient(session_key)
+            client = com.DatabricksClient(self.account_name, session_key)
 
             # Request to get cluster ID
             _LOGGER.info("Requesting cluster ID for cluster: {}".format(self.cluster))
@@ -75,7 +86,9 @@ class DatabricksRunCommand(GeneratingCommand):
             if self.revision_timestamp and self.revision_timestamp.strip():
                 notebook_task["revision_timestamp"] = self.revision_timestamp
             if self.notebook_params and self.notebook_params.strip():
-                notebook_task["base_parameters"] = utils.format_to_json_parameters(self.notebook_params)
+                notebook_task["base_parameters"] = utils.format_to_json_parameters(
+                    self.notebook_params
+                )
 
             payload = {
                 "run_name": self.run_name,
@@ -84,9 +97,7 @@ class DatabricksRunCommand(GeneratingCommand):
             }
 
             _LOGGER.info("Submitting the run")
-            response = client.databricks_api(
-                "post", const.RUN_SUBMIT_ENDPOINT, data=payload
-            )
+            response = client.databricks_api("post", const.RUN_SUBMIT_ENDPOINT, data=payload)
 
             kv_log_info.update(response)
             run_id = response["run_id"]

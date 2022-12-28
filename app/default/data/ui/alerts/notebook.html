@@ -21,5 +21,12 @@
             (Optional)
         </span>
     </div>
+    <label class="control-label" for="notebook_account_name">Databricks Account</label>
+    <div class="controls">
+    <splunk-search-dropdown name="action.notebook.param.account_name" id="notebook_account_name"
+        search = "| rest /servicesNS/nobody/TA-Databricks/configs/conf-ta_databricks_account splunk_server=local | table title"
+        label-field="title" value-field="title" />
+    <span class="help-block">Name of Databricks Account to use for execution.</span>
+    </div>
 </div>
 </form>

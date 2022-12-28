@@ -1,4 +1,3 @@
-import ta_databricks_declare  # noqa: F401
 import requests
 import databricks_const as const
 import databricks_common_utils as utils
@@ -6,6 +5,9 @@ from log_manager import setup_logging
 
 from splunktaucclib.rest_handler.endpoint.validator import Validator
 from splunk_aoblib.rest_migration import ConfigMigrationHandler
+import splunk.rest as rest
+import traceback
+import json
 
 _LOGGER = setup_logging("ta_databricks_validator")
 
@@ -20,6 +22,60 @@ class SessionKeyProvider(ConfigMigrationHandler):
         Save session key in class instance.
         """
         self.session_key = self.getSessionKey()
+
+
+class LoggingValidator(Validator):
+    """Logging Validator Class."""
+
+    def validate(self, value, data):
+        """Validates user role before saving log level."""
+        try:
+            self._splunk_session_key = SessionKeyProvider().session_key
+            if not utils.check_user_roles(self._splunk_session_key, validate="validate_user"):
+                self.put_msg("Lack of 'databricks_admin' role for the current user. \
+                    Refer 'Provide Required Access' section in the Intro page")
+                return False
+            return True
+        except Exception as e:
+            _LOGGER.error("Databricks Error : Error occured while validating user for saving log level {}".format(e))
+            return False
+
+
+class ProxyEncryption(Validator):
+    """
+    Proxy Encryption Class.
+    """
+
+    def validate(self, value, data):
+        """
+        Check if the given value is valid.
+
+        :param value: value to validate.
+        :param data: whole payload in request.
+        :return True or False
+        """
+        try:
+            self._splunk_session_key = SessionKeyProvider().session_key
+            if not utils.check_user_roles(self._splunk_session_key, validate="validate_user"):
+                self.put_msg("Lack of 'databricks_admin' role for the current user. \
+                    Refer 'Provide Required Access' section in the Intro page")
+                return False
+            rest.simpleRequest(
+                "/databricks_custom_encryption",
+                method='POST',
+                postargs=data,
+                sessionKey=self._splunk_session_key,
+                raiseAllErrors=True,
+                rawResult=True
+            )
+
+            if data.get("proxy_password"):
+                data["proxy_password"] = "*****"
+            return True
+        except Exception as e:
+            _LOGGER.error("Databricks Error : Error occured while performing custom proxy encryption {}".format(e))
+            self.put_msg(e)
+            return False
 
 
 class ValidateDatabricksInstance(Validator):
@@ -49,8 +105,9 @@ class ValidateDatabricksInstance(Validator):
         client_id = data.get("client_id").strip()
         client_sec = data.get("client_secret").strip()
         tenant_id = data.get("tenant_id").strip()
+        account_name = data.get("name")
         access_token = utils.get_aad_access_token(
-            self._splunk_session_key, const.USER_AGENT_CONST,
+            self._splunk_session_key, account_name,
             self._proxy_settings, tenant_id, client_id, client_sec)
         if isinstance(access_token, tuple):
             _LOGGER.error(access_token[0])
@@ -81,14 +138,28 @@ class ValidateDatabricksInstance(Validator):
         headers = {
             "Authorization": "Bearer {}".format(access_token),
             "Content-Type": "application/json",
-            "User-Agent": const.USER_AGENT_CONST,
+            "User-Agent": utils.get_user_agent(self._splunk_session_key)
         }
+        _LOGGER.debug("User-Agent: {}".format(headers.get('User-Agent')))
         try:
-            resp = requests.get(req_url, headers=headers, proxies=self._proxy_settings, verify=const.VERIFY_SSL)
+            resp = requests.get(
+                req_url,
+                headers=headers,
+                proxies=self._proxy_settings,
+                verify=const.VERIFY_SSL,
+                timeout=const.TIMEOUT
+            )
             resp.raise_for_status()
             _ = resp.json()
             _LOGGER.info('Validated Databricks instance sucessfully.')
             return True
+        except requests.exceptions.SSLError as sslerror:
+            self.put_msg("SSL certificate validation failed. Please verify the SSL certificate.")
+            _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                          " certificate: {}".format(sslerror))
+            _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                          " certificate: {}".format(traceback.format_exc()))
+            return False
         except Exception as e:
             if "resp" in locals() and resp.status_code == 403:
                 msg = "Invalid access token. Please enter the valid access token."
@@ -98,6 +169,9 @@ class ValidateDatabricksInstance(Validator):
                 msg = "Internal server error. Cannot verify Databricks instance."
             elif "resp" in locals() and resp.status_code == 400:
                 msg = "Invalid Databricks instance."
+            elif "_ssl.c" in str(e):
+                msg = "SSL certificate verification failed. Please add a valid " \
+                    "SSL certificate."
             else:
                 msg = "Unable to request Databricks instance. "\
                     "Please validate the provided Databricks and "\
@@ -116,6 +190,14 @@ class ValidateDatabricksInstance(Validator):
         :return True or False
         """
         _LOGGER.info("Initiating configuration validation.")
+        self._splunk_session_key = SessionKeyProvider().session_key
+
+        # Check User role
+        if not utils.check_user_roles(self._splunk_session_key, validate="validate_user"):
+            self.put_msg("Lack of 'databricks_admin' role for the current user. \
+                    Refer 'Provide Required Access' section in the Intro page")
+            return False
+
         auth_type = data.get("auth_type")
         if auth_type == "PAT":
             if (not (data.get("databricks_access_token", None)
@@ -140,9 +222,71 @@ class ValidateDatabricksInstance(Validator):
                 self.put_msg('Field Client Secret is required')
                 return False
         _LOGGER.info("Reading proxy and user data.")
-        self._splunk_session_key = SessionKeyProvider().session_key
-        self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
+        try:
+            self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
+        except Exception as e:
+            if "_ssl.c" in str(e):
+                self.put_msg("SSL certificate verification failed. Please add a valid SSL certificate.")
+                _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                              " certificate: {}".format(e))
+                _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                              " certificate: {}".format(traceback.format_exc()))
+                return False
+            else:
+                self.put_msg("Unexpected error occured. check *databricks*.log file for more detail. ")
+                _LOGGER.error("Databricks Error : Unexpected error occured: {}".format(e))
+                _LOGGER.debug("Databricks Error : Unexpected error occured: {}".format(traceback.format_exc()))
+                return False
         if auth_type == "PAT":
-            return self.validate_pat(data)
+            if self.validate_pat(data):
+                return self.perform_encryption(data)
         else:
-            return self.validate_aad(data)
+            if self.validate_aad(data):
+                return self.perform_encryption(data)
+
+    def perform_encryption(self, data):
+        """
+        Method to perform custom encryption if creds are valid.
+
+        :param data: whole payload in request.
+        :return True or False
+        """
+        try:
+            mask = "*****"
+            try:
+                response = rest.simpleRequest(
+                    "/databricks_custom_encryption",
+                    method='POST',
+                    postargs=data,
+                    sessionKey=self._splunk_session_key,
+                    raiseAllErrors=True,
+                    rawResult=True
+                )
+                if int(response[0].get("status")) not in [200, 201]:
+                    if int(response[0].get("status")) == 500 and json.loads(response[1]).get("error"):
+                        raise Exception(json.loads(response[1]).get("error"))
+                    else:
+                        raise Exception("Something went wrong.")
+
+            except Exception as e:
+                _LOGGER.info("Databricks Error: Error Occured while encrypting Databricks Creds {}".format(
+                    e
+                ))
+                _LOGGER.debug("Databricks Error: Error Occured while encrypting Databricks Creds {}".format(
+                    traceback.format_exc()
+                ))
+                raise Exception(e)
+            if data.get("databricks_access_token"):
+                data["databricks_access_token"] = mask
+            if data.get("client_secret"):
+                data["client_secret"] = mask
+            if data.get("access_token"):
+                data["access_token"] = mask
+            del data["name"]
+            if data.get("edit"):
+                del data["edit"]
+            return True
+        except Exception as e:
+            _LOGGER.error("Databricks Error : Error occured while performing custom encryption {}".format(e))
+            self.put_msg(e)
+            return False

@@ -5,6 +5,7 @@ import traceback
 import json
 
 import databricks_const as const
+import databricks_common_utils as utils
 
 from datetime import datetime, timedelta
 from log_manager import setup_logging
@@ -43,6 +44,16 @@ class DatabricksRetiredRunCommand(GeneratingCommand):
             _LOGGER.info("Initiating databricksretiredrun command.")
             if False:
                 yield
+
+            session_key = self._metadata.searchinfo.session_key
+
+            # Check User role
+            if not utils.check_user_roles(session_key):
+                error_msg = ('Lack of "databricks_user" role for the current user.'
+                             ' Refer "Provide Required Access" section in the Intro page.')
+                _LOGGER.error(error_msg)
+                raise Exception(error_msg)
+
             current_time = datetime.utcnow()
             if not any((self.days, self.run_id, self.user)):
                 msg = "No parameters provided. Please provide at least one of the parameters"

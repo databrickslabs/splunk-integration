@@ -42,7 +42,7 @@ class TestDatabricksUtils(unittest.TestCase):
         db_com = import_module('databricks_com')
         db_com._LOGGER = MagicMock()
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         self.assertIsInstance(obj,db_com.DatabricksClient)
         db_com._LOGGER.info.assert_called_with("Proxy is configured. Using proxy to execute the request.")
 
@@ -55,7 +55,7 @@ class TestDatabricksUtils(unittest.TestCase):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123","auth_type" : "PAT"}
         with self.assertRaises(Exception) as context:
-            obj = db_com.DatabricksClient("session_key")
+            obj = db_com.DatabricksClient("account_name", "session_key")
         self.assertEqual(
             "Addon is not configured. Navigate to addon's configuration page to configure the addon.", str(context.exception))
 
@@ -68,7 +68,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_cluster_id(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version, mock_response):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         cluster_id = obj.get_cluster_id("test1")
         self.assertEqual(cluster_id, "123")
     
@@ -81,7 +81,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_cluster_pending(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version, mock_response):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         with self.assertRaises(Exception) as context:
             cluster_id = obj.get_cluster_id("test2")
         self.assertEqual(
@@ -97,7 +97,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_cluster_none(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version, mock_response):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         with self.assertRaises(Exception) as context:
             cluster_id = obj.get_cluster_id("test3")
         self.assertEqual(
@@ -111,7 +111,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_api_response_get(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         obj.session.get.return_value = Response(200)
         resp = obj.databricks_api("get", "endpoint", args="123")
         self.assertEqual(obj.session.get.call_count, 1)
@@ -125,7 +125,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_api_response_post(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         obj.session.post.return_value = Response(200)
         resp = obj.databricks_api("post", "endpoint", args="123", data={"p1": "v1"})
         self.assertEqual(obj.session.post.call_count, 1)
@@ -139,7 +139,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_api_response_429(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "PAT"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         obj.session.post.return_value = Response(429)
         with self.assertRaises(Exception) as context:
             resp = obj.databricks_api("post", "endpoint", args="123", data={"p1": "v1"})
@@ -157,7 +157,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_api_response_refresh_token(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version, mock_refresh):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "AAD"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         obj.session.post.side_effect = [Response(403), Response(200)]
         resp = obj.databricks_api("post", "endpoint", args="123", data={"p1": "v1"})
         self.assertEqual(obj.session.post.call_count, 2)
@@ -173,7 +173,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_api_response_refresh_token_error(self, mock_conf, mock_session, mock_proxy, mock_token, mock_version, mock_refresh):
         db_com = import_module('databricks_com')
         mock_conf.return_value = {"databricks_instance" : "123", "auth_type" : "AAD"}
-        obj = db_com.DatabricksClient("session_key")
+        obj = db_com.DatabricksClient("account_name", "session_key")
         obj.session.post.side_effect = [Response(403), Response(403)]
         with self.assertRaises(Exception) as context:
             resp = obj.databricks_api("post", "endpoint", args="123", data={"p1": "v1"})

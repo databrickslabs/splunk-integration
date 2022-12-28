@@ -25,6 +25,7 @@ class DatabricksJobCommand(GeneratingCommand):
 
     # Take input from user using parameters
     job_id = Option(require=True, validate=validators.Integer(0))
+    account_name = Option(require=True)
     notebook_params = Option(require=False)
 
     def generate(self):
@@ -32,6 +33,7 @@ class DatabricksJobCommand(GeneratingCommand):
         _LOGGER.info("Initiating databricksjob command")
         kv_log_info = {
             "user": self._metadata.searchinfo.username,
+            "account_name": self.account_name,
             "created_time": time.time(),
             "param": self._metadata.searchinfo.args,
             "run_id": "-",
@@ -44,8 +46,15 @@ class DatabricksJobCommand(GeneratingCommand):
         session_key = self._metadata.searchinfo.session_key
 
         try:
+            # Check User role
+            if not utils.check_user_roles(session_key):
+                error_msg = ('Lack of "databricks_user" role for the current user.'
+                             ' Refer "Provide Required Access" section in the Intro page.')
+                _LOGGER.error(error_msg)
+                raise Exception(error_msg)
+
             # Get job details
-            client = com.DatabricksClient(session_key)
+            client = com.DatabricksClient(self.account_name, session_key)
 
             payload = {
                 "job_id": self.job_id,
@@ -58,7 +67,9 @@ class DatabricksJobCommand(GeneratingCommand):
             tasks_list = list(set(job_settings.keys()))
 
             if "notebook_task" not in tasks_list:
-                raise Exception("Given job does not contains the notebook task. Hence terminating the execution.")
+                raise Exception(
+                    "Given job does not contains the notebook task. Hence terminating the execution."
+                )
             if (
                 "spark_jar_task" in tasks_list
                 or "spark_python_task" in tasks_list
@@ -75,9 +86,7 @@ class DatabricksJobCommand(GeneratingCommand):
             payload["notebook_params"] = utils.format_to_json_parameters(self.notebook_params)
 
             _LOGGER.info("Submitting job for execution.")
-            response = client.databricks_api(
-                "post", const.EXECUTE_JOB_ENDPOINT, data=payload
-            )
+            response = client.databricks_api("post", const.EXECUTE_JOB_ENDPOINT, data=payload)
 
             kv_log_info.update(response)
             run_id = response["run_id"]

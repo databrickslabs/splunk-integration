@@ -35,11 +35,20 @@ class TestDatabricksAlert(unittest.TestCase):
 
     def test_system_exit(self):
         helper = MagicMock()
-        helper.get_param.side_effect = [" ", "ts", "param", "cluster"]
+        helper.get_param.side_effect = [" ", "ts", "param", "cluster", "account_name"]
         helper.log_error = MagicMock()
         with self.assertRaises(SystemExit) as cm:
             self.alert.process_event(helper)
         helper.log_error.assert_called_once_with("Notebook path is a required parameter which is not provided.")
+        self.assertEqual(cm.exception.code, 1)
+    
+    def test_system_exit_account_name(self):
+        helper = MagicMock()
+        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", ""]
+        helper.log_error = MagicMock()
+        with self.assertRaises(SystemExit) as cm:
+            self.alert.process_event(helper)
+        helper.log_error.assert_called_once_with("Databricks Account is a required parameter which is not provided.")
         self.assertEqual(cm.exception.code, 1)
     
     @patch("modalert_launch_notebook_helper.time", auto_spec=True)
@@ -47,7 +56,7 @@ class TestDatabricksAlert(unittest.TestCase):
     @patch("modalert_launch_notebook_helper.get_splunkd_access_info", auto_spec=True)
     def test_alert_adhoc(self, mock_info, mock_client, mock_time):
         helper = MagicMock()
-        helper.get_param.side_effect = ["/path", "ts", "param", "cluster"]
+        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", "account_name"]
         helper.alert_mode = "adhoc"
         helper.orig_sid = "sid"
         helper.orig_rid = "rid"
@@ -63,7 +72,7 @@ class TestDatabricksAlert(unittest.TestCase):
     @patch("modalert_launch_notebook_helper.get_splunkd_access_info", auto_spec=True)
     def test_alert_non_adhoc(self, mock_info, mock_client, mock_time):
         helper = MagicMock()
-        helper.get_param.side_effect = ["/path", "ts", "param", "cluster"]
+        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", "account_name"]
         helper.alert_mode = "scheduled"
         helper.sid = "sid"
         helper.settings = {"rid": "rid"}
@@ -78,7 +87,7 @@ class TestDatabricksAlert(unittest.TestCase):
     @patch("modalert_launch_notebook_helper.get_splunkd_access_info", auto_spec=True)
     def test_alert_exception(self, mock_info, mock_client):
         helper = MagicMock()
-        helper.get_param.side_effect = ["/path", "ts", "param", "cluster"]
+        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", "account_name"]
         helper.alert_mode = "scheduled"
         helper.sid = "sid"
         helper.settings = {"rid": "rid"}

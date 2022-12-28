@@ -1,11 +1,11 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "info": {
     "title": "Databricks Add-on For Splunk",
     "id": {
       "group": null,
       "name": "TA-Databricks",
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "author": [
       {
@@ -21,7 +21,6 @@
       "categories": [],
       "developmentStatus": null
     },
-    "commonInformationModels": null,
     "license": {
       "name": null,
       "text": null,
@@ -33,21 +32,27 @@
       "uri": null
     },
     "releaseNotes": {
-      "name": null,
-      "text": null,
+      "name": "README",
+      "text": "README.md",
       "uri": null
     }
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "tasks": [],
-  "inputGroups": {
-  },
-  "incompatibleApps": {
-  },
+  "inputGroups": {},
+  "incompatibleApps": {},
+  "supportedDeployments": [
+    "_standalone",
+    "_distributed",
+    "_search_head_clustering"
+  ],
   "platformRequirements": {
     "splunk": {
       "Enterprise": "*"
     }
-  }
+  },
+  "targetWorkloads": [
+      "_search_heads",
+      "_forwarders"
+  ]
 }

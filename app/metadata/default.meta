@@ -1,12 +1,19 @@
 
 []
-access = read : [ * ], write : [ admin ]
+access = read : [ * ], write : [ databricks_admin ]
 export = system
 
+[ta_databricks_passwords]
+access = read : [ * ], write : [ databricks_user, databricks_admin ]
+
+[collections]
+access = read : [ * ], write : [ databricks_admin, databricks_user ]
+export = none
+
 [views]
-access = read : [ * ], write : [ admin ]
+access = read : [ * ], write : [ databricks_admin ]
 export = none
 
 [views/databricks-launch-notebook]
-access = read : [ * ], write : [ admin ]
+access = read : [ * ], write : [ databricks_admin ]
 export = system

@@ -26,6 +26,7 @@ class DatabricksQueryCommand(GeneratingCommand):
     # Take input from user using parameters
     cluster = Option(require=False)
     query = Option(require=True)
+    account_name = Option(require=True)
     command_timeout = Option(require=False, validate=validators.Integer(minimum=1))
 
     def generate(self):
@@ -38,15 +39,24 @@ class DatabricksQueryCommand(GeneratingCommand):
         session_key = self._metadata.searchinfo.session_key
 
         try:
+            # Check User role
+            if not utils.check_user_roles(session_key):
+                error_msg = ('Lack of "databricks_user" role for the current user.'
+                             ' Refer "Provide Required Access" section in the Intro page.')
+                _LOGGER.error(error_msg)
+                raise Exception(error_msg)
+
             # Fetching cluster name
-            self.cluster = self.cluster or utils.get_databricks_configs().get("cluster_name")
+            self.cluster = self.cluster or utils.get_databricks_configs(
+                session_key, self.account_name
+            ).get("cluster_name")
             if not self.cluster:
                 raise Exception(
                     "Databricks cluster is required to execute this custom command. "
                     "Provide a cluster parameter or configure the cluster in the TA's configuration page."
                 )
 
-            client = com.DatabricksClient(session_key)
+            client = com.DatabricksClient(self.account_name, session_key)
 
             # Request to get cluster ID
             _LOGGER.info("Requesting cluster ID for cluster: {}.".format(self.cluster))
@@ -56,9 +66,7 @@ class DatabricksQueryCommand(GeneratingCommand):
             # Request to create context
             _LOGGER.info("Creating Context in cluster.")
             payload = {"language": "sql", "clusterId": cluster_id}
-            response = client.databricks_api(
-                "post", const.CONTEXT_ENDPOINT, data=payload
-            )
+            response = client.databricks_api("post", const.CONTEXT_ENDPOINT, data=payload)
 
             context_id = response.get("id")
             _LOGGER.info("Context created: {}.".format(context_id))
@@ -67,9 +75,7 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.info("Submitting SQL query for execution.")
             payload["contextId"] = context_id
             payload["command"] = self.query
-            response = client.databricks_api(
-                "post", const.COMMAND_ENDPOINT, data=payload
-            )
+            response = client.databricks_api("post", const.COMMAND_ENDPOINT, data=payload)
 
             command_id = response.get("id")
             _LOGGER.info("Query submitted, command id: {}.".format(command_id))
@@ -85,9 +91,7 @@ class DatabricksQueryCommand(GeneratingCommand):
 
             total_wait_time = 0
             while total_wait_time <= command_timeout_in_seconds:
-                response = client.databricks_api(
-                    "get", const.STATUS_ENDPOINT, args=args
-                )
+                response = client.databricks_api("get", const.STATUS_ENDPOINT, args=args)
 
                 status = response.get("status")
                 _LOGGER.info("Query execution status: {}.".format(status))
@@ -99,14 +103,20 @@ class DatabricksQueryCommand(GeneratingCommand):
 
                 elif status == "Finished":
                     if response["results"]["resultType"] == "error":
-                        msg = response["results"].get("summary", "Error encountered while executing query.")
+                        msg = response["results"].get(
+                            "summary", "Error encountered while executing query."
+                        )
                         raise Exception(str(msg))
 
                     if response["results"]["resultType"] != "table":
-                        raise Exception("Encountered unknown result type, terminating the execution.")
+                        raise Exception(
+                            "Encountered unknown result type, terminating the execution."
+                        )
 
                     if response["results"].get("truncated", True):
-                        self.write_warning("Results are truncated due to Databricks API limitations.")
+                        self.write_warning(
+                            "Results are truncated due to Databricks API limitations."
+                        )
 
                     _LOGGER.info("Query execution successful. Preparing data.")
 
@@ -136,14 +146,18 @@ class DatabricksQueryCommand(GeneratingCommand):
 
                     _LOGGER.info(
                         "Query execution in progress, will retry after {} seconds.".format(
-                            str(seconds_to_timeout)))
+                            str(seconds_to_timeout)
+                        )
+                    )
                     time.sleep(seconds_to_timeout)
                     total_wait_time += seconds_to_timeout
                     continue
 
                 _LOGGER.info(
                     "Query execution in progress, will retry after {} seconds.".format(
-                        str(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)))
+                        str(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
+                    )
+                )
                 time.sleep(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
                 total_wait_time += const.COMMAND_SLEEP_INTERVAL_IN_SECONDS
             else:
@@ -156,9 +170,7 @@ class DatabricksQueryCommand(GeneratingCommand):
             if context_id:
                 _LOGGER.info("Deleting context.")
                 payload = {"contextId": context_id, "clusterId": cluster_id}
-                _ = client.databricks_api(
-                    "post", const.CONTEXT_DESTROY_ENDPOINT, data=payload
-                )
+                _ = client.databricks_api("post", const.CONTEXT_DESTROY_ENDPOINT, data=payload)
                 _LOGGER.info("Context deleted successfully.")
 
         except Exception as e:

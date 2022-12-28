@@ -1,7 +1,7 @@
 
 from email.policy import default
 import ta_databricks_declare
-from databricks_validators import ValidateDatabricksInstance
+from databricks_validators import ValidateDatabricksInstance, ProxyEncryption, LoggingValidator
 from splunktaucclib.rest_handler.endpoint import (
     field,
     validator,
@@ -62,12 +62,9 @@ fields_proxy = [
     field.RestField(
         'proxy_password',
         required=False,
-        encrypted=True,
+        encrypted=False,
         default=None,
-        validator=validator.String(
-            min_len=0,
-            max_len=8192,
-        )
+        validator=ProxyEncryption()
     ),
     field.RestField(
         'proxy_rdns',
@@ -86,7 +83,7 @@ fields_logging = [
         required=False,
         encrypted=False,
         default='INFO',
-        validator=None
+        validator=LoggingValidator()
     )
 ]
 model_logging = RestModel(fields_logging, name='logging')
@@ -133,14 +130,14 @@ fields_databricks_credentials = [
     field.RestField(
         'client_secret',
         required=False,
-        encrypted=True,
+        encrypted=False,
         default='',
         validator=None
     ),
     field.RestField(
         'databricks_access_token',
         required=False,
-        encrypted=True,
+        encrypted=False,
         default='',
         validator=None
     ),
@@ -157,7 +154,7 @@ fields_databricks_credentials = [
     field.RestField(
         'access_token',
         required=False,
-        encrypted=True
+        encrypted=False
     )
 ]
 model_databricks_credentials = RestModel(fields_databricks_credentials, name='databricks_credentials')
@@ -167,8 +164,7 @@ endpoint = MultipleModel(
     'ta_databricks_settings',
     models=[
         model_proxy,
-        model_logging,
-        model_databricks_credentials
+        model_logging
     ],
 )
 

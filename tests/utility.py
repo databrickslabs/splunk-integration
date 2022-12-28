@@ -8,5 +8,3 @@ class Response:
     def json(self):
         """Set json value."""
         return {"status_code": self.status_code}
-
-
