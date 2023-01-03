@@ -25,9 +25,9 @@ class DatabricksCustomEncryption(PersistentServerConnectionApplication):
         self.account_name = None
         self.auth_type = None
         self.edit = None
-        self.client_secret = None
-        self.databricks_access_token = None
-        self.access_token = None
+        self.aad_client_secret = None
+        self.pat_access_token = None
+        self.aad_access_token = None
         self.proxy_password = None
         self.payload = {}
         self.status = None
@@ -51,14 +51,14 @@ class DatabricksCustomEncryption(PersistentServerConnectionApplication):
             self.account_name = form_data.get("name")
             if form_data.get("edit"):
                 self.edit = form_data.get("edit")
-            if form_data.get("auth_type") or form_data.get("databricks_access_token") or form_data.get("client_secret"):
+            if form_data.get("auth_type") or form_data.get("pat_access_token") or form_data.get("aad_client_secret"):
                 self.auth_type = form_data.get("auth_type")
 
-                if self.auth_type == "PAT" or form_data.get("databricks_access_token"):
-                    self.databricks_access_token = form_data.get("databricks_access_token")
-                elif self.auth_type == "AAD" or form_data.get("client_secret"):
-                    self.client_secret = form_data.get("client_secret")
-                    self.access_token = form_data.get("access_token")
+                if self.auth_type == "PAT" or form_data.get("pat_access_token"):
+                    self.pat_access_token = form_data.get("pat_access_token")
+                elif self.auth_type == "AAD" or form_data.get("aad_client_secret"):
+                    self.aad_client_secret = form_data.get("aad_client_secret")
+                    self.aad_access_token = form_data.get("aad_access_token")
 
                 self.databricks_configuration_encrypt()
 
@@ -96,7 +96,7 @@ class DatabricksCustomEncryption(PersistentServerConnectionApplication):
 
             if self.auth_type == "PAT":
                 # encrypted api key
-                encrypted_databricks_access_token = cipher.encrypt(self.databricks_access_token.encode())
+                encrypted_pat_access_token = cipher.encrypt(self.pat_access_token.encode())
 
                 # nonce is a random value generated each time we instantiate the cipher using new()
                 # creating a dict to write in custom passwords conf file
@@ -104,11 +104,11 @@ class DatabricksCustomEncryption(PersistentServerConnectionApplication):
                     'name': self.account_name,
                     'key': base64.b64encode(modified_key.encode()).decode(),
                     'nonce': base64.b64encode(cipher.nonce).decode(),
-                    'databricks_access_token': base64.b64encode(encrypted_databricks_access_token).decode()
+                    'pat_access_token': base64.b64encode(encrypted_pat_access_token).decode()
                 }
             else:
-                encrypted_client_secret = cipher.encrypt(self.client_secret.encode())
-                encrypted_access_token = cipher.encrypt(self.access_token.encode())
+                encrypted_aad_client_secret = cipher.encrypt(self.aad_client_secret.encode())
+                encrypted_aad_access_token = cipher.encrypt(self.aad_access_token.encode())
 
                 # nonce is a random value generated each time we instantiate the cipher using new()
                 # creating a dict to write in custom passwords conf file
@@ -116,8 +116,8 @@ class DatabricksCustomEncryption(PersistentServerConnectionApplication):
                     'name': self.account_name,
                     'key': base64.b64encode(modified_key.encode()).decode(),
                     'nonce': base64.b64encode(cipher.nonce).decode(),
-                    'client_secret': base64.b64encode(encrypted_client_secret).decode(),
-                    'access_token': base64.b64encode(encrypted_access_token).decode()
+                    'aad_client_secret': base64.b64encode(encrypted_aad_client_secret).decode(),
+                    'aad_access_token': base64.b64encode(encrypted_aad_access_token).decode()
                 }
             if not self.edit:
                 rest.simpleRequest(

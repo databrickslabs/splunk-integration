@@ -42,9 +42,9 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         self.assertIsInstance(obj1, db_cm.DatabricksCustomDecryption)
     
     
-    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_config_decryption",autospec=True)
-    @patch("databricks_custom_decryption.DatabricksCustomDecryption.get_account_configs",autospec=True)
-    @patch("splunk.rest.simpleRequest",autospec=True)
+    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_config_decryption")
+    @patch("databricks_custom_decryption.DatabricksCustomDecryption.get_account_configs")
+    @patch("splunk.rest.simpleRequest")
     def test_handle_config(self, mock_rest, mock_account_configs , mock_decrypt):
         db_cm = import_module("databricks_custom_decryption")
         obj1 = db_cm.DatabricksCustomDecryption("command_line", "command_args")
@@ -57,8 +57,8 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
         
-    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_proxy_decryption",autospec=True)
-    @patch("splunk.rest.simpleRequest",autospec=True)
+    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_proxy_decryption")
+    @patch("splunk.rest.simpleRequest")
     def test_handle_proxy(self, mock_rest, mock_decrypt):
         db_cm = import_module("databricks_custom_decryption")
         obj1 = db_cm.DatabricksCustomDecryption("command_line", "command_args")
@@ -70,10 +70,10 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
     
-    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_config_decryption",autospec=True)
-    @patch("databricks_custom_decryption.DatabricksCustomDecryption.get_account_configs",autospec=True)
-    @patch("splunk.rest.simpleRequest",autospec=True)
-    @patch("traceback.format_exc", autospec=True)
+    @patch("databricks_custom_decryption.DatabricksCustomDecryption.perform_config_decryption")
+    @patch("databricks_custom_decryption.DatabricksCustomDecryption.get_account_configs")
+    @patch("splunk.rest.simpleRequest")
+    @patch("traceback.format_exc")
     def test_handle_error(self, mock_traceback, mock_rest, mock_account_configs , mock_decrypt):
         db_cm = import_module("databricks_custom_decryption")
         db_cm._LOGGER = MagicMock()
@@ -90,7 +90,7 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
         
-    @patch("splunk.rest.simpleRequest",autospec=True)
+    @patch("splunk.rest.simpleRequest")
     def test_get_account_configs(self, mock_rest):
         db_cm = import_module("databricks_custom_decryption")
         obj1 = db_cm.DatabricksCustomDecryption("command_line", "command_args")
@@ -100,9 +100,9 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         response = obj1.get_account_configs()
         self.assertEqual(response, {"sample":"sample"})
     
-    @patch("databricks_custom_encryption.AES.new", autospec=True)
-    @patch("databricks_custom_encryption.AES.decrypt", autospec=True)
-    @patch("base64.b64decode", autospec=True)
+    @patch("databricks_custom_encryption.AES.new")
+    @patch("databricks_custom_encryption.AES.decrypt")
+    @patch("base64.b64decode")
     def test_perform_config_decryption_pat(self, mock_base, mock_aes_decrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_decryption")
         db_cm._LOGGER = MagicMock()
@@ -111,26 +111,26 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         # mock_base.return_value = b'encrypted_access_token'
         # mock_aes_decrypt.return_value = b"decrypted_access_token"
         obj1.auth_type = "PAT"
-        configs = {"key":"key", "nonce":"nonce", "databricks_access_token":"access_token"}
+        configs = {"key":"key", "nonce":"nonce", "pat_access_token":"access_token"}
         obj1.perform_config_decryption(configs)
-        self.assertEqual(obj1.payload["databricks_access_token"], "decrypted_access_token")
+        self.assertEqual(obj1.payload["pat_access_token"], "decrypted_access_token")
         
-    @patch("databricks_custom_encryption.AES.new", autospec=True)
-    @patch("databricks_custom_encryption.AES.decrypt", autospec=True)
-    @patch("base64.b64decode", autospec=True)
+    @patch("databricks_custom_encryption.AES.new")
+    @patch("databricks_custom_encryption.AES.decrypt")
+    @patch("base64.b64decode")
     def test_perform_config_decryption_aad(self, mock_base, mock_aes_decrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_decryption")
         db_cm._LOGGER = MagicMock()
         obj1 = db_cm.DatabricksCustomDecryption("command_line", "command_args")
         mock_aes_new.return_value.decrypt.return_value.decode.return_value = "decrypted_access_token"
         obj1.auth_type = "AAD"
-        configs = {"key":"key", "nonce":"nonce", "access_token":"access_token", "client_secret":"client_secret"}
+        configs = {"key":"key", "nonce":"nonce", "aad_access_token":"access_token", "aad_client_secret":"client_secret"}
         obj1.perform_config_decryption(configs)
-        self.assertEqual(obj1.payload["access_token"], "decrypted_access_token")
+        self.assertEqual(obj1.payload["aad_access_token"], "decrypted_access_token")
     
-    @patch("databricks_custom_encryption.AES.new", autospec=True)
-    @patch("databricks_custom_encryption.AES.decrypt", autospec=True)
-    @patch("base64.b64decode", autospec=True)
+    @patch("databricks_custom_encryption.AES.new")
+    @patch("databricks_custom_encryption.AES.decrypt")
+    @patch("base64.b64decode")
     def test_perform_proxy_decryption(self, mock_base, mock_aes_decrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_decryption")
         db_cm._LOGGER = MagicMock()

@@ -63,7 +63,7 @@
           <li> Now Login as user you created by giving username and password.</li></ul>
           </li>
         </ul>
-        <b>Note: </b>To create user and assign roles, admin_all_objects capability is required. Make sure to make no modification is the existing created "databricks_admin" and "databricks_user" roles.
+        <b>Note: </b>To create user and assign roles, admin_all_objects capability is required. Make sure to make no modification is the existing created 'databricks_admin' and 'databricks_user' roles.
         </html>
       </panel>
     </row>

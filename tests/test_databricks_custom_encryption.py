@@ -45,7 +45,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
         self.assertIsInstance(obj1, db_cm.DatabricksCustomEncryption)
 
-    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt",autospec=True)
+    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt")
     def test_handle_pat(self, mock_encrypt):
         db_cm = import_module("databricks_custom_encryption")
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
@@ -58,7 +58,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
         
-    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt",autospec=True)
+    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt")
     def test_handle_pat_error(self, mock_encrypt):
         db_cm = import_module("databricks_custom_encryption")
         
@@ -77,7 +77,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
         
-    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt",autospec=True)
+    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_configuration_encrypt")
     def test_handle_aad(self, mock_encrypt):
         db_cm = import_module("databricks_custom_encryption")
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
@@ -90,7 +90,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         }
         self.assertEqual(response, obj1.handle(in_string))
     
-    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_proxy_encrypt",autospec=True)
+    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_proxy_encrypt")
     def test_handle_proxy(self, mock_encrypt):
         db_cm = import_module("databricks_custom_encryption")
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
@@ -104,7 +104,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         self.assertEqual(response, obj1.handle(in_string))
         
         
-    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_proxy_encrypt",autospec=True)
+    @patch("databricks_custom_encryption.DatabricksCustomEncryption.databricks_proxy_encrypt")
     def test_handle_proxy_error(self, mock_encrypt):
         db_cm = import_module("databricks_custom_encryption")
         err_message = "error message"
@@ -120,23 +120,23 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         self.assertEqual(response, obj1.handle(in_string))
 
     @patch("databricks_custom_encryption.AES.new", return_value=MagicMock())
-    @patch("databricks_custom_encryption.AES.encrypt", autospec=True)
-    @patch("splunk.rest.simpleRequest", autospec=True)
-    @patch("base64.b64encode", autospec=True)
+    @patch("databricks_custom_encryption.AES.encrypt")
+    @patch("splunk.rest.simpleRequest")
+    @patch("base64.b64encode")
     def test_databricks_configuration_encrypt(self, mock_base, mock_rest, mock_aes_encrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_encryption")
         db_cm._LOGGER = MagicMock()
         mock_aes_encrypt.return_value ="encrypted_access_token"
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
         obj1.auth_type = "PAT"
-        obj1.databricks_access_token = "access_token"
+        obj1.pat_access_token = "access_token"
         obj1.databricks_configuration_encrypt()
         db_cm._LOGGER.debug.assert_called_with("Databricks Configuration Custom Encryption completed successfully.")
         
     @patch("databricks_custom_encryption.AES.new", return_value=MagicMock())
-    @patch("databricks_custom_encryption.AES.encrypt", autospec=True)
-    @patch("splunk.rest.simpleRequest", autospec=True)
-    @patch("base64.b64encode", autospec=True)
+    @patch("databricks_custom_encryption.AES.encrypt")
+    @patch("splunk.rest.simpleRequest")
+    @patch("base64.b64encode")
     def test_databricks_configuration_encrypt_edit(self, mock_base, mock_rest, mock_aes_encrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_encryption")
         db_cm._LOGGER = MagicMock()
@@ -144,14 +144,14 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
         obj1.auth_type = "PAT"
         obj1.edit = "edit"
-        obj1.databricks_access_token = "access_token"
+        obj1.pat_access_token = "access_token"
         obj1.databricks_configuration_encrypt()
         db_cm._LOGGER.debug.assert_called_with("Databricks Configuration Custom Encryption completed successfully.")
     
     @patch("databricks_custom_encryption.AES.new", return_value=MagicMock())
-    @patch("databricks_custom_encryption.AES.encrypt", autospec=True)
-    @patch("splunk.rest.simpleRequest", autospec=True)
-    @patch("base64.b64encode", autospec=True)
+    @patch("databricks_custom_encryption.AES.encrypt")
+    @patch("splunk.rest.simpleRequest")
+    @patch("base64.b64encode")
     def test_databricks_proxy_encrypt(self, mock_base, mock_rest, mock_aes_encrypt, mock_aes_new):
         db_cm = import_module("databricks_custom_encryption")
         db_cm._LOGGER = MagicMock()

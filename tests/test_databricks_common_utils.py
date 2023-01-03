@@ -35,17 +35,16 @@ def tearDownModule():
 class TestDatabricksUtils(unittest.TestCase):
     """Test Databricks utils."""
     
-    @patch("databricks_common_utils.get_current_user", autospec=True)
+    @patch("databricks_common_utils.get_current_user")
     def test_get_user_agent(self, mock_user):
         db_utils = import_module('databricks_common_utils')
-        mock_user.return_value = "admin"
-        response = db_utils.get_user_agent("session_key")
-        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.2.0-admin")
+        response = db_utils.get_user_agent()
+        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.2.0")
     
-    @patch("databricks_common_utils.client.connect", autospec=True)
-    @patch("databricks_common_utils.client.connect.jobs.oneshot", autospec=True)
-    @patch("databricks_common_utils.results.JSONResultsReader", autospec=True)
-    @patch("splunk.clilib.cli_common.getMgmtUri", autospec=True)
+    @patch("databricks_common_utils.client.connect")
+    @patch("databricks_common_utils.client.connect.jobs.oneshot")
+    @patch("databricks_common_utils.results.JSONResultsReader")
+    @patch("splunk.clilib.cli_common.getMgmtUri")
     def test_check_user_roles(self, mock_common, mock_json, mock_jobs, mock_client):
         db_utils = import_module('databricks_common_utils')
         mock_common.return_value = 8089
@@ -55,10 +54,10 @@ class TestDatabricksUtils(unittest.TestCase):
         response = db_utils.check_user_roles("session_key")
         self.assertEqual(response, True)
     
-    @patch("databricks_common_utils.client.connect", autospec=True)
-    @patch("databricks_common_utils.client.connect.jobs.oneshot", autospec=True)
-    @patch("databricks_common_utils.results.JSONResultsReader", autospec=True)
-    @patch("splunk.clilib.cli_common.getMgmtUri", autospec=True)
+    @patch("databricks_common_utils.client.connect")
+    @patch("databricks_common_utils.client.connect.jobs.oneshot")
+    @patch("databricks_common_utils.results.JSONResultsReader")
+    @patch("splunk.clilib.cli_common.getMgmtUri")
     def test_check_user_roles_false(self, mock_common, mock_json, mock_jobs, mock_client):
         db_utils = import_module('databricks_common_utils')
         mock_common.return_value = 8089
@@ -68,10 +67,10 @@ class TestDatabricksUtils(unittest.TestCase):
         response = db_utils.check_user_roles("session_key")
         self.assertEqual(response, False)
     
-    @patch("databricks_common_utils.client.connect", autospec=True)
-    @patch("databricks_common_utils.client.connect.jobs.oneshot", autospec=True)
-    @patch("databricks_common_utils.results.JSONResultsReader", autospec=True)
-    @patch("databricks_common_utils.get_mgmt_port", autospec=True)
+    @patch("databricks_common_utils.client.connect")
+    @patch("databricks_common_utils.client.connect.jobs.oneshot")
+    @patch("databricks_common_utils.results.JSONResultsReader")
+    @patch("databricks_common_utils.get_mgmt_port")
     def test_get_current_user(self, mock_common, mock_json, mock_jobs, mock_client):
         db_utils = import_module('databricks_common_utils')
         mock_common.return_value = 8089
@@ -81,7 +80,7 @@ class TestDatabricksUtils(unittest.TestCase):
         response = db_utils.get_current_user("session_key")
         self.assertEqual(response, "db_admin")
     
-    @patch("splunk.rest.simpleRequest",autospec=True)
+    @patch("splunk.rest.simpleRequest")
     def test_get_mgmt_port(self, mock_rest):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -90,7 +89,7 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(response, '8089')
     
 
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_databricks_configs(self, mock_request):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -100,7 +99,7 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(response, {"databricks_instance" : "123", "databricks_access_token" : "pat123", "auth_type":"PAT"})
 
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_save_databricks_aad_access_token(self, mock_manager):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -108,7 +107,7 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(db_utils._LOGGER.info.call_count, 2)
         db_utils._LOGGER.info.assert_called_with("Saved AAD access token successfully.")
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_save_databricks_aad_access_token_exception(self, mock_manager):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -121,21 +120,21 @@ class TestDatabricksUtils(unittest.TestCase):
             "Exception while saving AAD access token.", str(context.exception))
     
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_token_aad(self, mock_request):
         db_utils = import_module('databricks_common_utils')
-        mock_request.return_value = (200, json.dumps({"access_token" : "aad_access_token"}))
+        mock_request.return_value = (200, json.dumps({"aad_access_token" : "aad_access_token"}))
         clear_token = db_utils.get_clear_token("session_key", "AAD", "account_name")
         self.assertEqual(clear_token, "aad_access_token")
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_token_pat(self, mock_request):
         db_utils = import_module('databricks_common_utils')
-        mock_request.return_value = (200, json.dumps({"databricks_access_token":"PAT token"}))
+        mock_request.return_value = (200, json.dumps({"pat_access_token":"PAT token"}))
         clear_token = db_utils.get_clear_token("session_key", "PAT", "account_name")
         self.assertEqual(clear_token, "PAT token")
 
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_token_exception(self, mock_request):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -145,14 +144,14 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(clear_token, None)
     
 
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_client_secret(self, mock_request):
         db_utils = import_module('databricks_common_utils')
-        mock_request.return_value = (200, json.dumps({"client_secret":"client_secret_value"}))
+        mock_request.return_value = (200, json.dumps({"aad_client_secret":"client_secret_value"}))
         cl_sec = db_utils.get_clear_client_secret("account_name", "session_key")
         self.assertEqual(cl_sec, "client_secret_value")
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_client_secret_exception(self, mock_request):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -162,22 +161,22 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(cl_sec, None)
 
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_proxy_clear_password(self, mock_request):
         db_utils = import_module('databricks_common_utils')
         mock_request.return_value = (200, json.dumps({"proxy_password":"psswd"}))
         pwd = db_utils.get_proxy_clear_password("session_key")
         self.assertEqual(pwd, "psswd")
     
-    @patch("databricks_common_utils.rest.simpleRequest", autospec=True)
+    @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_proxy_configuration(self, mock_rest):
         db_utils = import_module('databricks_common_utils')
         mock_rest.return_value = (200, json.dumps({"entry":[{"content":{"proxy_ip":"ip", "proxy_port":"port"}},"test"]}))
         prxy_settings = db_utils.get_proxy_configuration("session_key")
         self.assertEqual(prxy_settings, {"proxy_ip":"ip", "proxy_port":"port"})
     
-    @patch("databricks_common_utils.get_proxy_configuration", autospec=True)
-    @patch("databricks_common_utils.get_proxy_clear_password", autospec=True)
+    @patch("databricks_common_utils.get_proxy_configuration")
+    @patch("databricks_common_utils.get_proxy_clear_password")
     def test_get_proxy_uri(self, mock_pwd, mock_conf):
         db_utils = import_module('databricks_common_utils')
         mock_conf.return_value = {"proxy_enabled": 1, "proxy_type": "http", "proxy_url": "proxy_url", "proxy_port": 8000, "proxy_username": "proxy_usr"}
@@ -186,8 +185,8 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(proxy_uri, {'http': 'http://proxy_usr:proxy_pwd@proxy_url:8000', 'https': 'http://proxy_usr:proxy_pwd@proxy_url:8000'})
         
 
-    @patch("databricks_common_utils.get_proxy_configuration", autospec=True)
-    @patch("databricks_common_utils.get_proxy_clear_password", autospec=True)
+    @patch("databricks_common_utils.get_proxy_configuration")
+    @patch("databricks_common_utils.get_proxy_clear_password")
     def test_get_proxy_uri_disabled(self, mock_pwd, mock_conf):
         db_utils = import_module('databricks_common_utils')
         mock_conf.return_value = {"proxy_enabled": 0, "proxy_type": "http", "proxy_url": "proxy_url", "proxy_port": 8000, "proxy_username": "proxy_usr"}
@@ -195,14 +194,14 @@ class TestDatabricksUtils(unittest.TestCase):
         proxy_uri = db_utils.get_proxy_uri("session_key")
         self.assertEqual(proxy_uri, None)
 
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.requests.post")
     def test_update_kv_store_collection_if(self, mock_post):
         db_utils = import_module('databricks_common_utils')
         mock_post.return_value.status_code =  200
         kv_resp = db_utils.update_kv_store_collection("splunk_uri", "run_collection","session_key", {})
         self.assertEqual(kv_resp, {"kv_status": "KV Store updated successfully"})
     
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.requests.post")
     def test_update_kv_store_collection_else(self, mock_post):
         db_utils = import_module('databricks_common_utils')
         mock_post.return_value.status_code =  400
@@ -221,11 +220,11 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(
             "Invalid format for parameter notebook_params. Provide the value in 'param1=val1||param2=val2' format.", str(context.exception))
 
-    @patch("databricks_common_utils.get_proxy_uri", autospec=True)        
-    @patch("databricks_common_utils.get_databricks_configs", autospec=True)        
-    @patch("databricks_common_utils.get_clear_client_secret", autospec=True)
-    @patch("databricks_common_utils.save_databricks_aad_access_token", autospec=True)
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.get_proxy_uri")        
+    @patch("databricks_common_utils.get_databricks_configs")        
+    @patch("databricks_common_utils.get_clear_client_secret")
+    @patch("databricks_common_utils.save_databricks_aad_access_token")
+    @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token(self, mock_post, mock_save, mock_secret, mock_conf, mock_proxy):
         db_utils = import_module('databricks_common_utils')
         mock_save.side_effect = MagicMock
@@ -237,11 +236,11 @@ class TestDatabricksUtils(unittest.TestCase):
         return_val = db_utils.get_aad_access_token("session_key", "user_agent", "account_name")
         self.assertEqual (return_val, "123")
     
-    @patch("databricks_common_utils.get_proxy_uri", autospec=True)        
-    @patch("databricks_common_utils.get_databricks_configs", autospec=True)        
-    @patch("databricks_common_utils.get_clear_client_secret", autospec=True)
-    @patch("databricks_common_utils.save_databricks_aad_access_token", autospec=True)
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.get_proxy_uri")        
+    @patch("databricks_common_utils.get_databricks_configs")        
+    @patch("databricks_common_utils.get_clear_client_secret")
+    @patch("databricks_common_utils.save_databricks_aad_access_token")
+    @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token_200(self, mock_post, mock_save, mock_secret, mock_conf, mock_proxy):
         db_utils = import_module('databricks_common_utils')
         mock_save.return_value = MagicMock()
@@ -253,11 +252,11 @@ class TestDatabricksUtils(unittest.TestCase):
         return_val = db_utils.get_aad_access_token("session_key", "user_agent", "account_name")
         self.assertEqual (return_val, "123")
     
-    @patch("databricks_common_utils.get_proxy_uri", autospec=True)        
-    @patch("databricks_common_utils.get_databricks_configs", autospec=True)        
-    @patch("databricks_common_utils.get_clear_client_secret", autospec=True)
-    @patch("databricks_common_utils.save_databricks_aad_access_token", autospec=True)
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.get_proxy_uri")        
+    @patch("databricks_common_utils.get_databricks_configs")        
+    @patch("databricks_common_utils.get_clear_client_secret")
+    @patch("databricks_common_utils.save_databricks_aad_access_token")
+    @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token_200(self, mock_post, mock_save, mock_secret, mock_conf, mock_proxy):
         db_utils = import_module('databricks_common_utils')
         mock_save.return_value = MagicMock()
@@ -270,11 +269,11 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual (return_val, "123")
 
     
-    @patch("databricks_common_utils.get_proxy_uri", autospec=True)        
-    @patch("databricks_common_utils.get_databricks_configs", autospec=True)        
-    @patch("databricks_common_utils.get_clear_client_secret", autospec=True)
-    @patch("databricks_common_utils.save_databricks_aad_access_token", autospec=True)
-    @patch("databricks_common_utils.requests.post", autospec=True)
+    @patch("databricks_common_utils.get_proxy_uri")        
+    @patch("databricks_common_utils.get_databricks_configs")        
+    @patch("databricks_common_utils.get_clear_client_secret")
+    @patch("databricks_common_utils.save_databricks_aad_access_token")
+    @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token_403(self, mock_post, mock_save, mock_secret, mock_conf, mock_proxy):
         db_utils = import_module('databricks_common_utils')
         mock_save.return_value = MagicMock()

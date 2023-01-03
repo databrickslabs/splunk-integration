@@ -20,7 +20,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 # RELEASE NOTES VERSION 1.2.0
 * Updated the Add-on to include new roles for Databricks Admin and Databricks User.
 * Implemented custom encryption module.
-* Added support for mutiple account creation.
+* Added support for creation of multiple accounts.
 * Updated the user-agent to include logged in user.
 
 # RELEASE NOTES VERSION 1.1.0
@@ -56,21 +56,21 @@ Databricks Add-on for Splunk can be installed through UI using "Manage Apps" > "
 
 # CREATE USERS AND ASSIGN ROLES
 
-** Steps to create user with "databricks_admin" capabilities:
+** Steps to create user with 'databricks_admin' capabilities:
 
 * Login as admin.
 * Go to Settings->Users.
 * If you want to create new User: Click on "New User". Enter "Name" of the user, set and confirm password. In the Assign roles section select 'databricks_admin' role, it should be shown in Selected Items sections and Save. Go to Administrator and select Logout. Login as the User you created by giving the name and password. While logging as new User created it will ask to reset password, Reset the password and complete login.
 * If you want to edit an existing User: Click on Edit section in Actions of the User you want to update. In the Assign roles section select 'databricks_admin' role, it should be shown in Selected Items sections and Save. Go to Administrator and select Logout. Now Login as user you created by giving username and password.
 
-** Steps to create user with "databricks_user" capabilities:
+** Steps to create user with 'databricks_user' capabilities:
 
 * Login as admin.
 * Go to Settings->Users.
 * If you want to create new User: Click on "New User". Enter "Name" of the user, set and confirm password. In the Assign roles section select 'databricks_user' role, it should be shown in Selected Items sections and Save. Go to Administrator and select Logout. Login as the User you created by giving the name and password. While logging as new User created it will ask to reset password, Reset the password and complete login.
 * If you want to edit an existing User: Click on Edit section in Actions of the User you want to update. In the Assign roles section select 'databricks_user' role, it should be shown in Selected Items sections and Save. Go to Administrator and select Logout. Now Login as user you created by giving username and password.
 
-**Note**: To create user and assign roles, admin_all_objects capability is required. Make sure to make no modification is the existing created "databricks_admin" and "databricks_user" roles.
+**Note**: To create user and assign roles, admin_all_objects capability is required. Make sure to make no modification is the existing created 'databricks_admin' and 'databricks_user' roles.
 
 # CAPABILITIES
 
@@ -80,7 +80,7 @@ Databricks Add-on for Splunk can be installed through UI using "Manage Apps" > "
 
 
 # CONFIGURATION
-Users will be required to have databricks_admin role in order to configure Databricks Add-on for Splunk. This integration allows a user to configure multiple pair of Databricks Instances, its credentials, and Databricks Cluster Name at a time. In case a user is using the integration in search head cluster environment, configuration on all the search cluster nodes will be overwritten as and when a user changes some configuration on any one of the search head cluster members. Hence a user should configure the integration on only one of the search head cluster members.
+Users will be required to have 'databricks_admin' role in order to configure Databricks Add-on for Splunk. This integration allows a user to configure multiple pair of Databricks Instances, its credentials, and Databricks Cluster Name at a time. In case a user is using the integration in search head cluster environment, configuration on all the search cluster nodes will be overwritten as and when a user changes some configuration on any one of the search head cluster members. Hence a user should configure the integration on only one of the search head cluster members.
 
 **Configuration pre-requisites**:
 To configure the Add-on with Azure Active Directory token authentication, you need to provision a service principal in Azure Portal and add it to the target Azure Databricks workspace.
@@ -306,13 +306,13 @@ Follow the below steps to upgrade the Add-on to 1.2.0
 
 * Follow the General upgrade steps section.
 * Navigate to Settings > Users.
-* Create new user or provide existing user with "databricks_admin" role.
-* Login with the user having "databricks_admin" role.
+* Create new user or provide existing user with 'databricks_admin' role.
+* Login with the user having 'databricks_admin' role.
 * Navigate to Databricks Add-on for Splunk > Configuration.
 * Click on Add button, and reconfigure account with required information.
 * The logged in user will now able to execute any custom commands.
 
-**Note:** Create new user or provide existing user with "databricks_user" role in order to restrict them from configuring/modifying the credentials.
+**Note:** Create new user or provide existing user with 'databricks_user' role in order to restrict them from configuring/modifying the credentials.
 
 
 ## Upgrade from Databricks Add-On for Splunk v1.0.0 to v1.1.0

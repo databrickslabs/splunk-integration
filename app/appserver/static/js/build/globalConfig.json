@@ -118,7 +118,7 @@
                             "defaultValue": "PAT"
                         },
                         {
-                            "field": "client_id",
+                            "field": "aad_client_id",
                             "label": "Client Id",
                             "type": "text",
                             "help": "Enter Azure App Client Id.",
@@ -136,7 +136,7 @@
                             }
                         },
                         {
-                            "field": "tenant_id",
+                            "field": "aad_tenant_id",
                             "label": "Tenant Id",
                             "type": "text",
                             "help": "Enter Azure App Tenant Id.",
@@ -154,7 +154,7 @@
                             }
                         },
                         {
-                            "field": "client_secret",
+                            "field": "aad_client_secret",
                             "label": "Client Secret",
                             "type": "text",
                             "help": "Enter Azure App Client Secret.",
@@ -172,7 +172,7 @@
                             }
                         },
                         {
-                            "field": "databricks_access_token",
+                            "field": "pat_access_token",
                             "label": "Databricks Access Token",
                             "type": "text",
                             "help": "Enter Databricks personal access token of the user.",

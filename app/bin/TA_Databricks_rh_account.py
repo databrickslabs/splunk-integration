@@ -37,7 +37,7 @@ class CustomConfigMigrationHandler(ConfigMigrationHandler):
     def handleCreate(self, confInfo):
         self.payload["name"] = self.callerArgs.id
         try:
-            ConfigMigrationHandler.handleCreate(self, confInfo)
+            super().handleCreate(confInfo)
         except Exception as e:
             logger.info("Databricks Error: Error Occured while creating Databricks Account {}".format(
                 e
@@ -71,14 +71,16 @@ class CustomConfigMigrationHandler(ConfigMigrationHandler):
                     raiseAllErrors=True,
                     rawResult=True,
                 )
-            
             if int(response[0].get("status")) == 403:
-                raise Exception("Lack of 'databricks_admin' role for the current user. \
-                    Refer 'Provide Required Access' section in the Intro page")
+                raise Exception("Lack of 'databricks_admin' role for the current user." \
+                    " Refer 'Provide Required Access' section in the Intro page." \
+                    " Response Status Code - {}.".format(response[0].get("status")))
             elif int(response[0].get("status")) not in [200,201]:
-                raise Exception("Something Went Wrong.")
+                raise Exception("Something Went Wrong." \
+                    " Failed to authorized server. Connection closed." \
+                    " Response Status Code - {}.".format(response[0].get("status")))
         except Exception as e:
-            logger.info("Databricks Error: Error Occured while deleting Databricks password {}".format(
+            logger.info("Databricks Error: Error Occured while deleting Databricks Account {}".format(
                 e
             ))
             logger.debug("Databricks Error: Error Occured while deleting Databricks Account {}".format(
@@ -97,17 +99,20 @@ class CustomConfigMigrationHandler(ConfigMigrationHandler):
                 )
             
             if int(response[0].get("status")) == 403:
-                raise Exception("Lack of 'databricks_admin' role for the current user. \
-                    Refer 'Provide Required Access' section in the Intro page")
+                raise Exception("Lack of 'databricks_admin' role for the current user." \
+                    " Refer 'Provide Required Access' section in the Intro page." \
+                    " Response Status Code - {}.".format(response[0].get("status")))
             elif int(response[0].get("status")) == 404:
                 raise Exception("Password for this account already removed.")
             if int(response[0].get("status")) not in [200,201]:
-                raise Exception("Something Went Wrong.")
+                raise Exception("Something Went Wrong." \
+                    " Failed to authorized server. Connection closed." \
+                    " Response Status Code - {}.".format(response[0].get("status")))
         except Exception as e:
-            logger.info("Databricks Error: Error Occured while deleting Databricks password {}".format(
+            logger.info("Databricks Error: Error Occured while deleting Databricks Password {}".format(
                 e
             ))
-            logger.debug("Databricks Error: Error Occured while deleting Databricks Account {}".format(
+            logger.debug("Databricks Error: Error Occured while deleting Databricks Password {}".format(
                 traceback.format_exc()
             ))
             raise Exception(e)
@@ -131,7 +136,7 @@ fields = [
         validator=ValidateDatabricksInstance()
     ),
     field.RestField(
-        'client_id',
+        'aad_client_id',
         required=False,
         encrypted=False,
         default='',
@@ -141,7 +146,7 @@ fields = [
         )
     ),
     field.RestField(
-        'tenant_id',
+        'aad_tenant_id',
         required=False,
         encrypted=False,
         default='',
@@ -151,14 +156,14 @@ fields = [
         )
     ),
     field.RestField(
-        'client_secret',
+        'aad_client_secret',
         required=False,
         encrypted=False,
         default='',
         validator=None
     ),
     field.RestField(
-        'databricks_access_token',
+        'pat_access_token',
         required=False,
         encrypted=False,
         default='',
@@ -175,7 +180,7 @@ fields = [
         )
     ),
     field.RestField(
-        'access_token',
+        'aad_access_token',
         required=False,
         encrypted=False
     )

@@ -108,7 +108,7 @@ fields_databricks_credentials = [
         validator=ValidateDatabricksInstance()
     ),
     field.RestField(
-        'client_id',
+        'aad_client_id',
         required=False,
         encrypted=False,
         default='',
@@ -118,7 +118,7 @@ fields_databricks_credentials = [
         )
     ),
     field.RestField(
-        'tenant_id',
+        'aad_tenant_id',
         required=False,
         encrypted=False,
         default='',
@@ -128,14 +128,14 @@ fields_databricks_credentials = [
         )
     ),
     field.RestField(
-        'client_secret',
+        'aad_client_secret',
         required=False,
         encrypted=False,
         default='',
         validator=None
     ),
     field.RestField(
-        'databricks_access_token',
+        'pat_access_token',
         required=False,
         encrypted=False,
         default='',
@@ -152,7 +152,7 @@ fields_databricks_credentials = [
         )
     ),
     field.RestField(
-        'access_token',
+        'aad_access_token',
         required=False,
         encrypted=False
     )

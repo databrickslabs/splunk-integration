@@ -46,7 +46,7 @@ class DatabricksClient(object):
         self.request_headers = {
             "Authorization": "Bearer {}".format(self.databricks_token),
             "Content-Type": "application/json",
-            "User-Agent": utils.get_user_agent(session_key),
+            "User-Agent": "{}".format(const.USER_AGENT_CONST),
         }
         _LOGGER.debug("User-Agent: {}".format(self.request_headers.get("User-Agent")))
         self.session.headers.update(self.request_headers)

@@ -91,8 +91,8 @@ class ValidateDatabricksInstance(Validator):
         :return: Boolean depending on the sucess of the connection
         """
         databricks_instance = data.get("databricks_instance").strip("/")
-        databricks_access_token = data.get("databricks_access_token")
-        return self.validate_db_instance(databricks_instance, databricks_access_token)
+        pat_access_token = data.get("pat_access_token")
+        return self.validate_db_instance(databricks_instance, pat_access_token)
 
     def validate_aad(self, data):
         """
@@ -102,23 +102,23 @@ class ValidateDatabricksInstance(Validator):
         :return: Boolean depending on the sucess of the connection
         """
         _LOGGER.info('Obtaining Azure Active Directory access token')
-        client_id = data.get("client_id").strip()
-        client_sec = data.get("client_secret").strip()
-        tenant_id = data.get("tenant_id").strip()
+        aad_client_id = data.get("aad_client_id").strip()
+        client_sec = data.get("aad_client_secret").strip()
+        aad_tenant_id = data.get("aad_tenant_id").strip()
         account_name = data.get("name")
-        access_token = utils.get_aad_access_token(
+        aad_access_token = utils.get_aad_access_token(
             self._splunk_session_key, account_name,
-            self._proxy_settings, tenant_id, client_id, client_sec)
-        if isinstance(access_token, tuple):
-            _LOGGER.error(access_token[0])
-            self.put_msg(access_token[0])
+            self._proxy_settings, aad_tenant_id, aad_client_id, client_sec)
+        if isinstance(aad_access_token, tuple):
+            _LOGGER.error(aad_access_token[0])
+            self.put_msg(aad_access_token[0])
             return False
         _LOGGER.info('Obtained Azure Active Directory access token Successfully.')
         databricks_instance = data.get("databricks_instance").strip("/")
-        valid_instance = self.validate_db_instance(databricks_instance, access_token)
+        valid_instance = self.validate_db_instance(databricks_instance, aad_access_token)
         if valid_instance:
-            data["access_token"] = access_token
-            data["databricks_access_token"] = ""
+            data["aad_access_token"] = aad_access_token
+            data["pat_access_token"] = ""
             return True
         else:
             return False
@@ -138,7 +138,7 @@ class ValidateDatabricksInstance(Validator):
         headers = {
             "Authorization": "Bearer {}".format(access_token),
             "Content-Type": "application/json",
-            "User-Agent": utils.get_user_agent(self._splunk_session_key)
+            "User-Agent": "{}".format(const.USER_AGENT_CONST)
         }
         _LOGGER.debug("User-Agent: {}".format(headers.get('User-Agent')))
         try:
@@ -200,24 +200,24 @@ class ValidateDatabricksInstance(Validator):
 
         auth_type = data.get("auth_type")
         if auth_type == "PAT":
-            if (not (data.get("databricks_access_token", None)
-                     and data.get("databricks_access_token").strip())
+            if (not (data.get("pat_access_token", None)
+                     and data.get("pat_access_token").strip())
                     ):
                 self.put_msg('Field Databricks Access Token is required')
                 return False
         else:
-            if (not (data.get("client_id", None)
-                     and data.get("client_id").strip())
+            if (not (data.get("aad_client_id", None)
+                     and data.get("aad_client_id").strip())
                     ):
                 self.put_msg('Field Client Id is required')
                 return False
-            elif (not (data.get("tenant_id", None)
-                  and data.get("tenant_id").strip())
+            elif (not (data.get("aad_tenant_id", None)
+                  and data.get("aad_tenant_id").strip())
                   ):
                 self.put_msg('Field Tenant Id is required')
                 return False
-            elif (not (data.get("client_secret", None)
-                  and data.get("client_secret").strip())
+            elif (not (data.get("aad_client_secret", None)
+                  and data.get("aad_client_secret").strip())
                   ):
                 self.put_msg('Field Client Secret is required')
                 return False
@@ -276,12 +276,12 @@ class ValidateDatabricksInstance(Validator):
                     traceback.format_exc()
                 ))
                 raise Exception(e)
-            if data.get("databricks_access_token"):
-                data["databricks_access_token"] = mask
-            if data.get("client_secret"):
-                data["client_secret"] = mask
-            if data.get("access_token"):
-                data["access_token"] = mask
+            if data.get("pat_access_token"):
+                data["pat_access_token"] = mask
+            if data.get("aad_client_secret"):
+                data["aad_client_secret"] = mask
+            if data.get("aad_access_token"):
+                data["aad_access_token"] = mask
             del data["name"]
             if data.get("edit"):
                 del data["edit"]

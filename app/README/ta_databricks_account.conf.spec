@@ -1,8 +1,8 @@
 [<name>]
 databricks_instance = 
-client_id = 
-tenant_id = 
-client_secret = 
-access_token =
+aad_client_id = 
+aad_tenant_id = 
+aad_client_secret = 
+aad_access_token =
 cluster_name = 
-databricks_access_token = 
+pat_access_token = 

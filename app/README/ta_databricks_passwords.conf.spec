@@ -1,9 +1,9 @@
 [<name>]
 key =
 nonce =
-databricks_access_token =
-client_secret =
-access_token =
+pat_access_token =
+aad_client_secret =
+aad_access_token =
 
 [proxy_password]
 proxy_key =

@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..')))
 import ta_databricks_declare  # noqa: E402 F401
 import traceback  # noqa: E402
 import base64  # noqa: E402
-
 from splunk.persistconn.application import PersistentServerConnectionApplication  # noqa: E402
 from log_manager import setup_logging  # noqa: E402
 from Crypto.Cipher import AES  # noqa: E402
@@ -124,29 +123,10 @@ class DatabricksCustomDecryption(PersistentServerConnectionApplication):
             decrypt_cipher = AES.new(self.key.encode(), AES.MODE_EAX, nonce=decoded_nonce)
 
             if self.auth_type == "PAT":
-                encrypted_databricks_access_token = base64.b64decode(configs.get("databricks_access_token").encode())
-                # decrypt the key
-                decrypted_databricks_access_token = decrypt_cipher.decrypt(encrypted_databricks_access_token)
-                try:
-                    self.payload["databricks_access_token"] = decrypted_databricks_access_token.decode()
-                except UnicodeDecodeError:
-                    _LOGGER.debug("Performing str based decoding for databricks_access_token.")
-                    self.payload["databricks_access_token"] = str(decrypted_databricks_access_token)[2:-1]
+                self.decrypt_and_set_payload(configs, decrypt_cipher, "pat_access_token")
             else:
-                encrypted_client_secret = base64.b64decode(configs.get("client_secret").encode())
-                # decrypt the key
-                decrypted_client_secret = decrypt_cipher.decrypt(encrypted_client_secret)
-
-                encrypted_access_token = base64.b64decode(configs.get("access_token").encode())
-                # decrypt the key
-                decrypted_access_token = decrypt_cipher.decrypt(encrypted_access_token)
-                try:
-                    self.payload["access_token"] = decrypted_access_token.decode()
-                    self.payload["client_secret"] = decrypted_client_secret.decode()
-                except UnicodeDecodeError:
-                    _LOGGER.debug("Performing str based decoding for access_token and client_secret.")
-                    self.payload["access_token"] = str(decrypted_client_secret)[2:-1]
-                    self.payload["client_secret"] = str(decrypted_access_token)[2:-1]
+                self.decrypt_and_set_payload(configs, decrypt_cipher, "aad_client_secret")
+                self.decrypt_and_set_payload(configs, decrypt_cipher, "aad_access_token")
 
         except Exception as e:
             _LOGGER.error("Databricks Error : Error occured while performing custom config decryption - {}".format(e))
@@ -159,9 +139,8 @@ class DatabricksCustomDecryption(PersistentServerConnectionApplication):
             _LOGGER.debug("Performing custom proxy decryption.")
             proxy_key = configs.get("proxy_key")
             proxy_nonce = configs.get("proxy_nonce")
-            encrypted_proxy_password = base64.b64decode(configs.get("proxy_password").encode())
 
-        # decode the key
+            # decode the key
             decoded_proxy_key = base64.b64decode(proxy_key).decode()
             # decode the nonce
             decoded_proxy_nonce = base64.b64decode(proxy_nonce.encode())
@@ -170,19 +149,29 @@ class DatabricksCustomDecryption(PersistentServerConnectionApplication):
             self.proxy_key = ''.join(map(lambda x: chr(ord(x) - 1), decoded_proxy_key))
 
             decrypt_proxy_cipher = AES.new(self.proxy_key.encode(), AES.MODE_EAX, nonce=decoded_proxy_nonce)
-
-            # decrypt the key
-            decrypted_proxy_password = decrypt_proxy_cipher.decrypt(encrypted_proxy_password)
-            try:
-                self.payload["proxy_password"] = decrypted_proxy_password.decode()
-            except UnicodeDecodeError:
-                _LOGGER.debug("Performing str based decoding for proxy.")
-                self.payload["proxy_password"] = str(decrypted_proxy_password)[2:-1]
+            self.decrypt_and_set_payload(configs, decrypt_proxy_cipher, "proxy_password")
 
         except Exception as e:
             _LOGGER.error("Databricks Error : Error occured while performing custom proxy decryption - {}".format(e))
             _LOGGER.debug("Databricks Error : Error occured while performing custom proxy decryption - {}".format(
                 traceback.format_exc()))
+
+    def decrypt_and_set_payload(self, configs, decrypt_cipher, field):
+        """Method to do base64 decode, peform decryption and set payload."""
+        try:
+            encrypted_value = base64.b64decode(configs.get(field).encode())
+            # decrypt the key
+            decrypted_value = decrypt_cipher.decrypt(encrypted_value)
+            try:
+                self.payload[field] = decrypted_value.decode()
+            except UnicodeDecodeError:
+                _LOGGER.debug("Performing str based decoding for {}.".format(field))
+                self.payload[field] = str(decrypted_value)[2:-1]
+        except Exception as e:
+            _LOGGER.error("Databricks Error : Error occured while performing \
+                base64 decoding, decryption and setting payload  - {}".format(e))
+            _LOGGER.debug("Databricks Error : Error occured while performing \
+                base64 decoding, decryption and setting payload - {}".format(traceback.format_exc()))
 
     def handleStream(self, handle, in_string):
         """For future use."""

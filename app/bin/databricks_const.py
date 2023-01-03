@@ -36,3 +36,15 @@ RETRIES = 3
 BACKOFF_FACTOR = 60
 TIMEOUT = 300
 STATUS_FORCELIST = [429, 500, 502, 503, 504]
+
+# Error codes and message
+ERROR_CODE = {
+    '700016': 'Invalid Client ID provided.',
+    '900023': 'Invalid Tenant ID provided.',
+    '7000215': 'Invalid Client Secret provided.',
+    '403': 'Client secret may have expired. Please configure a valid Client secret.',
+    '404': 'Invalid API endpoint.',
+    '500': 'Internal server error.',
+    '400': 'Bad request. The request is malformed.',
+    '429': 'API limit exceeded. Please try again after some time.'
+}
