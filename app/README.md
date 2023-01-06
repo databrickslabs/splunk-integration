@@ -21,7 +21,6 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 * Updated the Add-on to include new roles for Databricks Admin and Databricks User.
 * Implemented custom encryption module.
 * Added support for creation of multiple accounts.
-* Updated the user-agent to include logged in user.
 
 # RELEASE NOTES VERSION 1.1.0
 * Added support for authentication through Azure Active Directory for Azure Databricks instance.

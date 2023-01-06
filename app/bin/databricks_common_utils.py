@@ -385,9 +385,7 @@ def get_aad_access_token(
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": "{}".format(const.USER_AGENT_CONST),
     }
-
-    _LOGGER.debug("User-Agent: {}".format(headers.get("User-Agent")))
-
+    _LOGGER.debug("Request made to the Databricks from Splunk user: {}".format(get_current_user(session_key)))
     data_dict = {"grant_type": "client_credentials", "scope": const.SCOPE}
     aad_client_id = (
         get_databricks_configs(session_key, account_name).get("aad_client_id").strip()

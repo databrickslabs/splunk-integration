@@ -48,7 +48,9 @@ class DatabricksClient(object):
             "Content-Type": "application/json",
             "User-Agent": "{}".format(const.USER_AGENT_CONST),
         }
-        _LOGGER.debug("User-Agent: {}".format(self.request_headers.get("User-Agent")))
+        _LOGGER.debug(
+            "Request made to the Databricks from Splunk user: {}".format(utils.get_current_user(self.session_key))
+        )
         self.session.headers.update(self.request_headers)
         if self.session.proxies:
             _LOGGER.info("Proxy is configured. Using proxy to execute the request.")

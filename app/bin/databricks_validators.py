@@ -140,7 +140,11 @@ class ValidateDatabricksInstance(Validator):
             "Content-Type": "application/json",
             "User-Agent": "{}".format(const.USER_AGENT_CONST)
         }
-        _LOGGER.debug("User-Agent: {}".format(headers.get('User-Agent')))
+        _LOGGER.debug(
+            "Request made to the Databricks from Splunk user: {}".format(
+                utils.get_current_user(self._splunk_session_key)
+            )
+        )
         try:
             resp = requests.get(
                 req_url,
