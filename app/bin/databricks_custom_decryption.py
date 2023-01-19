@@ -123,7 +123,7 @@ class DatabricksCustomDecryption(PersistentServerConnectionApplication):
             decrypt_cipher = AES.new(self.key.encode(), AES.MODE_EAX, nonce=decoded_nonce)
 
             if self.auth_type == "PAT":
-                self.decrypt_and_set_payload(configs, decrypt_cipher, "pat_access_token")
+                self.decrypt_and_set_payload(configs, decrypt_cipher, "databricks_pat")
             else:
                 self.decrypt_and_set_payload(configs, decrypt_cipher, "aad_client_secret")
                 self.decrypt_and_set_payload(configs, decrypt_cipher, "aad_access_token")

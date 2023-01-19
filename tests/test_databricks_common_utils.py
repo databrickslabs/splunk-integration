@@ -130,7 +130,7 @@ class TestDatabricksUtils(unittest.TestCase):
     @patch("databricks_common_utils.rest.simpleRequest")
     def test_get_clear_token_pat(self, mock_request):
         db_utils = import_module('databricks_common_utils')
-        mock_request.return_value = (200, json.dumps({"pat_access_token":"PAT token"}))
+        mock_request.return_value = (200, json.dumps({"databricks_pat":"PAT token"}))
         clear_token = db_utils.get_clear_token("session_key", "PAT", "account_name")
         self.assertEqual(clear_token, "PAT token")
 

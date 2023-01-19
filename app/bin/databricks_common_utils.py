@@ -94,7 +94,7 @@ def get_clear_token(session_key, auth_type, account_name):
         )
         response_content = json.loads(response_content)
         if auth_type == "PAT":
-            access_token = response_content.get("pat_access_token")
+            access_token = response_content.get("databricks_pat")
         else:
             access_token = response_content.get("aad_access_token")
 

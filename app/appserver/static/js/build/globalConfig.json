@@ -172,7 +172,7 @@
                             }
                         },
                         {
-                            "field": "pat_access_token",
+                            "field": "databricks_pat",
                             "label": "Databricks Access Token",
                             "type": "text",
                             "help": "Enter Databricks personal access token of the user.",

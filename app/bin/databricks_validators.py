@@ -91,8 +91,8 @@ class ValidateDatabricksInstance(Validator):
         :return: Boolean depending on the sucess of the connection
         """
         databricks_instance = data.get("databricks_instance").strip("/")
-        pat_access_token = data.get("pat_access_token")
-        return self.validate_db_instance(databricks_instance, pat_access_token)
+        databricks_pat = data.get("databricks_pat")
+        return self.validate_db_instance(databricks_instance, databricks_pat)
 
     def validate_aad(self, data):
         """
@@ -118,7 +118,7 @@ class ValidateDatabricksInstance(Validator):
         valid_instance = self.validate_db_instance(databricks_instance, aad_access_token)
         if valid_instance:
             data["aad_access_token"] = aad_access_token
-            data["pat_access_token"] = ""
+            data["databricks_pat"] = ""
             return True
         else:
             return False
@@ -204,8 +204,8 @@ class ValidateDatabricksInstance(Validator):
 
         auth_type = data.get("auth_type")
         if auth_type == "PAT":
-            if (not (data.get("pat_access_token", None)
-                     and data.get("pat_access_token").strip())
+            if (not (data.get("databricks_pat", None)
+                     and data.get("databricks_pat").strip())
                     ):
                 self.put_msg('Field Databricks Access Token is required')
                 return False
@@ -280,8 +280,8 @@ class ValidateDatabricksInstance(Validator):
                     traceback.format_exc()
                 ))
                 raise Exception(e)
-            if data.get("pat_access_token"):
-                data["pat_access_token"] = mask
+            if data.get("databricks_pat"):
+                data["databricks_pat"] = mask
             if data.get("aad_client_secret"):
                 data["aad_client_secret"] = mask
             if data.get("aad_access_token"):

@@ -1,7 +1,7 @@
 [<name>]
 key =
 nonce =
-pat_access_token =
+databricks_pat =
 aad_client_secret =
 aad_access_token =
 

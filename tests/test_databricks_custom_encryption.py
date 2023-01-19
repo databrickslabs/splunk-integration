@@ -129,7 +129,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         mock_aes_encrypt.return_value ="encrypted_access_token"
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
         obj1.auth_type = "PAT"
-        obj1.pat_access_token = "access_token"
+        obj1.databricks_pat = "access_token"
         obj1.databricks_configuration_encrypt()
         db_cm._LOGGER.debug.assert_called_with("Databricks Configuration Custom Encryption completed successfully.")
         
@@ -144,7 +144,7 @@ class TestDatabricksCustomEncryption(unittest.TestCase):
         obj1 = db_cm.DatabricksCustomEncryption("command_line", "command_args")
         obj1.auth_type = "PAT"
         obj1.edit = "edit"
-        obj1.pat_access_token = "access_token"
+        obj1.databricks_pat = "access_token"
         obj1.databricks_configuration_encrypt()
         db_cm._LOGGER.debug.assert_called_with("Databricks Configuration Custom Encryption completed successfully.")
     

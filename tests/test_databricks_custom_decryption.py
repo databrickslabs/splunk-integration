@@ -111,9 +111,9 @@ class TestDatabricksCustomDecryption(unittest.TestCase):
         # mock_base.return_value = b'encrypted_access_token'
         # mock_aes_decrypt.return_value = b"decrypted_access_token"
         obj1.auth_type = "PAT"
-        configs = {"key":"key", "nonce":"nonce", "pat_access_token":"access_token"}
+        configs = {"key":"key", "nonce":"nonce", "databricks_pat":"access_token"}
         obj1.perform_config_decryption(configs)
-        self.assertEqual(obj1.payload["pat_access_token"], "decrypted_access_token")
+        self.assertEqual(obj1.payload["databricks_pat"], "decrypted_access_token")
         
     @patch("databricks_custom_encryption.AES.new")
     @patch("databricks_custom_encryption.AES.decrypt")

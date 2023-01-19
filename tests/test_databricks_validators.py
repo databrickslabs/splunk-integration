@@ -86,7 +86,7 @@ class TestDatabricksUtils(unittest.TestCase):
         db_val._LOGGER = MagicMock()
         db_val_obj = db_val.ValidateDatabricksInstance()
         mock_pat.return_value = True
-        db_val_obj.validate("PAT",{"auth_type": "PAT", "pat_access_token": "pat_token"})
+        db_val_obj.validate("PAT",{"auth_type": "PAT", "databricks_pat": "pat_token"})
         self.assertEqual(mock_pat.call_count, 1)
     
     @patch("databricks_validators.SessionKeyProvider", return_value=MagicMock())
@@ -169,7 +169,7 @@ class TestDatabricksUtils(unittest.TestCase):
         db_val._LOGGER = MagicMock()
         db_val_obj = db_val.ValidateDatabricksInstance()
         mock_valid_inst.return_value = True
-        db_val_obj.validate_pat({"auth_type": "PAT", "pat_access_token": "pat_token", "databricks_instance": "db_instance"})
+        db_val_obj.validate_pat({"auth_type": "PAT", "databricks_pat": "pat_token", "databricks_instance": "db_instance"})
         mock_valid_inst.assert_called_once_with(db_val_obj, "db_instance", "pat_token")
 
     @patch("databricks_validators.utils.get_aad_access_token", return_value="access_token")

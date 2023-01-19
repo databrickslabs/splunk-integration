@@ -33,7 +33,7 @@ class AuthSelectHook {
             data.aad_client_id.display = state;
             data.aad_tenant_id.display = state;
             data.aad_client_secret.display = state;
-            data.pat_access_token.display = !state;
+            data.databricks_pat.display = !state;
             return { data }
         });
     }

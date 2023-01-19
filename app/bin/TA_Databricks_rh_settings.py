@@ -135,7 +135,7 @@ fields_databricks_credentials = [
         validator=None
     ),
     field.RestField(
-        'pat_access_token',
+        'databricks_pat',
         required=False,
         encrypted=False,
         default='',
