@@ -1,15 +1,15 @@
 [run]
 omit =
-	TA-Databricks/bin/log_manager.py
-	TA-Databricks/bin/ta_databricks/aob_py3/*
-	TA-Databricks/bin/ta_databricks/alert_actions_base.py
-	TA-Databricks/bin/ta_databricks/cim_actions.py
-	TA-Databricks/bin/ta_databricks/logging_helper.py
-	TA-Databricks/bin/launch_notebook.py
-	TA-Databricks/bin/databricks_const.py
-	TA-Databricks/bin/notebook.py
-	TA-Databricks/bin/*_declare.py
-	TA-Databricks/bin/*_rh_*.py
+	app/bin/log_manager.py
+	app/bin/ta_databricks/aob_py3/*
+	app/bin/ta_databricks/alert_actions_base.py
+	app/bin/ta_databricks/cim_actions.py
+	app/bin/ta_databricks/logging_helper.py
+	app/bin/launch_notebook.py
+	app/bin/databricks_const.py
+	app/bin/notebook.py
+	app/bin/*_declare.py
+	app/bin/*_rh_*.py
 	*/site-packages/*
 	*/ta_databricks/*
 	*/tests/*

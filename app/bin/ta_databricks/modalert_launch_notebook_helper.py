@@ -19,11 +19,16 @@ def process_event(helper, *args, **kwargs):
     revision_timestamp = helper.get_param("revision_timestamp")
     notebook_parameters = helper.get_param("notebook_parameters")
     cluster_name = helper.get_param("cluster_name")
+    account_name = helper.get_param("account_name")
 
     if not (notebook_path and notebook_path.strip()):
         helper.log_error("Notebook path is a required parameter which is not provided.")
         exit(1)
-    search_string = "|databricksrun  notebook_path=\"" + notebook_path.strip() + "\""
+    if not (account_name):
+        helper.log_error("Databricks Account is a required parameter which is not provided.")
+        exit(1)
+    search_string = "|databricksrun account_name=\"" + account_name + "\"  notebook_path=\"" + \
+        notebook_path.strip() + "\""
     if revision_timestamp:
         search_string = search_string + " revision_timestamp=\"" + revision_timestamp.strip() + "\""
     if notebook_parameters:
