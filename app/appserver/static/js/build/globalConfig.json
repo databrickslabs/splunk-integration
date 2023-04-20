@@ -2,7 +2,7 @@
     "meta": {
         "name": "TA-Databricks",
         "displayName": "Databricks Add-on For Splunk",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "apiVersion": "3.0.0",
         "restRoot": "TA_Databricks"
     },
@@ -10,14 +10,57 @@
         "configuration": {
             "title": "Configuration",
             "description": "Set up your add-on",
-            "tabs": [{
-                    "name": "databricks_credentials",
+            "tabs": [
+                {
+                    "name": "account",
                     "title": "Databricks Credentials",
                     "hook": {
                         "src": "auth_select_hook",
                         "type": "external"
                     },
-                    "entity": [{
+                    "table": {
+                        "header": [
+                            {
+                                "field": "name",
+                                "label": "Account Name"
+                            },
+                            {
+                                "field": "databricks_instance",
+                                "label": "Databricks Instance"
+                            },
+                            {
+                                "field": "auth_type",
+                                "label": "Authentication Method"
+                            }
+                        ],
+                        "actions": [
+                            "edit",
+                            "delete",
+                            "clone"
+                        ]
+                    },
+                    "entity": [
+                        {
+                            "field": "name",
+                            "label": "Account Name",
+                            "type": "text",
+                            "required": true,
+                            "help": "Enter a unique name for this account.",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 50,
+                                    "errorMsg": "Length of Account Name should be between 1 and 50"
+                                },
+                                {
+                                    "type": "regex",
+                                    "pattern": "^[a-zA-Z]\\w*$",
+                                    "errorMsg": "Account Name must start with a letter and followed by alphabetic letters, digits or underscores."
+                                }
+                            ]
+                        },
+                        {
                             "field": "databricks_instance",
                             "label": "Databricks Instance",
                             "type": "text",
@@ -75,7 +118,7 @@
                             "defaultValue": "PAT"
                         },
                         {
-                            "field": "client_id",
+                            "field": "aad_client_id",
                             "label": "Client Id",
                             "type": "text",
                             "help": "Enter Azure App Client Id.",
@@ -93,7 +136,7 @@
                             }
                         },
                         {
-                            "field": "tenant_id",
+                            "field": "aad_tenant_id",
                             "label": "Tenant Id",
                             "type": "text",
                             "help": "Enter Azure App Tenant Id.",
@@ -111,7 +154,7 @@
                             }
                         },
                         {
-                            "field": "client_secret",
+                            "field": "aad_client_secret",
                             "label": "Client Secret",
                             "type": "text",
                             "help": "Enter Azure App Client Secret.",
@@ -129,7 +172,7 @@
                             }
                         },
                         {
-                            "field": "databricks_access_token",
+                            "field": "databricks_pat",
                             "label": "Databricks Access Token",
                             "type": "text",
                             "help": "Enter Databricks personal access token of the user.",

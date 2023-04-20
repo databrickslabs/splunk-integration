@@ -91,84 +91,11 @@ fields_logging = [
 ]
 model_logging = RestModel(fields_logging, name='logging')
 
-
-fields_databricks_credentials = [
-    field.RestField(
-        'databricks_instance',
-        required=True,
-        encrypted=False,
-        default='',
-        validator=validator.String(
-            min_len=0,
-            max_len=500,
-        )
-    ),
-    field.RestField(
-        'auth_type',
-        required=True,
-        encrypted=False,
-        default='',
-        validator=ValidateDatabricksInstance()
-    ),
-    field.RestField(
-        'client_id',
-        required=False,
-        encrypted=False,
-        default='',
-        validator=validator.String(
-            min_len=0,
-            max_len=500,
-        )
-    ),
-    field.RestField(
-        'tenant_id',
-        required=False,
-        encrypted=False,
-        default='',
-        validator=validator.String(
-            min_len=0,
-            max_len=500,
-        )
-    ),
-    field.RestField(
-        'client_secret',
-        required=False,
-        encrypted=True,
-        default='',
-        validator=None
-    ),
-    field.RestField(
-        'databricks_access_token',
-        required=False,
-        encrypted=True,
-        default='',
-        validator=None
-    ),
-    field.RestField(
-        'cluster_name',
-        required=False,
-        encrypted=False,
-        default='',
-        validator=validator.String(
-            min_len=0,
-            max_len=500,
-        )
-    ),
-    field.RestField(
-        'access_token',
-        required=False,
-        encrypted=True
-    )
-]
-model_databricks_credentials = RestModel(fields_databricks_credentials, name='databricks_credentials')
-
-
 endpoint = MultipleModel(
     'ta_databricks_settings',
     models=[
         model_proxy,
-        model_logging,
-        model_databricks_credentials
+        model_logging
     ],
 )
 

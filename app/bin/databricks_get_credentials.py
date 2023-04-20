@@ -1,0 +1,181 @@
+"""This module contain class and method related to updating the finding state."""
+import sys
+import os
+import json
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..')))
+
+import splunk.rest as rest  # noqa: E402
+import ta_databricks_declare  # noqa: E402 F401
+import databricks_const as const  # noqa: E402
+import traceback  # noqa: E402
+from solnlib.credentials import CredentialManager  # noqa: E402
+from splunk.persistconn.application import PersistentServerConnectionApplication  # noqa: E402
+from log_manager import setup_logging  # noqa: E402
+
+APP_NAME = const.APP_NAME
+_LOGGER = setup_logging("ta_databricks_get_credentials")
+
+
+class DatabricksGetCredentials(PersistentServerConnectionApplication):
+    """Custom Encryption Handler."""
+
+    def __init__(self, _command_line, _command_arg):
+        """Initialize object with given parameters."""
+        self.auth_type = None
+        self.key = None
+        self.proxy_key = None
+        self.session_key = None
+        self.admin_session_key = None
+        self.payload = {}
+        self.status = None
+        super(PersistentServerConnectionApplication, self).__init__()
+
+    # Handle a synchronous from splunkd.
+    def handle(self, in_string):
+        """
+        For using any custom command, Called for a simple synchronous request.
+
+        @param in_string: request data passed in
+        @rtype: string or dict
+        @return: String to return in response.  If a dict was passed in,
+                 it will automatically be JSON encoded before being returned.
+        """
+        req_data = json.loads(in_string)
+        self.admin_session_key = req_data.get('system_authtoken', None)
+        form_data = dict(req_data.get("form"))
+        self.account_name = form_data.get("name")
+
+        # Saving Configurations
+        if form_data.get('update_token'):
+            try:
+                _LOGGER.info("Saving databricks AAD access token.")
+                client_sec = form_data.get("aad_client_secret")
+                access_token = form_data.get("aad_access_token")
+                manager = CredentialManager(
+                    self.admin_session_key,
+                    app=APP_NAME,
+                    realm="__REST_CREDENTIAL__#{0}#{1}".format(APP_NAME, "configs/conf-ta_databricks_account"),
+                )
+                new_creds = json.dumps({"aad_client_secret": client_sec, "aad_access_token": access_token})
+                manager.set_password(self.account_name, new_creds)
+                _LOGGER.info("Saved AAD access token successfully.")
+                return {
+                    'payload': 'Saved AAD access token successfully.',
+                    'status': 200
+                }
+            except Exception as e:
+                error_msg = "Databricks Error: Exception while saving AAD access token: {}".format(str(e))
+                _LOGGER.error(error_msg)
+                _LOGGER.debug(traceback.format_exc())
+                return {
+                    'payload': error_msg,
+                    'status': 500
+                }
+
+        # Retrieve Configurations
+        config_dict = {
+            'databricks_instance': None,
+            'aad_client_id': None,
+            'aad_tenant_id': None,
+            'aad_client_secret': None,
+            'aad_access_token': None,
+            'cluster_name': None,
+            'databricks_pat': None,
+            'auth_type': None,
+            'proxy_enabled': None,
+            'proxy_type': None,
+            'proxy_url': None,
+            'proxy_port': None,
+            'proxy_username': None,
+            'proxy_password': None,
+            'proxy_rdns': None,
+        }
+        try:
+            _LOGGER.info("Retrieving account and settings configurations.")
+
+            # Get account settings from conf
+            _, account_response_content = rest.simpleRequest(
+                "/servicesNS/nobody/TA-Databricks/configs/conf-ta_databricks_account/{}".format(
+                    self.account_name
+                ),
+                sessionKey=self.admin_session_key,
+                getargs={"output_mode": "json"},
+                raiseAllErrors=True,
+            )
+            account_config_json = json.loads(account_response_content)
+            account_config = account_config_json.get("entry")[0].get("content")
+            _LOGGER.debug("Account configurations read successfully from account.conf .")
+
+            config_dict['auth_type'] = account_config.get('auth_type')
+            config_dict['databricks_instance'] = account_config.get('databricks_instance')
+            config_dict['cluster_name'] = account_config.get('cluster_name')
+
+            # Get clear account password from passwords.conf
+            account_manager = CredentialManager(
+                self.admin_session_key,
+                app=APP_NAME,
+                realm="__REST_CREDENTIAL__#{}#configs/conf-ta_databricks_account".format(APP_NAME),
+            )
+            account_password = json.loads(account_manager.get_password(self.account_name))
+            _LOGGER.debug("Clear account password read successfully from passwords.conf.")
+
+            if config_dict['auth_type'] == 'PAT':
+                config_dict['databricks_pat'] = account_password.get('databricks_pat')
+            else:
+                config_dict['aad_client_id'] = account_config.get('aad_client_id')
+                config_dict['aad_tenant_id'] = account_config.get('aad_tenant_id')
+                config_dict['aad_client_secret'] = account_password.get('aad_client_secret')
+                config_dict['aad_access_token'] = account_password.get('aad_access_token')
+
+            # Get proxy settings from conf
+            _, proxy_response_content = rest.simpleRequest(
+                "/servicesNS/nobody/{}/TA_Databricks_settings/proxy".format(
+                    APP_NAME
+                ),
+                sessionKey=self.admin_session_key,
+                getargs={"output_mode": "json"},
+                raiseAllErrors=True,
+            )
+            proxy_config_json = json.loads(proxy_response_content)
+            proxy_config = proxy_config_json.get("entry")[0].get("content")
+            _LOGGER.debug("Proxy configurations read successfully from settings.conf")
+
+            if proxy_config.get('proxy_password'):
+                # Get clear proxy password from passwords.conf
+                proxy_manager = CredentialManager(
+                    self.admin_session_key,
+                    app=APP_NAME,
+                    realm="__REST_CREDENTIAL__#{}#configs/conf-ta_databricks_settings".format(APP_NAME),
+                )
+                proxy_password = json.loads(proxy_manager.get_password('proxy'))
+                config_dict['proxy_password'] = proxy_password.get('proxy_password')
+                _LOGGER.debug("Clear proxy password read successfully from passwords.conf.")
+
+            config_dict['proxy_enabled'] = proxy_config.get('proxy_enabled')
+            config_dict['proxy_type'] = proxy_config.get('proxy_type')
+            config_dict['proxy_url'] = proxy_config.get('proxy_url')
+            config_dict['proxy_port'] = proxy_config.get('proxy_port')
+            config_dict['proxy_username'] = proxy_config.get('proxy_username')
+            config_dict['proxy_rdns'] = proxy_config.get('proxy_rdns')
+
+            self.status = 200
+            return {
+                'payload': config_dict,
+                'status': self.status
+            }
+        except Exception:
+            error_msg = "Databricks Error: Error occured while retrieving account and proxy configurations - {}".format(
+                traceback.format_exc())
+            _LOGGER.error(error_msg)
+            return {
+                'payload': error_msg,
+                'status': 500
+            }
+
+    def handleStream(self, handle, in_string):
+        """For future use."""
+        raise NotImplementedError("PersistentServerConnectionApplication.handleStream")
+
+    def done(self):
+        """Virtual method which can be optionally overridden to receive a callback after the request completes."""
+        pass

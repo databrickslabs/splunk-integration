@@ -1,7 +1,7 @@
 <form version="1.1" script="js/handle_autoforward.js">
   <label>Launch Notebook</label>
   <search id="notebookrun" rejects="$form.identifier$,$redirected$">
-    <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$</query>
+    <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$ account_name=$account_name|s$</query>
     <progress>
       <unset token="redirected"></unset>
       <unset token="normal_change_notebook"></unset>
@@ -92,6 +92,16 @@
     <input type="text" token="cluster" searchWhenChanged="false">
       <label>Cluster Name</label>
       <default></default>
+    </input>
+    <input type="dropdown" token="account_name">
+      <label>Account Name</label>
+      <fieldForLabel>title</fieldForLabel>
+      <fieldForValue>title</fieldForValue>
+      <search>
+        <query>| rest /servicesNS/nobody/TA-Databricks/configs/conf-ta_databricks_account splunk_server=local | table title</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
     </input>
     <input type="dropdown" token="autoforward">
       <label>Auto Forward?</label>

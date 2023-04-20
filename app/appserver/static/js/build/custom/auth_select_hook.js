@@ -30,10 +30,10 @@ class AuthSelectHook {
     toggleAADFields(state) {
         this.util.setState((prevState) => {
             let data = {...prevState.data };
-            data.client_id.display = state;
-            data.tenant_id.display = state;
-            data.client_secret.display = state;
-            data.databricks_access_token.display = !state;
+            data.aad_client_id.display = state;
+            data.aad_tenant_id.display = state;
+            data.aad_client_secret.display = state;
+            data.databricks_pat.display = !state;
             return { data }
         });
     }

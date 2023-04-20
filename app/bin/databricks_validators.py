@@ -1,4 +1,3 @@
-import ta_databricks_declare  # noqa: F401
 import requests
 import databricks_const as const
 import databricks_common_utils as utils
@@ -6,6 +5,7 @@ from log_manager import setup_logging
 
 from splunktaucclib.rest_handler.endpoint.validator import Validator
 from splunk_aoblib.rest_migration import ConfigMigrationHandler
+import traceback
 
 _LOGGER = setup_logging("ta_databricks_validator")
 
@@ -35,8 +35,8 @@ class ValidateDatabricksInstance(Validator):
         :return: Boolean depending on the sucess of the connection
         """
         databricks_instance = data.get("databricks_instance").strip("/")
-        databricks_access_token = data.get("databricks_access_token")
-        return self.validate_db_instance(databricks_instance, databricks_access_token)
+        databricks_pat = data.get("databricks_pat")
+        return self.validate_db_instance(databricks_instance, databricks_pat)
 
     def validate_aad(self, data):
         """
@@ -46,22 +46,23 @@ class ValidateDatabricksInstance(Validator):
         :return: Boolean depending on the sucess of the connection
         """
         _LOGGER.info('Obtaining Azure Active Directory access token')
-        client_id = data.get("client_id").strip()
-        client_sec = data.get("client_secret").strip()
-        tenant_id = data.get("tenant_id").strip()
-        access_token = utils.get_aad_access_token(
-            self._splunk_session_key, const.USER_AGENT_CONST,
-            self._proxy_settings, tenant_id, client_id, client_sec)
-        if isinstance(access_token, tuple):
-            _LOGGER.error(access_token[0])
-            self.put_msg(access_token[0])
+        aad_client_id = data.get("aad_client_id").strip()
+        client_sec = data.get("aad_client_secret").strip()
+        aad_tenant_id = data.get("aad_tenant_id").strip()
+        account_name = data.get("name")
+        aad_access_token = utils.get_aad_access_token(
+            self._splunk_session_key, account_name,
+            aad_tenant_id, aad_client_id, client_sec, self._proxy_settings)
+        if isinstance(aad_access_token, tuple):
+            _LOGGER.error(aad_access_token[0])
+            self.put_msg(aad_access_token[0])
             return False
         _LOGGER.info('Obtained Azure Active Directory access token Successfully.')
         databricks_instance = data.get("databricks_instance").strip("/")
-        valid_instance = self.validate_db_instance(databricks_instance, access_token)
+        valid_instance = self.validate_db_instance(databricks_instance, aad_access_token)
         if valid_instance:
-            data["access_token"] = access_token
-            data["databricks_access_token"] = ""
+            data["aad_access_token"] = aad_access_token
+            data["databricks_pat"] = ""
             return True
         else:
             return False
@@ -81,14 +82,32 @@ class ValidateDatabricksInstance(Validator):
         headers = {
             "Authorization": "Bearer {}".format(access_token),
             "Content-Type": "application/json",
-            "User-Agent": const.USER_AGENT_CONST,
+            "User-Agent": "{}".format(const.USER_AGENT_CONST)
         }
+        _LOGGER.debug(
+            "Request made to the Databricks from Splunk user: {}".format(
+                utils.get_current_user(self._splunk_session_key)
+            )
+        )
         try:
-            resp = requests.get(req_url, headers=headers, proxies=self._proxy_settings, verify=const.VERIFY_SSL)
+            resp = requests.get(
+                req_url,
+                headers=headers,
+                proxies=self._proxy_settings,
+                verify=const.VERIFY_SSL,
+                timeout=const.TIMEOUT
+            )
             resp.raise_for_status()
             _ = resp.json()
             _LOGGER.info('Validated Databricks instance sucessfully.')
             return True
+        except requests.exceptions.SSLError as sslerror:
+            self.put_msg("SSL certificate validation failed. Please verify the SSL certificate.")
+            _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                          " certificate: {}".format(sslerror))
+            _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                          " certificate: {}".format(traceback.format_exc()))
+            return False
         except Exception as e:
             if "resp" in locals() and resp.status_code == 403:
                 msg = "Invalid access token. Please enter the valid access token."
@@ -98,6 +117,9 @@ class ValidateDatabricksInstance(Validator):
                 msg = "Internal server error. Cannot verify Databricks instance."
             elif "resp" in locals() and resp.status_code == 400:
                 msg = "Invalid Databricks instance."
+            elif "_ssl.c" in str(e):
+                msg = "SSL certificate verification failed. Please add a valid " \
+                    "SSL certificate."
             else:
                 msg = "Unable to request Databricks instance. "\
                     "Please validate the provided Databricks and "\
@@ -116,32 +138,47 @@ class ValidateDatabricksInstance(Validator):
         :return True or False
         """
         _LOGGER.info("Initiating configuration validation.")
+        self._splunk_session_key = SessionKeyProvider().session_key
+
         auth_type = data.get("auth_type")
         if auth_type == "PAT":
-            if (not (data.get("databricks_access_token", None)
-                     and data.get("databricks_access_token").strip())
+            if (not (data.get("databricks_pat", None)
+                     and data.get("databricks_pat").strip())
                     ):
                 self.put_msg('Field Databricks Access Token is required')
                 return False
         else:
-            if (not (data.get("client_id", None)
-                     and data.get("client_id").strip())
+            if (not (data.get("aad_client_id", None)
+                     and data.get("aad_client_id").strip())
                     ):
                 self.put_msg('Field Client Id is required')
                 return False
-            elif (not (data.get("tenant_id", None)
-                  and data.get("tenant_id").strip())
+            elif (not (data.get("aad_tenant_id", None)
+                  and data.get("aad_tenant_id").strip())
                   ):
                 self.put_msg('Field Tenant Id is required')
                 return False
-            elif (not (data.get("client_secret", None)
-                  and data.get("client_secret").strip())
+            elif (not (data.get("aad_client_secret", None)
+                  and data.get("aad_client_secret").strip())
                   ):
                 self.put_msg('Field Client Secret is required')
                 return False
         _LOGGER.info("Reading proxy and user data.")
-        self._splunk_session_key = SessionKeyProvider().session_key
-        self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
+        try:
+            self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
+        except Exception as e:
+            if "_ssl.c" in str(e):
+                self.put_msg("SSL certificate verification failed. Please add a valid SSL certificate.")
+                _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                              " certificate: {}".format(e))
+                _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
+                              " certificate: {}".format(traceback.format_exc()))
+                return False
+            else:
+                self.put_msg("Unexpected error occured. check *databricks*.log file for more detail. ")
+                _LOGGER.error("Databricks Error : Unexpected error occured: {}".format(e))
+                _LOGGER.debug("Databricks Error : Unexpected error occured: {}".format(traceback.format_exc()))
+                return False
         if auth_type == "PAT":
             return self.validate_pat(data)
         else:
