@@ -75,6 +75,13 @@ fields_proxy = [
         encrypted=False,
         default=None,
         validator=None
+    ),
+    field.RestField(
+        'use_for_oauth',
+        required=False,
+        encrypted=False,
+        default=0,
+        validator=None
     )
 ]
 model_proxy = RestModel(fields_proxy, name='proxy')

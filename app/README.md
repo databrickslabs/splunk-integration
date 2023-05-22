@@ -12,7 +12,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 * Prerequisites -
   * This application requires appropriate credentials to query data from Databricks platform. For Details refer to Configuration > Add Databricks Credentials section.
 * Compatible with:
-    * Splunk Enterprise version: 8.1.x, 8.2.x and 9.0.x
+    * Splunk Enterprise version: 8.2.x and 9.0.x
     * REST API: 1.2 and 2.0
     * OS: Platform independent
     * Browser: Safari, Chrome and Firefox
@@ -20,6 +20,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 # RELEASE NOTES VERSION 1.2.0
 * Updated the Add-on to allow non-admin users to execute the custom commands.
 * Added support for creation of multiple accounts.
+* Added a mechanism to use Proxy just for AAD authentication.
 
 # RELEASE NOTES VERSION 1.1.0
 * Added support for authentication through Azure Active Directory for Azure Databricks instance.
@@ -97,6 +98,7 @@ Navigate to Databricks Add-on for Splunk, click on "Configuration", go to the "P
 | Username              | Username for proxy authentication (Username and Password are inclusive fields) | No        |
 | Password              | Password for proxy authentication (Username and Password are inclusive fields) | No        |
 | Remote DNS resolution | Whether to resolve DNS or not                                                  | No        |
+| Use Proxy for OAuth   | Check this box if you want to use proxy just for AAD token generation (https://login.microsoftonline.com/). All other network calls will skip the proxy even if it's enabled.                  | No        |
 
 
 **Steps to configure an HTTPS proxy**
@@ -315,6 +317,10 @@ Some of the components included in "Databricks Add-on for Splunk" are licensed u
 * For any other unknown failure, please check the log files $SPLUNK_HOME/var/log/ta_databricks*.log to get more details on the issue.
 * The Add-on does not require a restart after the installation for all functionalities to work. However, the icons will be visible after one Splunk restart post-installation. 
 * If all custom commands/notebooks fail to run with https response code [403] then most probably the client secret has expired. Please regenerate your client secret in this case on your Azure portal and configure the add-on again with the new client secret. Set the client secret's expiration time to a custom value that you seem fit. Refer this [guide](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app#add-a-client-secret) for setting a client secret in Azure Active Directory.
+* If proxy is enabled and Use Proxy for OAuth is checked, and custom commands fail to run and throw the below mentioned error.
+HTTPSConnectionPool(host=<host>, port=443): Max retries exceeded with url: <url> (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fd9a01fb050>: Failed to establish a new connection: [Errno 110] Connection timed out'))
+In this case, uncheck 'Use Proxy for OAuth' and save the Proxy configuration and re-run the custom command again.
+
 
 
 **Note**: $SPLUNK_HOME denotes the path where Splunk is installed. Ex: /opt/splunk

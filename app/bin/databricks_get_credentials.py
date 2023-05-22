@@ -89,6 +89,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'proxy_username': None,
             'proxy_password': None,
             'proxy_rdns': None,
+            'use_for_oauth': None
         }
         try:
             _LOGGER.info("Retrieving account and settings configurations.")
@@ -157,6 +158,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             config_dict['proxy_port'] = proxy_config.get('proxy_port')
             config_dict['proxy_username'] = proxy_config.get('proxy_username')
             config_dict['proxy_rdns'] = proxy_config.get('proxy_rdns')
+            config_dict['use_for_oauth'] = proxy_config.get('use_for_oauth')
 
             self.status = 200
             return {

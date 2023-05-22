@@ -62,8 +62,7 @@ class TestDatabricksUtils(unittest.TestCase):
         db_val_obj = db_val.ValidateDatabricksInstance()
         db_val_obj.validate("PAT",{"auth_type": "PAT"})
         mock_put.assert_called_once_with("Field Databricks Access Token is required")
-        
-    
+
     @patch("databricks_validators.SessionKeyProvider", return_value=MagicMock())
     @patch("databricks_validators.utils.get_proxy_uri", return_value="{}")
     @patch("splunk_aoblib.rest_migration.ConfigMigrationHandler")
@@ -156,16 +155,16 @@ class TestDatabricksUtils(unittest.TestCase):
         mock_put.assert_called_once_with("test")
         self.assertEqual(mock_valid_inst.call_count, 0)
     
+    @patch("databricks_validators.utils.get_proxy_uri", return_value=None)
     @patch("databricks_validators.Validator.put_msg", return_value=MagicMock())
     @patch("requests.get", return_value=Response(500))
     @patch("databricks_common_utils.get_user_agent")
-    def test_validate_instance_false(self, mock_user_agent, mock_get, mock_put):
+    def test_validate_instance_false(self, mock_user_agent, mock_get, mock_put, mock_proxy):
         db_val = import_module('databricks_validators')
         db_val._LOGGER = MagicMock()
         db_val_obj = db_val.ValidateDatabricksInstance()
         db_val_obj._splunk_version = "splunk_version"
         db_val_obj._splunk_session_key = "session_key"
-        db_val_obj._proxy_settings = {}
         db_val_obj.current_user = "current_user"
         ret_val = db_val_obj.validate_db_instance("instance", "token")
         mock_put.assert_called_once_with("Internal server error. Cannot verify Databricks instance.")

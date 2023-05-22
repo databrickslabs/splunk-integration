@@ -5,6 +5,7 @@ from log_manager import setup_logging
 
 from splunktaucclib.rest_handler.endpoint.validator import Validator
 from splunk_aoblib.rest_migration import ConfigMigrationHandler
+from solnlib.utils import is_true
 import traceback
 
 _LOGGER = setup_logging("ta_databricks_validator")
@@ -78,6 +79,15 @@ class ValidateDatabricksInstance(Validator):
         req_url = "{}{}{}".format(
             "https://", instance_url, const.CLUSTER_ENDPOINT
         )
+        self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
+        if self._proxy_settings:
+            if is_true(self._proxy_settings.get("use_for_oauth")):
+                _LOGGER.info(
+                    "Skipping the usage of proxy for validation as 'Use Proxy for OAuth' parameter is checked."
+                )
+                self._proxy_settings = None
+            else:
+                self._proxy_settings.pop("use_for_oauth")
 
         headers = {
             "Authorization": "Bearer {}".format(access_token),

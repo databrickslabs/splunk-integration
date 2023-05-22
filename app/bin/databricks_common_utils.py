@@ -57,7 +57,7 @@ def get_databricks_configs(session_key, account_name):
                 )
 
             http_uri = "{}://{}".format(configs_dict["proxy_type"], http_uri)
-            proxy_data = {"http": http_uri, "https": http_uri}
+            proxy_data = {"http": http_uri, "https": http_uri, "use_for_oauth": configs_dict.get("use_for_oauth")}
             configs_dict["proxy_uri"] = proxy_data
 
     except Exception as e:
@@ -178,12 +178,13 @@ def get_proxy_uri(session_key):
 
         http_uri = "{}://{}".format(proxy_settings['proxy_type'], http_uri)
 
-        proxy_data = {"http": http_uri, "https": http_uri}
+        proxy_data = {"http": http_uri, "https": http_uri, "use_for_oauth": proxy_settings.get("use_for_oauth")}
 
-        _LOGGER.info("Returning proxy configurations.")
+        _LOGGER.info("Proxy is enabled. Returning proxy configurations.")
 
         return proxy_data
     else:
+        _LOGGER.info("Proxy is disabled. Skipping proxy mechanism.")
         return None
 
 
@@ -353,6 +354,10 @@ def get_aad_access_token(
     data_dict["client_id"] = aad_client_id
     data_dict["client_secret"] = aad_client_secret
     data_encoded = urlencode(data_dict)
+
+    if proxy_settings:
+        proxy_settings.pop("use_for_oauth")
+
     while retry:
         try:
             resp = requests.post(

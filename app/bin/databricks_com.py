@@ -8,6 +8,8 @@ from log_manager import setup_logging
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
+from solnlib.utils import is_true
+
 _LOGGER = setup_logging("ta_databricks_com")
 
 
@@ -33,6 +35,15 @@ class DatabricksClient(object):
         self.session_key = session_key
         self.session = self.get_requests_retry_session()
         self.session.proxies = databricks_configs.get("proxy_uri")
+        if self.session.proxies:
+            if is_true(self.session.proxies.get("use_for_oauth")):
+                _LOGGER.info(
+                    "Skipping the usage of proxy for running query as 'Use Proxy for OAuth' parameter is checked."
+                )
+                self.session.proxies = None
+            else:
+                self.session.proxies.pop("use_for_oauth")
+
         self.session.verify = const.VERIFY_SSL
         self.session.timeout = const.TIMEOUT
         if self.auth_type == 'PAT':
@@ -108,14 +119,15 @@ class DatabricksClient(object):
                     response = None
                     run_again = False
                     _LOGGER.info("Refreshing AAD token.")
+                    proxy_settings = utils.get_proxy_uri(self.session_key)  # Reinitializing the proxy
                     db_token = utils.get_aad_access_token(
                         self.session_key,
                         self.account_name,
                         self.aad_tenant_id,
                         self.aad_client_id,
                         self.aad_client_secret,
-                        self.session.proxies,
-                        retry=const.RETRIES,
+                        proxy_settings,   # Using the reinit proxy. As proxy is getting updated on Line no: 43, 45
+                        retry=const.RETRIES,  # based on the condition and for this call we will always need proxy.
                     )
                     if isinstance(db_token, tuple):
                         raise Exception(db_token[0])
@@ -161,6 +173,10 @@ class DatabricksClient(object):
         cluster_id = None
         resp = self.databricks_api("get", const.CLUSTER_ENDPOINT)
         response = resp.get("clusters")
+        if response is None:
+            raise Exception(
+                "No cluster found with name {}. Provide a valid cluster name.".format(cluster_name)
+            )
 
         for r in response:
 

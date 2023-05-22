@@ -88,3 +88,21 @@ class TestDatabricksGetCredentials(unittest.TestCase):
 
         assert result["payload"] == "Databricks Error: Exception while saving AAD access token: Failed to save AAD access token"
         assert result["status"] == 500
+
+    @patch("databricks_get_credentials.rest.simpleRequest")
+    def test_handle_retrieve_config_success(self, mock_request):
+        db_cm = import_module("databricks_get_credentials")
+        db_cm._LOGGER = MagicMock()
+        obj1 = db_cm.DatabricksGetCredentials("command_line", "command_args")
+        input_string = json.dumps({
+            "system_authtoken": "dummy_token",
+            "form": {
+                "name": "test",
+                "update_token": None,
+                "aad_client_secret": "client_secret",
+                "aad_access_token": "access_token"
+            }
+        })
+        mock_request.return_value = (200, json.dumps({"entry":[{"content":{"auth_type":"PAT", "databricks_instance":"http", "cluster_name":"test"}},"test"]}))
+        result = obj1.handle(input_string)
+        db_cm._LOGGER.debug.assert_called_with("Account configurations read successfully from account.conf .")

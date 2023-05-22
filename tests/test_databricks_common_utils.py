@@ -1,7 +1,6 @@
 import declare
 import os
 import sys
-import requests
 import unittest
 import json
 from utility import Response
@@ -110,19 +109,20 @@ class TestDatabricksUtils(unittest.TestCase):
     @patch("databricks_common_utils.get_proxy_clear_password")
     def test_get_proxy_uri(self, mock_pwd, mock_conf):
         db_utils = import_module('databricks_common_utils')
-        mock_conf.return_value = {"proxy_enabled": 1, "proxy_type": "http", "proxy_url": "proxy_url", "proxy_port": 8000, "proxy_username": "proxy_usr"}
+        mock_conf.return_value = {"proxy_enabled": 1, "proxy_type": "http", "proxy_url": "proxy_url", "proxy_port": 8000, "proxy_username": "proxy_usr", "use_for_oauth": "1"}
         mock_pwd.return_value = "proxy_pwd"
         proxy_uri = db_utils.get_proxy_uri("session_key")
-        self.assertEqual(proxy_uri, {'http': 'http://proxy_usr:proxy_pwd@proxy_url:8000', 'https': 'http://proxy_usr:proxy_pwd@proxy_url:8000'})
-        
+        self.assertEqual(proxy_uri, {'http': 'http://proxy_usr:proxy_pwd@proxy_url:8000', 'https': 'http://proxy_usr:proxy_pwd@proxy_url:8000', 'use_for_oauth': '1'})
 
     @patch("databricks_common_utils.get_proxy_configuration")
     @patch("databricks_common_utils.get_proxy_clear_password")
     def test_get_proxy_uri_disabled(self, mock_pwd, mock_conf):
         db_utils = import_module('databricks_common_utils')
+        db_utils._LOGGER = MagicMock()
         mock_conf.return_value = {"proxy_enabled": 0, "proxy_type": "http", "proxy_url": "proxy_url", "proxy_port": 8000, "proxy_username": "proxy_usr"}
         mock_pwd.return_value = "proxy_pwd"
         proxy_uri = db_utils.get_proxy_uri("session_key")
+        db_utils._LOGGER.info.assert_called_with("Proxy is disabled. Skipping proxy mechanism.")
         self.assertEqual(proxy_uri, None)
 
     @patch("databricks_common_utils.requests.post")

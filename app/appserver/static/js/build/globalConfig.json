@@ -275,6 +275,13 @@
                             "field": "proxy_rdns",
                             "label": "Remote DNS resolution",
                             "type": "checkbox"
+                        },
+                        {
+                            "field": "use_for_oauth",
+                            "label": "Use Proxy for OAuth",
+                            "defaultValue": 0,
+                            "tooltip": "Check this box if you want to use proxy just for AAD token generation (https://login.microsoftonline.com/). All other network calls will skip the proxy even if it's enabled.",
+                            "type": "checkbox"
                         }
                     ],
                     "options": {
