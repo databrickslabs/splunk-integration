@@ -6,15 +6,7 @@ proxy_port =
 proxy_username = 
 proxy_password = 
 proxy_rdns = 
+use_for_oauth = 
 
 [logging]
 loglevel = 
-
-[databricks_credentials]
-databricks_instance = 
-client_id = 
-tenant_id = 
-client_secret = 
-access_token =
-cluster_name = 
-databricks_access_token = 

@@ -2,12 +2,14 @@ import declare
 import unittest
 from mock import patch, MagicMock
 
+
 mocked_modules = {}
 def setUpModule():
     global mocked_modules
 
     module_to_be_mocked = [
         'log_manager',
+        'databricks_common_utils',
         'splunk',
         'splunk.rest',
         'splunk.clilib',
@@ -33,9 +35,12 @@ class TestDatabricksRetiredRunCommand(unittest.TestCase):
         cls.databricksretiredrun = databricksretiredrun
         cls.DatabricksRetiredRunCommand = databricksretiredrun.DatabricksRetiredRunCommand
 
-    def test_option_values_exception(self):
+    @patch("databricks_common_utils.check_user_roles")
+    def test_option_values_exception(self, mock_user_role):
         db_retired_run_obj = self.DatabricksRetiredRunCommand()
+        db_retired_run_obj._metadata = MagicMock()
         db_retired_run_obj.write_error = MagicMock()
+        mock_user_role.check_user_roles.return_value = False
         with self.assertRaises(SystemExit) as cm:
             resp = db_retired_run_obj.generate()
             next(resp)

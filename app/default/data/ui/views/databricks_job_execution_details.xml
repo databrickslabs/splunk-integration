@@ -37,7 +37,7 @@
 | addinfo
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
 | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") | search user="$user_filter$" command_status="$command_execution_status_filter$"
-| table created_time user param run_id command_status output_url result_url error 
+| table created_time user account_name param run_id command_status output_url result_url error 
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
@@ -45,7 +45,8 @@
 | rename param as "Notebook Params"
 | rename run_id as "Run ID"
 | rename command_status as "Submission Status"
-| rename user as "User"</query>
+| rename user as "User"
+| rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>
           <latest>$creation_time_filter.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -86,7 +87,7 @@
 | eval info_max_time=if(isnum(info_max_time), info_max_time, now())
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
 | search user="$user_filter$" command_status="$command_execution_status_filter$" | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
-| table created_time user param run_id command_status output_url result_url error 
+| table created_time user account_name param run_id command_status output_url result_url error 
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
@@ -94,7 +95,8 @@
 | rename param as "Notebook Params"
 | rename run_id as "Run ID"
 | rename command_status as "Submission Status"
-| rename user as "User"</query>
+| rename user as "User"
+| rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>
           <latest>$creation_time_filter.latest$</latest>
           <sampleRatio>1</sampleRatio>

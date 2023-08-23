@@ -43,6 +43,9 @@ class DatabricksRetiredRunCommand(GeneratingCommand):
             _LOGGER.info("Initiating databricksretiredrun command.")
             if False:
                 yield
+
+            session_key = self._metadata.searchinfo.session_key
+
             current_time = datetime.utcnow()
             if not any((self.days, self.run_id, self.user)):
                 msg = "No parameters provided. Please provide at least one of the parameters"

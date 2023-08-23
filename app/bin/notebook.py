@@ -1,15 +1,14 @@
 ## Minimal set of standard modules to import
-import csv      ## Result set is in CSV format
-import gzip     ## Result set is gzipped
-import json     ## Payload comes in JSON format
+import csv  ## Result set is in CSV format
+import gzip  ## Result set is gzipped
+import json  ## Payload comes in JSON format
 import logging  ## For specifying log levels
-import sys      ## For appending the library path
+import sys  ## For appending the library path
 
 ## Standard modules specific to this action
-import requests ## For making http based API calls
-import urllib   ## For url encoding
-import time     ## For rate limiting
-
+import requests  ## For making http based API calls
+import urllib  ## For url encoding
+import time  ## For rate limiting
 
 
 import re, os
@@ -21,12 +20,13 @@ import traceback
 ## C.  Import ModularAction from cim_actions
 ## D.  Import ModularActionTimer from cim_actions
 from splunk.clilib.bundle_paths import make_splunkhome_path
+
 sys.path.append(make_splunkhome_path(["etc", "apps", "Splunk_SA_CIM", "lib"]))
 from cim_actions import ModularAction, ModularActionTimer
 
 ## Retrieve a logging instance from ModularAction
 ## It is required that this endswith _modalert
-logger = ModularAction.setup_logger('databricks_modalert')
+logger = ModularAction.setup_logger("databricks_modalert")
 
 ## Subclass ModularAction for purposes of implementing
 ## a script specific dowork() method
@@ -38,8 +38,8 @@ class NotebookModularAction(ModularAction):
         super(NotebookModularAction, self).__init__(settings, logger, action_name)
         ## Initialize param.limit
         try:
-            self.limit = int(self.configuration.get('limit', 1))
-            if self.limit<1 or self.limit>30:
+            self.limit = int(self.configuration.get("limit", 1))
+            if self.limit < 1 or self.limit > 30:
                 self.limit = 30
         except:
             self.limit = 1
@@ -61,41 +61,41 @@ class NotebookModularAction(ModularAction):
         #         raise Exception('Parameter field does not exist in result')
 
     ## This method will do the actual work itself
-  
+
     def dowork(self, result):
         # ## get parameter value
         # parameter  = result[self.configuration.get('parameter_field')]
         # ## get service
         # service    = self.configuration.get('service', '')
         ## build sourcetype
-        sourcetype = 'databricks:notebook'
-        self.message(f'Successfully started Databricks Notebook Action', status='success')
+        sourcetype = "databricks:notebook"
+        self.message(f"Successfully started Databricks Notebook Action", status="success")
         # self.message(f'Settings: {self.settings}', status='success')
         # self.message(f'Configuration: {self.configuration}', status='success')
-        
-        paramOne = self.configuration.get('paramone')
+
+        paramOne = self.configuration.get("paramone")
         paramTwo = None
         try:
-            paramTwo = self.configuration.get('paramtwo')
+            paramTwo = self.configuration.get("paramtwo")
         except:
             pass
-        notebook = self.configuration.get('notebook')
+        notebook = self.configuration.get("notebook")
         params = {}
         if paramOne in result:
             params[paramOne] = result[paramOne]
-        if paramTwo and paramTwo!="" and paramTwo in result:
+        if paramTwo and paramTwo != "" and paramTwo in result:
             params[paramTwo] = result[paramTwo]
 
         rid = ""
-        try: 
+        try:
             if "orig_rid" in result:
-                rid = result['orig_rid']
+                rid = result["orig_rid"]
             elif "rid" in result:
-                rid = result['rid']
-            elif self.settings.get('rid'):
-                rid = self.settings.get('rid')
-            elif self.settings.get('orig_rid'):
-                rid = self.settings.get('orig_rid')
+                rid = result["rid"]
+            elif self.settings.get("rid"):
+                rid = self.settings.get("rid")
+            elif self.settings.get("orig_rid"):
+                rid = self.settings.get("orig_rid")
             # self.message(f"RID: \"{rid}\" orig_rid in result?=\"{'orig_rid' in result}\" rid in result?=\"{'rid' in result}\" rid in settings?=\"{self.settings.get('rid')}\" orig_rid in settings?=\"{self.settings.get('rid')}\"", status="working")
         except:
             pass
@@ -103,23 +103,27 @@ class NotebookModularAction(ModularAction):
         sid = ""
         try:
             if "orig_sid" in result:
-                sid = result['orig_sid']
+                sid = result["orig_sid"]
             elif "sid" in result:
-                sid = result['sid']
-            elif self.settings.get('sid'):
-                sid = self.settings.get('sid')
-            elif self.settings.get('orig_sid'):
-                sid = self.settings.get('orig_sid')
+                sid = result["sid"]
+            elif self.settings.get("sid"):
+                sid = self.settings.get("sid")
+            elif self.settings.get("orig_sid"):
+                sid = self.settings.get("orig_sid")
             # self.message(f"SID: \"{sid}\" orig_sid in result?=\"{'orig_sid' in result}\" sid in result?=\"{'sid' in result}\" sid in settings?=\"{self.settings.get('sid')}\" orig_sid in settings?=\"{self.settings.get('sid')}\"", status="working")
         except:
             pass
 
         try:
-            cluster_id = com.get_cluster_id(self.session_key, self.cluster_name)
-            self.message("Cluster ID received: {}".format(cluster_id), status="working")#, level=logging.INFO)
+            cluster_id = com.get_cluster_id(self.cluster_name)
+            self.message(
+                "Cluster ID received: {}".format(cluster_id), status="working"
+            )  # , level=logging.INFO)
 
             # Request to submit the run
-            self.message("Preparing request body for execution", status="working")#, level=logging.INFO)
+            self.message(
+                "Preparing request body for execution", status="working"
+            )  # , level=logging.INFO)
             notebook_task = {"notebook_path": notebook}
             notebook_task["base_parameters"] = params
 
@@ -129,32 +133,53 @@ class NotebookModularAction(ModularAction):
                 "notebook_task": notebook_task,
             }
 
-            self.message("Submitting the run", status="working")#, level=logging.INFO)
-            response = com.databricks_api(
-                "post", const.RUN_SUBMIT_ENDPOINT, self.session_key, data=payload
-            )
+            self.message("Submitting the run", status="working")  # , level=logging.INFO)
+            response = com.databricks_api("post", const.RUN_SUBMIT_ENDPOINT, data=payload)
 
             # kv_log_info.update(response)
             run_id = response["run_id"]
-            self.message("Successfully submitted the run with ID: {}".format(run_id))#, status="working", level=logging.INFO)
+            self.message(
+                "Successfully submitted the run with ID: {}".format(run_id)
+            )  # , status="working", level=logging.INFO)
 
             # Request to get the run_id details
             # self.message("Fetching details for run ID: {}".format(run_id))#, status="working", level=logging.INFO)
             args = {"run_id": run_id}
-            response = com.databricks_api("get", const.GET_RUN_ENDPOINT, self.session_key, args=args)
+            response = com.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
             result_url = ""
             output_url = response.get("run_page_url")
             if output_url:
                 result_url = output_url.rstrip("/") + "/resultsOnly"
                 # self.message("Output url returned: {}".format(output_url), status="working")#, level=logging.INFO)
-            self.message(f"Start result_url=\"{result_url}\" output_url=\"{output_url}\" End", status="success")
+            self.message(
+                f'Start result_url="{result_url}" output_url="{output_url}" End', status="success"
+            )
             if sid != "" and rid != "":
                 self.addevent(
-                    json.dumps({"_time": time.time(), "sid": sid, "rid": rid, "result_url": result_url, "output_url": output_url, "response": response, "request_params": params, "databricks_instance": self.databricks_instance, "cluster_name": self.cluster_name, "notebook": notebook}),
-                    sourcetype=sourcetype)
+                    json.dumps(
+                        {
+                            "_time": time.time(),
+                            "sid": sid,
+                            "rid": rid,
+                            "result_url": result_url,
+                            "output_url": output_url,
+                            "response": response,
+                            "request_params": params,
+                            "databricks_instance": self.databricks_instance,
+                            "cluster_name": self.cluster_name,
+                            "notebook": notebook,
+                        }
+                    ),
+                    sourcetype=sourcetype,
+                )
             # self.message('Reported status for Databricks notebook action', status='success')#, level=logging.INFO)
         except Exception as e:
-            modaction.message(f"Failure during job submission: {traceback.format_exc()}", status='failure', level=logging.CRITICAL)
+            modaction.message(
+                f"Failure during job submission: {traceback.format_exc()}",
+                status="failure",
+                level=logging.CRITICAL,
+            )
+
 
 if __name__ == "__main__":
     ## This is standard chrome for validating that
@@ -168,39 +193,60 @@ if __name__ == "__main__":
         ## Retrieve an instanced of NotebookModularAction and name it modaction
         ## pass the payload (sys.stdin) and logging instance
         stdindata = sys.stdin.read()
-        modaction = NotebookModularAction(stdindata, logger, 'notebook')
+        modaction = NotebookModularAction(stdindata, logger, "notebook")
         logger.debug(modaction.settings)
-        modaction.message("About to start trying to import the Databricks code", status="starting", level=logging.CRITICAL)
+        modaction.message(
+            "About to start trying to import the Databricks code",
+            status="starting",
+            level=logging.CRITICAL,
+        )
         try:
             import databricks_com as com
             import databricks_const as const
             import databricks_common_utils as utils
         except Exception as e:
-            modaction.message(f"Failure on importing Databricks libs: {traceback.format_exc()}", status='failure', level=logging.CRITICAL)
-        
-        
+            modaction.message(
+                f"Failure on importing Databricks libs: {traceback.format_exc()}",
+                status="failure",
+                level=logging.CRITICAL,
+            )
+
+        modaction.session_key = json.loads(stdindata)["session_key"]
+        modaction.account_name = json.loads(stdindata).get("configuration").get("account_name")
+        com = com.DatabricksClient(modaction.account_name, modaction.session_key)
         try:
-            modaction.cluster_name = utils.get_databricks_configs().get('cluster_name')
-            modaction.databricks_instance = utils.get_databricks_configs().get('databricks_instance')
+            modaction.cluster_name = utils.get_databricks_configs(
+                modaction.session_key, modaction.account_name
+            ).get("cluster_name")
+            modaction.databricks_instance = utils.get_databricks_configs(
+                modaction.session_key, modaction.account_name
+            ).get("databricks_instance")
         except Exception as e:
-            modaction.message(f"Failure getting cluster name config: {traceback.format_exc()}", status='failure', level=logging.CRITICAL)
-        modaction.session_key = json.loads(stdindata)['session_key']
-        
+            modaction.message(
+                f"Failure getting cluster name config: {traceback.format_exc()}",
+                status="failure",
+                level=logging.CRITICAL,
+            )
+
         ## Add a duration message for the "main" component using modaction.start_timer as
         ## the start time
-        with ModularActionTimer(modaction, 'main', modaction.start_timer):
+        with ModularActionTimer(modaction, "main", modaction.start_timer):
             ## Process the result set by opening results_file with gzip
-            with gzip.open(modaction.results_file, 'rt') as fh:
+            with gzip.open(modaction.results_file, "rt") as fh:
                 ## Iterate the result set using a dictionary reader
                 ## We also use enumerate which provides "num" which
                 ## can be used as the result ID (rid)
-                modaction.message("Got a file: {}".format(modaction.results_file), status="working", level=logging.CRITICAL)
+                modaction.message(
+                    "Got a file: {}".format(modaction.results_file),
+                    status="working",
+                    level=logging.CRITICAL,
+                )
                 for num, result in enumerate(csv.DictReader(fh)):
                     ## results limiting
-                    if num>=modaction.limit:
+                    if num >= modaction.limit:
                         break
                     ## Set rid to row # (0->n) if unset
-                    result.setdefault('rid', str(num))
+                    result.setdefault("rid", str(num))
                     ## Update the ModularAction instance
                     ## with the current result.  This sets
                     ## orig_sid/rid/orig_rid accordingly.
@@ -217,16 +263,16 @@ if __name__ == "__main__":
                     modaction.dowork(result)
                     ## rate limiting
                     time.sleep(1.6)
-            
-            ## Once we're done iterating the result set and making 
+
+            ## Once we're done iterating the result set and making
             ## the appropriate API calls we will write out the events
-            modaction.writeevents(index="cim_modactions", source='databricks:modalert')
+            modaction.writeevents(index="cim_modactions", source="databricks:modalert")
 
     ## This is standard chrome for outer exception handling
     except Exception as e:
         ## adding additional logging since adhoc search invocations do not write to stderr
         try:
-            modaction.message(traceback.format_exc(), status='failure', level=logging.CRITICAL)
+            modaction.message(traceback.format_exc(), status="failure", level=logging.CRITICAL)
         except:
             logger.critical(e)
         print >> sys.stderr, "ERROR: %s" % e

@@ -8,34 +8,65 @@ from log_manager import setup_logging
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
+from solnlib.utils import is_true
+
 _LOGGER = setup_logging("ta_databricks_com")
 
 
 class DatabricksClient(object):
     """A class to establish connection with Databricks and get data using REST API."""
 
-    def __init__(self, session_key):
+    def __init__(self, account_name, session_key):
         """Intialize DatabricksClient object to get data from Databricks platform.
 
         Args:
             session_key (object): Splunk session key
         """
-        databricks_configs = utils.get_databricks_configs()
+        databricks_configs = utils.get_databricks_configs(session_key, account_name)
+        if not databricks_configs:
+            raise Exception(
+                "Account '{}' not found. Please provide valid Databricks account.".format(
+                    account_name
+                )
+            )
+        self.account_name = account_name
         databricks_instance = databricks_configs.get("databricks_instance")
         self.auth_type = databricks_configs.get("auth_type")
         self.session_key = session_key
         self.session = self.get_requests_retry_session()
-        self.session.proxies = utils.get_proxy_uri(session_key)
+        self.session.proxies = databricks_configs.get("proxy_uri")
+        if self.session.proxies:
+            if is_true(self.session.proxies.get("use_for_oauth")):
+                _LOGGER.info(
+                    "Skipping the usage of proxy for running query as 'Use Proxy for OAuth' parameter is checked."
+                )
+                self.session.proxies = None
+            else:
+                self.session.proxies.pop("use_for_oauth")
+
         self.session.verify = const.VERIFY_SSL
-        self.databricks_token = utils.get_clear_token(self.session_key, self.auth_type)
+        self.session.timeout = const.TIMEOUT
+        if self.auth_type == 'PAT':
+            self.databricks_token = databricks_configs.get("databricks_pat")
+        else:
+            self.databricks_token = databricks_configs.get("aad_access_token")
+            self.aad_client_id = databricks_configs.get("aad_client_id")
+            self.aad_tenant_id = databricks_configs.get("aad_tenant_id")
+            self.aad_client_secret = databricks_configs.get("aad_client_secret")
+
         if not all([databricks_instance, self.databricks_token]):
-            raise Exception("Addon is not configured. Navigate to addon's configuration page to configure the addon.")
+            raise Exception(
+                "Addon is not configured. Navigate to addon's configuration page to configure the addon."
+            )
         self.databricks_instance_url = "{}{}".format("https://", databricks_instance.strip("/"))
         self.request_headers = {
             "Authorization": "Bearer {}".format(self.databricks_token),
             "Content-Type": "application/json",
-            "User-Agent": const.USER_AGENT_CONST
+            "User-Agent": "{}".format(const.USER_AGENT_CONST),
         }
+        _LOGGER.debug(
+            "Request made to the Databricks from Splunk user: {}".format(utils.get_current_user(self.session_key))
+        )
         self.session.headers.update(self.request_headers)
         if self.session.proxies:
             _LOGGER.info("Proxy is configured. Using proxy to execute the request.")
@@ -56,7 +87,7 @@ class DatabricksClient(object):
             total=const.RETRIES,
             backoff_factor=const.BACKOFF_FACTOR,
             status_forcelist=const.STATUS_FORCELIST,
-            method_whitelist=["POST", "GET"]
+            method_whitelist=["POST", "GET"],
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount("http://", adapter)
@@ -79,28 +110,32 @@ class DatabricksClient(object):
             while True:
                 if method.lower() == "get":
                     _LOGGER.info("Executing REST call: {}.".format(endpoint))
-                    response = self.session.get(
-                        request_url, params=args
-                    )
+                    response = self.session.get(request_url, params=args, timeout=self.session.timeout)
                 elif method.lower() == "post":
                     _LOGGER.info("Executing REST call: {} Payload: {}.".format(endpoint, str(data)))
-                    response = self.session.post(
-                        request_url,
-                        params=args,
-                        json=data
-                    )
+                    response = self.session.post(request_url, params=args, json=data, timeout=self.session.timeout)
                 status_code = response.status_code
-                if status_code == 403 and self.auth_type == 'AAD' and run_again:
+                if status_code == 403 and self.auth_type == "AAD" and run_again:
                     response = None
                     run_again = False
                     _LOGGER.info("Refreshing AAD token.")
+                    proxy_settings = utils.get_proxy_uri(self.session_key)  # Reinitializing the proxy
                     db_token = utils.get_aad_access_token(
-                        self.session_key, self.request_headers['User-Agent'], self.session.proxies, retry=const.RETRIES)
+                        self.session_key,
+                        self.account_name,
+                        self.aad_tenant_id,
+                        self.aad_client_id,
+                        self.aad_client_secret,
+                        proxy_settings,   # Using the reinit proxy. As proxy is getting updated on Line no: 43, 45
+                        retry=const.RETRIES,  # based on the condition and for this call we will always need proxy.
+                    )
                     if isinstance(db_token, tuple):
                         raise Exception(db_token[0])
                     else:
                         self.databricks_token = db_token
-                    self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
+                    self.request_headers["Authorization"] = "Bearer {}".format(
+                        self.databricks_token
+                    )
                     self.session.headers.update(self.request_headers)
                 elif status_code != 200:
                     response.raise_for_status()
@@ -108,8 +143,10 @@ class DatabricksClient(object):
                     break
             return response.json()
         except Exception as e:
-            msg = "Unable to request Databricks instance. "\
+            msg = (
+                "Unable to request Databricks instance. "
                 "Please validate the provided Databricks and Proxy configurations or check the network connectivity."
+            )
             if "response" in locals() and response is not None:
                 status_code_messages = {
                     400: response.json().get("message", "Bad request. The request is malformed."),
@@ -136,6 +173,10 @@ class DatabricksClient(object):
         cluster_id = None
         resp = self.databricks_api("get", const.CLUSTER_ENDPOINT)
         response = resp.get("clusters")
+        if response is None:
+            raise Exception(
+                "No cluster found with name {}. Provide a valid cluster name.".format(cluster_name)
+            )
 
         for r in response:
 
@@ -150,4 +191,6 @@ class DatabricksClient(object):
                         r.get("state")
                     )
                 )
-        raise Exception("No cluster found with name {}. Provide a valid cluster name.".format(cluster_name))
+        raise Exception(
+            "No cluster found with name {}. Provide a valid cluster name.".format(cluster_name)
+        )
