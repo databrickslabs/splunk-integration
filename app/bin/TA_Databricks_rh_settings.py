@@ -2,6 +2,7 @@
 from email.policy import default
 import ta_databricks_declare
 from databricks_validators import ValidateDatabricksInstance
+from databricks_common_utils import IndexMacroManager
 from splunktaucclib.rest_handler.endpoint import (
     field,
     validator,
@@ -98,11 +99,29 @@ fields_logging = [
 ]
 model_logging = RestModel(fields_logging, name='logging')
 
+fields_additional_parameters = [
+    field.RestField(
+        'admin_command_timeout',
+        required=True,
+        default=300,
+        validator=None
+    ),
+    field.RestField(
+        'index',
+        required=True,
+        default='main',
+        encrypted=False,
+        validator=IndexMacroManager()
+    )
+]
+model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
+
 endpoint = MultipleModel(
     'ta_databricks_settings',
     models=[
         model_proxy,
-        model_logging
+        model_logging,
+        model_additional_parameters
     ],
 )
 

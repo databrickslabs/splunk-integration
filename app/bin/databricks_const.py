@@ -18,17 +18,12 @@ SCOPE = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
 # App Name
 APP_NAME = __file__.split(os.sep)[-3]
 
-# KV Store collection name
-KV_COLLECTION_NAME_SUBMIT_RUN = "databricks_submit_run_log"
-KV_COLLECTION_NAME_EXECUTE_JOB = "databricks_execute_job_log"
-
 REQUIRED_ROLES = ['databricks_user', 'databricks_admin']
 
 # Command execution configs
-COMMAND_TIMEOUT_IN_SECONDS = 300
 COMMAND_SLEEP_INTERVAL_IN_SECONDS = 3
 
-USER_AGENT_CONST = "Databricks-AddOnFor-Splunk-1.2.0"
+USER_AGENT_CONST = "Databricks-AddOnFor-Splunk-1.3.0"
 
 VERIFY_SSL = True
 INTERNAL_VERIFY_SSL = False

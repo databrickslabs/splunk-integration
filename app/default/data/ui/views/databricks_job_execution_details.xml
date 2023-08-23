@@ -20,7 +20,7 @@
       <fieldForLabel>user</fieldForLabel>
       <fieldForValue>user</fieldForValue>
       <search>
-        <query>| inputlookup submit_run_logs | append [| inputlookup execute_job_logs] | dedup user | table user</query>
+        <query>`databricks_index_macro` sourcetype=databricks* | dedup user | table user</query>
         <earliest>$creation_time_filter.earliest$</earliest>
         <latest>$creation_time_filter.latest$</latest>
       </search>
@@ -33,19 +33,22 @@
       <title>Databricks Run Details</title>
       <table>
         <search>
-          <query>| inputlookup submit_run_logs | sort -created_time 
+          <query>`databricks_index_macro` sourcetype="databricks:databricksrun" | sort -created_time 
+| dedup run_id
 | addinfo
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
-| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") | search user="$user_filter$" command_status="$command_execution_status_filter$"
-| table created_time user account_name param run_id command_status output_url result_url error 
+| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") | search user="$user_filter$" command_submission_status="$command_execution_status_filter$"
+| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error 
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
 | rename result_url as "Result URL"
-| rename param as "Notebook Params"
+| rename param{} as "Notebook Params"
 | rename run_id as "Run ID"
-| rename command_status as "Submission Status"
+| rename command_submission_status as "Command Submission Status"
+| rename run_execution_status as "Run Execution Status"
 | rename user as "User"
+| rename uid as UID
 | rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>
           <latest>$creation_time_filter.latest$</latest>
@@ -82,20 +85,23 @@
       <title>Databricks Job Details</title>
       <table>
         <search>
-          <query>| inputlookup execute_job_logs | sort -created_time
+          <query>`databricks_index_macro` sourcetype="databricks:databricksjob" | sort -created_time
+| dedup run_id
 | addinfo
 | eval info_max_time=if(isnum(info_max_time), info_max_time, now())
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
-| search user="$user_filter$" command_status="$command_execution_status_filter$" | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
-| table created_time user account_name param run_id command_status output_url result_url error 
+| search user="$user_filter$" command_submission_status="$command_execution_status_filter$" | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
+| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error 
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
 | rename result_url as "Result URL"
-| rename param as "Notebook Params"
+| rename param{} as "Notebook Params"
 | rename run_id as "Run ID"
-| rename command_status as "Submission Status"
+| rename command_submission_status as "Command Submission Status"
+| rename run_execution_status as "Job Execution Status"
 | rename user as "User"
+| rename uid as UID
 | rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>
           <latest>$creation_time_filter.latest$</latest>

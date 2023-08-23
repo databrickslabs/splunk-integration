@@ -89,7 +89,9 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'proxy_username': None,
             'proxy_password': None,
             'proxy_rdns': None,
-            'use_for_oauth': None
+            'use_for_oauth': None,
+            'admin_command_timeout': None,
+            'index': None
         }
         try:
             _LOGGER.info("Retrieving account and settings configurations.")
@@ -159,6 +161,20 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             config_dict['proxy_username'] = proxy_config.get('proxy_username')
             config_dict['proxy_rdns'] = proxy_config.get('proxy_rdns')
             config_dict['use_for_oauth'] = proxy_config.get('use_for_oauth')
+
+            # Get additional settings from conf
+            _, additional_settings_response_content = rest.simpleRequest(
+                "/servicesNS/nobody/{}/TA_Databricks_settings/additional_parameters".format(
+                    APP_NAME
+                ),
+                sessionKey=self.admin_session_key,
+                getargs={"output_mode": "json"},
+                raiseAllErrors=True,
+            )
+            additional_settings_json = json.loads(additional_settings_response_content)
+            additional_settings_config = additional_settings_json.get("entry")[0].get("content")
+            config_dict['admin_command_timeout'] = additional_settings_config.get("admin_command_timeout")
+            config_dict['index'] = additional_settings_config.get("index")
 
             self.status = 200
             return {

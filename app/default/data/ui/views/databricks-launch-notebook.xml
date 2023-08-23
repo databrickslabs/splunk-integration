@@ -25,7 +25,7 @@
     </fail>
   </search>
   <search id="redirected_notebookrun" depends="$form.identifier$">
-    <query>|inputlookup submit_run_logs where identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time</query>
+    <query>`databricks_index_macro` sourcetype="databricks:databricksrun" where identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time</query>
     <progress>
       <unset token="url"></unset>
       <unset token="failedAlertJob"></unset>

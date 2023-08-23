@@ -2,7 +2,7 @@
     "meta": {
         "name": "TA-Databricks",
         "displayName": "Databricks Add-on For Splunk",
-        "version": "1.2.0",
+        "version": "1.3.0",
         "apiVersion": "3.0.0",
         "restRoot": "TA_Databricks"
     },
@@ -274,7 +274,8 @@
                         {
                             "field": "proxy_rdns",
                             "label": "Remote DNS resolution",
-                            "type": "checkbox"
+                            "type": "checkbox",
+                            "help": "Enabling this option allows the proxy server to handle DNS resolution for clients, enhancing privacy and centralizing control over DNS requests."
                         },
                         {
                             "field": "use_for_oauth",
@@ -325,6 +326,42 @@
                     "options": {
                         "saveValidator": "function(formData) {if(!formData.loglevel) { return 'Log level cannot be empty'; } return true; }"
                     }
+                },
+                {
+                    "name": "additional_parameters",
+                    "title": "Additional Parameters",                  
+                    "entity": [{
+                        "field": "admin_command_timeout",
+                        "label": "Command Timeout Value",
+                        "defaultValue": 300,
+                        "options": {
+                            "placeholder": "Required"
+                        },
+                        "type": "text",
+                        "help": "Enter the maximum value of command timeout to be allowed for databricksquery command.",
+                        "required": true,
+                        "encrypted": false,
+                        "validators": [{
+                            "type": "regex",
+                            "pattern": "^[1-9]\\d*$",
+                            "errorMsg": "Command Timeout Value must be a positive integer."
+                        }
+                    ]
+                    },
+                    {
+                        "field": "index",
+                        "label": "Index",
+                        "type": "singleSelect",
+                        "defaultValue": "main",
+                        "help": "Enter the index in which you want to store the command execution details.",
+                        "options": {
+                            "endpointUrl": "data/indexes",
+                            "placeholder": "Required",
+                            "disableSearch": true,
+                            "denyList": "^_.*$"
+                        },
+                        "required": true
+                    }]
                 }
             ]
         }

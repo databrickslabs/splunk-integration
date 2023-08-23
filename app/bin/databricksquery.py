@@ -2,6 +2,7 @@ import ta_databricks_declare  # noqa: F401
 import sys
 import traceback
 import time
+import uuid
 
 import databricks_com as com
 import databricks_const as const
@@ -16,7 +17,8 @@ from splunklib.searchcommands import (
     validators,
 )
 
-_LOGGER = setup_logging("ta_databricksquery_command")
+UID = str(uuid.uuid4())
+_LOGGER = setup_logging("ta_databricksquery_command", UID)
 
 
 @Configuration(type="events")
@@ -31,14 +33,34 @@ class DatabricksQueryCommand(GeneratingCommand):
 
     def generate(self):
         """Generating custom command."""
-        _LOGGER.info("Initiating databricksquery command")
-        command_timeout_in_seconds = self.command_timeout or const.COMMAND_TIMEOUT_IN_SECONDS
-        _LOGGER.info("Setting command timeout to {} seconds.".format(command_timeout_in_seconds))
+        _LOGGER.info("Initiating databricksquery command.")
+        _LOGGER.info("Cluster: {}".format(self.cluster))
+        _LOGGER.info("Query: {}".format(self.query))
+        _LOGGER.info("Command Timeout: {}".format(self.command_timeout))
 
         # Get session key
         session_key = self._metadata.searchinfo.session_key
 
         try:
+            # Fetching timeout value
+            admin_com_timeout = \
+                utils.get_databricks_configs(session_key, self.account_name).get("admin_command_timeout")
+            if ((self.command_timeout and self.command_timeout > int(admin_com_timeout)) or not self.command_timeout):
+                command_timeout_in_seconds = int(admin_com_timeout)
+            else:
+                command_timeout_in_seconds = self.command_timeout
+            if (self.command_timeout and self.command_timeout > int(admin_com_timeout)):
+                _LOGGER.info("Provided value of Command Timeout (={}) by the user is greater than the maximum"
+                             " allowed/permitted value. Using the maximum allowed value: {} seconds"
+                             .format(self.command_timeout, int(admin_com_timeout)))
+            else:
+                if self.command_timeout:
+                    _LOGGER.info("Provided value of Command Timeout (={}) by the user is within the maximum"
+                                 " allowed/permitted value.".format(self.command_timeout))
+                else:
+                    _LOGGER.info("No value for Command Timeout is provided. "
+                                 "Using the maximum allowed value: {} seconds".format(admin_com_timeout))
+            _LOGGER.info("Setting Command Timeout to {} seconds.".format(command_timeout_in_seconds))
 
             # Fetching cluster name
             self.cluster = self.cluster or utils.get_databricks_configs(
@@ -107,7 +129,8 @@ class DatabricksQueryCommand(GeneratingCommand):
                             "Encountered unknown result type, terminating the execution."
                         )
 
-                    if response["results"].get("truncated", True):
+                    if response["results"].get("truncated"):
+                        _LOGGER.info("Results are truncated due to Databricks API limitations.")
                         self.write_warning(
                             "Results are truncated due to Databricks API limitations."
                         )
@@ -123,7 +146,8 @@ class DatabricksQueryCommand(GeneratingCommand):
 
                     # Fetch Data
                     data = response["results"]["data"]
-
+                    count_of_result = len(data) if data else 0
+                    _LOGGER.info("Total number of rows obtained in query's result: {}".format(count_of_result))
                     for d in data:
                         yield dict(zip(schema, d))
 
@@ -166,6 +190,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                 payload = {"contextId": context_id, "clusterId": cluster_id}
                 _ = client.databricks_api("post", const.CONTEXT_DESTROY_ENDPOINT, data=payload)
                 _LOGGER.info("Context deleted successfully.")
+            _LOGGER.info("Successfully executed databricksquery command.")
 
         except Exception as e:
             _LOGGER.error(e)

@@ -12,7 +12,7 @@ APP_NAME = const.APP_NAME
 DEFAULT_LOG_LEVEL = logging.INFO
 
 
-def setup_logging(log_name):
+def setup_logging(log_name, uid_value=None):
     """
     Get a logger object with specified log level.
 
@@ -23,6 +23,7 @@ def setup_logging(log_name):
     log_file = make_splunkhome_path(["var", "log", "splunk", "%s.log" % log_name])
     # Get directory in which log file is present
     log_dir = os.path.dirname(log_file)
+    uid = uid_value if uid_value else None
     # Create directory at the required path to store log file, if not found
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -47,10 +48,16 @@ def setup_logging(log_name):
             log_file, mode="a", maxBytes=10485760, backupCount=10
         )
         # Format logs
-        fmt_str = (
-            "%(asctime)s %(levelname)s pid=%(process)d tid=%(threadName)s "
-            "file=%(filename)s:%(funcName)s:%(lineno)d | %(message)s"
-        )
+        if uid:
+            fmt_str = (
+                "%(asctime)s %(levelname)s pid=%(process)d tid=%(threadName)s "
+                "file=%(filename)s:%(funcName)s:%(lineno)d | [UID: {}] %(message)s"
+            ).format(uid)
+        else:
+            fmt_str = (
+                "%(asctime)s %(levelname)s pid=%(process)d tid=%(threadName)s "
+                "file=%(filename)s:%(funcName)s:%(lineno)d | %(message)s"
+            )
         formatter = logging.Formatter(fmt_str)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
