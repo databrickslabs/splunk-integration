@@ -141,7 +141,10 @@ class DatabricksClient(object):
                     response.raise_for_status()
                 else:
                     break
-            return response.json()
+            if "cancel" in endpoint:
+                return response.json(), status_code
+            else:
+                return response.json()
         except Exception as e:
             msg = (
                 "Unable to request Databricks instance. "

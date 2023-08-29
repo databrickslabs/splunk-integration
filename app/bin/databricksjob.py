@@ -35,8 +35,8 @@ class DatabricksJobCommand(GeneratingCommand):
     def generate(self):
         """Generating custom command."""
         _LOGGER.info("Initiating databricksjob command.")
-        _LOGGER.info("job ID: {}".format(self.job_id))
-        _LOGGER.info("Notebook params: {}".format(self.notebook_params))
+        _LOGGER.info("Job ID: {}".format(self.job_id))
+        _LOGGER.info("Notebook Params: {}".format(self.notebook_params))
         info_to_process = {
             "user": self._metadata.searchinfo.username,
             "account_name": self.account_name,

@@ -189,7 +189,10 @@
                                 "placeholder": "required"
                             }
                         }
-                    ]
+                    ],
+                    "options": {
+                        "saveValidator": "function(formData) { if(formData.name === 'proxy' || formData.name === 'logging' || formData.name === 'additional_parameters' || formData.name === 'additional_settings') { return 'Can not create account named anyone of [proxy, logging, additional_parameters, additional_settings]. These are reserved keywords in Splunk.' ; } return true; }"
+                    }
                 },
                 {
                     "name": "proxy",
@@ -353,7 +356,7 @@
                         "label": "Index",
                         "type": "singleSelect",
                         "defaultValue": "main",
-                        "help": "Enter the index in which you want to store the command execution details.",
+                        "help": "Select the index in which you want to store the command execution details.",
                         "options": {
                             "endpointUrl": "data/indexes",
                             "placeholder": "Required",

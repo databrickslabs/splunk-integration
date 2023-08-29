@@ -6,10 +6,12 @@ CONTEXT_ENDPOINT = "/api/1.2/contexts/create"
 CONTEXT_DESTROY_ENDPOINT = "/api/1.2/contexts/destroy"
 COMMAND_ENDPOINT = "/api/1.2/commands/execute"
 STATUS_ENDPOINT = "/api/1.2/commands/status"
+CANCEL_QUERY_ENDPOINT = "/api/1.2/commands/cancel"
 GET_RUN_ENDPOINT = "/api/2.0/jobs/runs/get"
 RUN_SUBMIT_ENDPOINT = "/api/2.0/jobs/runs/submit"
 EXECUTE_JOB_ENDPOINT = "/api/2.0/jobs/run-now"
 GET_JOB_ENDPOINT = "/api/2.0/jobs/get"
+CANCEL_JOB_RUN_ENDPOINT = "/api/2.0/jobs/runs/cancel"
 AAD_TOKEN_ENDPOINT = "https://login.microsoftonline.com/{}/oauth2/v2.0/token"
 
 # Azure Databricks scope
@@ -22,6 +24,8 @@ REQUIRED_ROLES = ['databricks_user', 'databricks_admin']
 
 # Command execution configs
 COMMAND_SLEEP_INTERVAL_IN_SECONDS = 3
+
+SPLUNK_SEARCH_STATUS_CHECK_INTERVAL = 10
 
 USER_AGENT_CONST = "Databricks-AddOnFor-Splunk-1.3.0"
 

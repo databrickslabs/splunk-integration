@@ -1,8 +1,10 @@
 import ta_databricks_declare  # noqa: F401
 import sys
 import traceback
+import threading
 import time
 import uuid
+import xml.etree.ElementTree as ET
 
 import databricks_com as com
 import databricks_const as const
@@ -16,6 +18,8 @@ from splunklib.searchcommands import (
     Option,
     validators,
 )
+from solnlib.splunkenv import get_splunkd_uri
+from splunk import rest
 
 UID = str(uuid.uuid4())
 _LOGGER = setup_logging("ta_databricksquery_command", UID)
@@ -31,6 +35,30 @@ class DatabricksQueryCommand(GeneratingCommand):
     account_name = Option(require=True)
     command_timeout = Option(require=False, validate=validators.Integer(minimum=1))
 
+    def cancel_query(self, search_sid, session_key, client, call_args):
+        """Method to cancel query execution based on splunk search status."""
+        while True:
+            try:
+                URL = "{}/services/search/jobs/{}".format(get_splunkd_uri(), search_sid)
+                _, content = rest.simpleRequest(
+                    URL, sessionKey=session_key, method="GET", raiseAllErrors=True, getargs=None)
+                namespaces = {'s': 'http://dev.splunk.com/ns/rest', }
+                root = ET.fromstring(content)
+                dispatch_state = root.find(".//s:key[@name='dispatchState']", namespaces).text
+                is_finalized = root.find(".//s:key[@name='isFinalized']", namespaces).text
+
+                if dispatch_state == "FINALIZING" and is_finalized in [1, "1"]:
+                    _LOGGER.info("Stop button of Splunk search has been clicked by User. "
+                                 "Canceling the query execution.")
+                    response, status_code = client.databricks_api("post", const.CANCEL_QUERY_ENDPOINT, data=call_args)
+                    if status_code == 200:
+                        _LOGGER.info("Successfully canceled the query execution.")
+                        break
+                else:
+                    time.sleep(const.SPLUNK_SEARCH_STATUS_CHECK_INTERVAL)
+            except Exception as e:
+                _LOGGER.error("Error while attempting to cancel query execution. Error: {}".format(str(e)))
+
     def generate(self):
         """Generating custom command."""
         _LOGGER.info("Initiating databricksquery command.")
@@ -38,8 +66,9 @@ class DatabricksQueryCommand(GeneratingCommand):
         _LOGGER.info("Query: {}".format(self.query))
         _LOGGER.info("Command Timeout: {}".format(self.command_timeout))
 
-        # Get session key
+        # Get session key and sid
         session_key = self._metadata.searchinfo.session_key
+        search_sid = self._metadata.searchinfo.sid
 
         try:
             # Fetching timeout value
@@ -105,20 +134,26 @@ class DatabricksQueryCommand(GeneratingCommand):
                 "commandId": command_id,
             }
 
+            cancel_method_thread = threading.Thread(
+                target=self.cancel_query, args=(search_sid, session_key, client, args), name="cancel_method_thread")
+            cancel_method_thread.start()
+
             total_wait_time = 0
             while total_wait_time <= command_timeout_in_seconds:
                 response = client.databricks_api("get", const.STATUS_ENDPOINT, args=args)
-
                 status = response.get("status")
                 _LOGGER.info("Query execution status: {}.".format(status))
 
-                if status in ("Cancelled", "Error"):
+                if status in ("Canceled", "Cancelled", "Error"):
                     raise Exception(
                         "Could not complete the query execution. Status: {}.".format(status)
                     )
 
                 elif status == "Finished":
                     if response["results"]["resultType"] == "error":
+                        if response["results"].get("cause") and \
+                                "CommandCancelledException" in response["results"]["cause"]:
+                            raise Exception("Search Canceled!")
                         msg = response["results"].get(
                             "summary", "Error encountered while executing query."
                         )
@@ -193,8 +228,11 @@ class DatabricksQueryCommand(GeneratingCommand):
             _LOGGER.info("Successfully executed databricksquery command.")
 
         except Exception as e:
-            _LOGGER.error(e)
-            _LOGGER.error(traceback.format_exc())
+            if str(e) == "Search Canceled!":
+                _LOGGER.info("Query execution has been canceled!")
+            else:
+                _LOGGER.error(e)
+                _LOGGER.error(traceback.format_exc())
             self.write_error(str(e))
 
 

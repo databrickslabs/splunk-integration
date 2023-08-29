@@ -1,4 +1,4 @@
-<form version="1.1">
+<form version="1.1" script="cancel_button.js" stylesheet="cancel_button.css">
   <label>Databricks Job Execution Details</label>
   <fieldset submitButton="false">
     <input type="time" token="creation_time_filter">
@@ -9,7 +9,7 @@
       </default>
     </input>
     <input type="dropdown" token="command_execution_status_filter">
-      <label>Submission Status</label>
+      <label>Command Submission Status</label>
       <choice value="*">All</choice>
       <choice value="Failed">Failed</choice>
       <choice value="Success">Success</choice>
@@ -31,14 +31,16 @@
   <row>
     <panel>
       <title>Databricks Run Details</title>
-      <table>
+      <table id="databricks_run_table">
         <search>
           <query>`databricks_index_macro` sourcetype="databricks:databricksrun" | sort -created_time 
 | dedup run_id
 | addinfo
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
-| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") | search user="$user_filter$" command_submission_status="$command_execution_status_filter$"
-| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error 
+| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q")
+| eval cancel = run_id + "||" + account_name + "||" + run_execution_status + "||" + uid
+| search user="$user_filter$" command_submission_status="$command_execution_status_filter$"
+| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error cancel
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
@@ -48,6 +50,7 @@
 | rename command_submission_status as "Command Submission Status"
 | rename run_execution_status as "Run Execution Status"
 | rename user as "User"
+| rename cancel as "Cancel Run"
 | rename uid as UID
 | rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>
@@ -83,15 +86,17 @@
   <row>
     <panel>
       <title>Databricks Job Details</title>
-      <table>
+      <table id="databricks_job_table">
         <search>
           <query>`databricks_index_macro` sourcetype="databricks:databricksjob" | sort -created_time
 | dedup run_id
 | addinfo
 | eval info_max_time=if(isnum(info_max_time), info_max_time, now())
 | where info_min_time&lt;=created_time AND (info_max_time&gt;=created_time OR info_max_time="+Infinity") 
-| search user="$user_filter$" command_submission_status="$command_execution_status_filter$" | eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
-| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error 
+| search user="$user_filter$" command_submission_status="$command_execution_status_filter$" 
+| eval created_time=strftime(created_time,"%Y-%m-%dT%H:%M:%S.%Q") 
+| eval cancel = run_id + "||" + account_name + "||" + run_execution_status + "||" + uid
+| table uid created_time user account_name param{} run_id command_submission_status run_execution_status output_url result_url error cancel
 | rename created_time as "Created Time"
 | rename error as "Error Message"
 | rename output_url as "Output URL"
@@ -101,6 +106,7 @@
 | rename command_submission_status as "Command Submission Status"
 | rename run_execution_status as "Job Execution Status"
 | rename user as "User"
+| rename cancel as "Cancel Run"
 | rename uid as UID
 | rename account_name as "Databricks Account"</query>
           <earliest>$creation_time_filter.earliest$</earliest>

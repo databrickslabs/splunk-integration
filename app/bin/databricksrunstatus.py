@@ -46,19 +46,19 @@ if __name__ == "__main__":
                     continue
                 args = {"run_id": run_id}
                 response = client_.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
-                if response["state"]["life_cycle_state"] == "RUNNING":
+                if response and response["state"]["life_cycle_state"] == "RUNNING":
                     _LOGGER.info("{} Execution is in Running state.".format(APPEND_RUN_ID_IN_LOG))
                     if each["run_execution_status"] != "Running":
                         to_ingest = True
                         each["run_execution_status"] = "Running"
 
-                elif response["state"]["life_cycle_state"] == "PENDING":
+                elif response and response["state"]["life_cycle_state"] == "PENDING":
                     _LOGGER.info("{} Execution is in Pending state.".format(APPEND_RUN_ID_IN_LOG))
                     if each["run_execution_status"] != "Pending":
                         to_ingest = True
                         each["run_execution_status"] = "Pending"
 
-                elif response["state"]["life_cycle_state"] == "TERMINATED":
+                elif response and response["state"]["life_cycle_state"] == "TERMINATED":
                     if response["state"]["result_state"] == "SUCCESS":
                         _LOGGER.info("{} Execution is successfully completed.".format(APPEND_RUN_ID_IN_LOG))
                         each["run_execution_status"] = "Success"
@@ -71,6 +71,13 @@ if __name__ == "__main__":
                         _LOGGER.info("{} Execution is canceled.".format(APPEND_RUN_ID_IN_LOG))
                         each["run_execution_status"] = "Canceled"
                         to_ingest = True
+                else:
+                    if response:
+                        res_state = response["state"]["result_state"]
+                        _LOGGER.info("{} Execution status is {}.".format(APPEND_RUN_ID_IN_LOG, res_state))
+                        if each["run_execution_status"] != res_state:
+                            to_ingest = True
+                            each["run_execution_status"] = res_state
 
                 if to_ingest:
                     each["created_time"] = time.time()

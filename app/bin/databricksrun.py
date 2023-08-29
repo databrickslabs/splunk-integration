@@ -38,12 +38,13 @@ class DatabricksRunCommand(GeneratingCommand):
     def generate(self):
         """Generating custom command."""
         _LOGGER.info("Initiating databricksrun command.")
-        _LOGGER.info("Notebook path: {}".format(self.notebook_path))
-        _LOGGER.info("Notebook revision timestamp: {}".format(self.revision_timestamp))
-        _LOGGER.info("Run name: {}".format(self.run_name))
-        _LOGGER.info("Cluster: {}".format(self.cluster))
-        _LOGGER.info("Notebook params: {}".format(self.notebook_params))
-        _LOGGER.info("Identifier: {}".format(self.identifier))
+        _LOGGER.info("Notebook Path: {}".format(self.notebook_path if self.notebook_path else None))
+        _LOGGER.info("Notebook Revision Timestamp: {}"
+                     .format(self.revision_timestamp if self.revision_timestamp else None))
+        _LOGGER.info("Run Name: {}".format(self.run_name if self.run_name else None))
+        _LOGGER.info("Cluster: {}".format(self.cluster if self.cluster else None))
+        _LOGGER.info("Notebook Params: {}".format(self.notebook_params if self.notebook_params else None))
+        _LOGGER.info("Identifier: {}".format(self.identifier if self.run_name else None))
 
         info_to_process = {
             "user": self._metadata.searchinfo.username,
