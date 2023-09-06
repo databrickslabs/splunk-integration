@@ -173,6 +173,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             )
             additional_settings_json = json.loads(additional_settings_response_content)
             additional_settings_config = additional_settings_json.get("entry")[0].get("content")
+            _LOGGER.debug("Additional parameters configurations read successfully from settings.conf")
             config_dict['admin_command_timeout'] = additional_settings_config.get("admin_command_timeout")
             config_dict['index'] = additional_settings_config.get("index")
 

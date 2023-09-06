@@ -27,6 +27,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 * Execution details will be now stored in the index instead of the KV Store lookup.
 * Updated DNS Resolution help text on the Proxy configuration screen.
 * Enhanced logs and introduced UID in logs to distinguish each command execution logs.
+* Removed the table command dependency from the custom command searches.
 
 # RELEASE NOTES VERSION 1.2.0
 * Updated the Add-on to allow non-admin users to execute the custom commands.
@@ -157,7 +158,7 @@ This custom command helps users to query their data present in the Databricks ta
 
 * Syntax
 
-| databricksquery account_name="<account_name>" cluster="<cluster_name>" query="<SQL_query>" command_timeout=<timeout_in_seconds> | table *
+| databricksquery account_name="<account_name>" cluster="<cluster_name>" query="<SQL_query>" command_timeout=<timeout_in_seconds>
 
 * Output
 
@@ -165,7 +166,7 @@ The command gives the output of the query in tabular format. It will return an e
 
 * Example
 
-| databricksquery account_name="db_account" query="SELECT * FROM default.people WHERE age>30" cluster="test_cluster" command_timeout=60 | table *
+| databricksquery account_name="db_account" query="SELECT * FROM default.people WHERE age>30" cluster="test_cluster" command_timeout=60 |
 
 ## 2. databricksrun
 
@@ -184,7 +185,7 @@ This custom command helps users to submit a one-time run without creating a job.
 
 * Syntax
 
-| databricksrun account_name="<account_name>" notebook_path="<path_to_notebook>" run_name="<run_name>" cluster="<cluster_name>" revision_timestamp=<revision_timestamp> notebook_params="<params_for_job_execution>" | table *
+| databricksrun account_name="<account_name>" notebook_path="<path_to_notebook>" run_name="<run_name>" cluster="<cluster_name>" revision_timestamp=<revision_timestamp> notebook_params="<params_for_job_execution>" 
 
 * Output
 
@@ -192,11 +193,11 @@ The command will give the details about the executed run through job.
 
 * Example 1
 
-| databricksrun account_name="db_account" notebook_path="/path/to/test_notebook" run_name="run_comm" cluster="test_cluster" revision_timestamp=1609146477 notebook_params="key1=value1||key2=value2" | table *
+| databricksrun account_name="db_account" notebook_path="/path/to/test_notebook" run_name="run_comm" cluster="test_cluster" revision_timestamp=1609146477 notebook_params="key1=value1||key2=value2" 
 
 * Example 2
 
-| databricksrun account_name="db_account" notebook_path="/path/to/test_notebook" run_name="run_comm" cluster="test_cluster" revision_timestamp=1609146477 notebook_params="key1=value with \"double quotes\" in it||key2=value2" | table *
+| databricksrun account_name="db_account" notebook_path="/path/to/test_notebook" run_name="run_comm" cluster="test_cluster" revision_timestamp=1609146477 notebook_params="key1=value with \"double quotes\" in it||key2=value2" 
 
 ## 3. databricksjob  
 
@@ -212,7 +213,7 @@ This custom command helps users to run an already created job from Splunk.
 
 * Syntax
 
-| databricksjob account_name="<account_name>" job_id=<job_id> notebook_params="<params_for_job_execution>" | table *
+| databricksjob account_name="<account_name>" job_id=<job_id> notebook_params="<params_for_job_execution>" 
 
 * Output
 
@@ -220,11 +221,11 @@ The command will give the details about the executed run through job.
 
 * Example 1
 
-| databricksjob account_name="db_account" job_id=2 notebook_params="key1=value1||key2=value2" | table *
+| databricksjob account_name="db_account" job_id=2 notebook_params="key1=value1||key2=value2" 
 
 * Example 2
 
-| databricksjob account_name="db_account" job_id=2 notebook_params="key1=value with \"double quotes\" in it||key2=value2" | table *
+| databricksjob account_name="db_account" job_id=2 notebook_params="key1=value with \"double quotes\" in it||key2=value2" 
 
 # Macro
 Macro `databricks_index_macro` specifies the index in which you want to store the command execution details.

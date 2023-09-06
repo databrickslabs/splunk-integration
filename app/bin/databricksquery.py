@@ -25,7 +25,7 @@ UID = str(uuid.uuid4())
 _LOGGER = setup_logging("ta_databricksquery_command", UID)
 
 
-@Configuration(type="events")
+@Configuration(type="reporting")
 class DatabricksQueryCommand(GeneratingCommand):
     """Custom Command of databricksquery."""
 
@@ -71,30 +71,44 @@ class DatabricksQueryCommand(GeneratingCommand):
         search_sid = self._metadata.searchinfo.sid
 
         try:
+            if self.command_timeout and self.command_timeout < const.MINIMUM_COMMAND_TIMEOUT_VALUE:
+                self.write_error("Command Timeout value must be greater than or equal to {} seconds."
+                                 .format(const.MINIMUM_COMMAND_TIMEOUT_VALUE))
+                _LOGGER.warning("Command Timeout value must be greater than or equal to {} seconds."
+                                " Exiting the command.".format(const.MINIMUM_COMMAND_TIMEOUT_VALUE))
+                sys.exit(0)
             # Fetching timeout value
-            admin_com_timeout = \
-                utils.get_databricks_configs(session_key, self.account_name).get("admin_command_timeout")
+            databricks_configs = utils.get_databricks_configs(session_key, self.account_name)
+            if not databricks_configs:
+                self.write_error("Account '{}' not found. Please provide valid Databricks account."
+                                 .format(self.account_name))
+                _LOGGER.error("Account '{}' not found. Please provide valid Databricks account."
+                              " Exiting the command.".format(self.account_name))
+                sys.exit(0)
+            admin_com_timeout = databricks_configs.get("admin_command_timeout")
             if ((self.command_timeout and self.command_timeout > int(admin_com_timeout)) or not self.command_timeout):
                 command_timeout_in_seconds = int(admin_com_timeout)
             else:
                 command_timeout_in_seconds = self.command_timeout
             if (self.command_timeout and self.command_timeout > int(admin_com_timeout)):
-                _LOGGER.info("Provided value of Command Timeout (={}) by the user is greater than the maximum"
-                             " allowed/permitted value. Using the maximum allowed value: {} seconds"
-                             .format(self.command_timeout, int(admin_com_timeout)))
+                _LOGGER.warning("Provided value of Command Timeout ({} seconds) by the user is greater than the maximum"
+                                " allowed/permitted value. Using the maximum allowed/permitted value ({} seconds)."
+                                .format(self.command_timeout, int(admin_com_timeout)))
+                self.write_warning("Setting Command Timeout to maximum allowed/permitted value ({} seconds) as a"
+                                   " greater value has been specified ({} seconds) in search."
+                                   .format(admin_com_timeout, self.command_timeout))
             else:
                 if self.command_timeout:
-                    _LOGGER.info("Provided value of Command Timeout (={}) by the user is within the maximum"
-                                 " allowed/permitted value.".format(self.command_timeout))
+                    _LOGGER.info("Provided value of Command Timeout ({} seconds) by the user is within the maximum"
+                                 " allowed/permitted value ({} seconds)."
+                                 .format(self.command_timeout, int(admin_com_timeout)))
                 else:
                     _LOGGER.info("No value for Command Timeout is provided. "
-                                 "Using the maximum allowed value: {} seconds".format(admin_com_timeout))
+                                 "Using the maximum allowed value ({} seconds).".format(admin_com_timeout))
             _LOGGER.info("Setting Command Timeout to {} seconds.".format(command_timeout_in_seconds))
 
             # Fetching cluster name
-            self.cluster = self.cluster or utils.get_databricks_configs(
-                session_key, self.account_name
-            ).get("cluster_name")
+            self.cluster = self.cluster or databricks_configs.get("cluster_name")
             if not self.cluster:
                 raise Exception(
                     "Databricks cluster is required to execute this custom command. "
@@ -217,7 +231,11 @@ class DatabricksQueryCommand(GeneratingCommand):
                 # Timeout scenario
                 msg = "Command execution timed out. Last status: {}.".format(status)
                 _LOGGER.info(msg)
-                self.write_error(msg)
+                _LOGGER.info("Canceling the query execution")
+                resp_, status_code = client.databricks_api("post", const.CANCEL_QUERY_ENDPOINT, data=args)
+                if status_code == 200:
+                    _LOGGER.info("Successfully canceled the query execution.")
+                    self.write_error("Canceled the execution as command execution timed out")
 
             # Destroy the context to free-up space in Databricks
             if context_id:

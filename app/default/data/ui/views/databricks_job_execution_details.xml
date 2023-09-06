@@ -76,6 +76,9 @@
               <![CDATA[ $row.Result URL|n$ ]]>
             </link>
           </condition>
+          <condition field="UID">
+            <link target="_blank">search?q=`databricks_index_macro`%20sourcetype=databricks:databricksrun%20uid%3D%22$row.UID$%22&amp;earliest=0&amp;latest=now</link>
+          </condition>
           <condition>
             <!-- No Action if Columns other than ID and AlertTriggerID is clicked-->
           </condition>
@@ -131,6 +134,9 @@
             <link target="_blank">
               <![CDATA[ $row.Result URL|n$ ]]>
             </link>
+          </condition>
+          <condition field="UID">
+            <link target="_blank">search?q=`databricks_index_macro`%20sourcetype=databricks:databricksjob%20uid%3D%22$row.UID$%22&amp;earliest=0&amp;latest=now</link>
           </condition>
           <condition>
             <!-- No Action if Columns other than ID and AlertTriggerID is clicked-->

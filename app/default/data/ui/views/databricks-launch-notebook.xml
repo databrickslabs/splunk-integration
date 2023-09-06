@@ -1,4 +1,4 @@
-<form version="1.1" script="js/handle_autoforward.js">
+<form version="1.1" script="js/handle_autoforward.js" stylesheet="dashboard.css">
   <label>Launch Notebook</label>
   <search id="notebookrun" rejects="$form.identifier$,$redirected$">
     <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$ account_name=$account_name|s$ run_name=$run_name|s$</query>
@@ -25,7 +25,9 @@
     </fail>
   </search>
   <search id="redirected_notebookrun" depends="$form.identifier$">
-    <query>`databricks_index_macro` sourcetype="databricks:databricksrun" where identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time</query>
+    <query>`databricks_index_macro` sourcetype="databricks:databricksrun" identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time | table param{} account_name command_submission_status created_time error identifier number_in_job output_url result_url run_execution_status run_id uid user | rename param{} as param</query>
+    <earliest>0</earliest>
+    <latest>now</latest>
     <progress>
       <unset token="url"></unset>
       <unset token="failedAlertJob"></unset>
@@ -84,26 +86,26 @@
     </fail>
   </search>
   <fieldset submitButton="true">
-    <input type="text" token="run_name" searchWhenChanged="false">
+    <input type="text" token="run_name" id="run_name_text" searchWhenChanged="false">
       <label>Run Name</label>
       <default>TA-Databricks</default>
     </input>
-    <input type="text" token="notebook" searchWhenChanged="false">
+    <input type="text" token="notebook" id="path_text" searchWhenChanged="false">
       <label>Notebook Path</label>
     </input>
-    <input type="text" token="revision_timestamp" searchWhenChanged="false">
+    <input type="text" token="revision_timestamp" id="revision_timestamp_text" searchWhenChanged="false">
       <label>Notebook Revision Timestamp</label>
       <default></default>
     </input>
-    <input type="text" token="params" searchWhenChanged="false">
+    <input type="text" token="params" id="params_text" searchWhenChanged="false">
       <label>Notebook Parameters</label>
       <default></default>
     </input>
-    <input type="text" token="cluster" searchWhenChanged="false">
+    <input type="text" token="cluster" id="cluster_text" searchWhenChanged="false">
       <label>Cluster Name</label>
       <default></default>
     </input>
-    <input type="dropdown" token="account_name">
+    <input type="dropdown" token="account_name" id="acct_dropdown">
       <label>Account Name</label>
       <fieldForLabel>title</fieldForLabel>
       <fieldForValue>title</fieldForValue>
@@ -113,7 +115,7 @@
         <latest></latest>
       </search>
     </input>
-    <input type="dropdown" token="autoforward">
+    <input type="dropdown" token="autoforward" id="auto_fwd">
       <label>Auto Forward?</label>
       <choice value="No">No</choice>
       <choice value="Yes">Yes</choice>
@@ -163,7 +165,7 @@
     <panel>
       <title>Result URL</title>
       <html>
-        <center>Job running, <a href="$url$" target="_blank">click here</a> to redirect.</center>
+        <center>Job submitted, <a href="$url$" target="_blank">click here</a> to redirect.</center>
       </html>
     </panel>
   </row>

@@ -23,7 +23,7 @@ UID = str(uuid.uuid4())
 _LOGGER = setup_logging("ta_databricksjob_command", UID)
 
 
-@Configuration(type="events")
+@Configuration(type="reporting")
 class DatabricksJobCommand(GeneratingCommand):
     """Custom Command of databricksjob."""
 
@@ -55,6 +55,10 @@ class DatabricksJobCommand(GeneratingCommand):
 
         try:
             databricks_configs = utils.get_databricks_configs(session_key, self.account_name)
+            if not databricks_configs:
+                ERR_MSG = \
+                    "Account '{}' not found. Please provide valid Databricks account.".format(self.account_name)
+                raise Exception(ERR_MSG)
             provided_index = databricks_configs.get("index")
             # Get job details
             client = com.DatabricksClient(self.account_name, session_key)
@@ -124,9 +128,7 @@ class DatabricksJobCommand(GeneratingCommand):
             try:
                 _LOGGER.info("Ingesting the data into Splunk index: {}".format(provided_index))
                 indented_json = json.dumps(info_to_process, indent=4)
-                json_lines = indented_json.split('\n')
-                final_json = '\n'.join(json_lines)
-                _LOGGER.info("Data to be ingested in Splunk:\n{}".format(final_json))
+                _LOGGER.info("Data to be ingested in Splunk:\n{}".format(indented_json))
                 utils.ingest_data_to_splunk(
                     info_to_process, session_key, provided_index, "databricks:databricksjob"
                 )
