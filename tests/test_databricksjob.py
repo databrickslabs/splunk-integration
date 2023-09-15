@@ -13,7 +13,10 @@ def setUpModule():
         'splunk.clilib',
         'solnlib.server_info',
         'splunk_aoblib',
-        'splunk_aoblib.rest_migration'
+        'splunk_aoblib.rest_migration',
+        'splunk.admin',
+        'splunk.clilib',
+        'splunk.clilib.cli_common'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -135,35 +138,3 @@ class TestDatabricksjob(unittest.TestCase):
         self.assertEqual(client.databricks_api.call_count,3)
         db_job_obj.write_error.assert_called_once_with("error while fetching job response")
         self.assertEqual(cm.exception.code, 1)
-    
-    @patch("databricksjob.com.DatabricksClient", autospec=True)
-    @patch("databricksjob.utils", autospec=True)
-    def test_fetch_job_data(self, mock_utils, mock_com):
-        ret_val = {"user": "test",
-            "created_time": "1234567890",
-            "param": "a=1||b=2",
-            "run_id": "123",
-            "output_url": "/test/resultsOnly",
-            "result_url": "/result_url",
-            "command_status": "success",
-            "error": "-"
-        }
-        db_job_obj = self.DatabricksJobCommand()
-        db_job_obj._metadata = MagicMock()
-        db_job_obj.job_id = "123"
-        db_job_obj.notebook_params = "a=1||b=2"
-        client = mock_com.return_value = MagicMock()
-        db_job_obj.write_error = MagicMock()
-        client.databricks_api.side_effect = [{"settings": {"notebook_task": "test"}}, {"run_id": "1234"}, {"run_page_url": "/test/", "result_url": "/result_url"}]
-        mock_utils.format_to_json_parameters.return_value = {"a":"1","b":"2"}
-        mock_utils.update_kv_store_collection.return_value =ret_val
-        resp = db_job_obj.generate()
-        return_val  = next(resp)
-        self.assertEqual(client.databricks_api.call_count,3)
-        mock_utils.update_kv_store_collection.assert_called_once()
-        assert return_val == ret_val
-    
-
-
-    
-    

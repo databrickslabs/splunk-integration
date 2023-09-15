@@ -13,7 +13,10 @@ def setUpModule():
         'splunk.clilib',
         'solnlib.server_info',
         'splunk_aoblib',
-        'splunk_aoblib.rest_migration'
+        'splunk_aoblib.rest_migration',
+        'splunk.admin',
+        'splunk.clilib',
+        'splunk.clilib.cli_common'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -33,13 +36,15 @@ class TestDatabricksQuery(unittest.TestCase):
         import databricksquery
         cls.databricksquery = databricksquery
         cls.DatabricksQueryCommand = databricksquery.DatabricksQueryCommand
-    
+
     @patch("databricksquery.utils", autospec=True)
-    def test_cluster_exception(self, mock_utils):
+    @patch('threading.Thread')
+    def test_cluster_exception(self, mock_thread, mock_utils):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.write_error = MagicMock()
-        mock_utils.get_databricks_configs.return_value = {"type": "pat"}
+        mock_utils.get_databricks_configs.return_value = {"type": "pat", "admin_command_timeout": 100}
         resp = db_query_obj.generate()
         try:
             next(resp)
@@ -50,8 +55,10 @@ class TestDatabricksQuery(unittest.TestCase):
 
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_get_cluster_id_exception(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_get_cluster_id_exception(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.write_error = MagicMock()
         db_query_obj.cluster = "test_cluster"
@@ -67,8 +74,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_create_context_exception(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_create_context_exception(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -85,8 +94,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_submit_query_exception(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_submit_query_exception(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -104,8 +115,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_fetch_data_exception(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_exception(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -123,8 +136,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_fetch_data_status_error(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_status_error(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -142,8 +157,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_fetch_data_status_finished_error(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_status_finished_error(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -161,8 +178,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_fetch_data_status_finished_not_table(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_status_finished_not_table(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -180,8 +199,10 @@ class TestDatabricksQuery(unittest.TestCase):
     
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
-    def test_fetch_data_status_finished_truncated(self, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_status_finished_truncated(self, mock_thread, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()
@@ -201,8 +222,10 @@ class TestDatabricksQuery(unittest.TestCase):
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
     @patch("databricksquery.time", autospec=True)
-    def test_fetch_data_status_finished_loop(self,mock_time, mock_utils, mock_com):
+    @patch('threading.Thread')
+    def test_fetch_data_status_finished_loop(self, mock_thread, mock_time, mock_utils, mock_com):
         db_query_obj = self.DatabricksQueryCommand()
+        mock_thread.return_value.start.return_value = None
         db_query_obj._metadata = MagicMock()
         db_query_obj.cluster = "test_cluster"
         client = mock_com.return_value = MagicMock()

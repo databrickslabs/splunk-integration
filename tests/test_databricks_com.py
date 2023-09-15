@@ -20,6 +20,9 @@ def setUpModule():
         'splunk.rest',
         'splunk.clilib',
         'solnlib.server_info',
+        'splunk.admin',
+        'splunk.clilib',
+        'splunk.clilib.cli_common'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -127,6 +130,8 @@ class TestDatabricksUtils(unittest.TestCase):
         resp = obj.databricks_api("get", "endpoint", args="123")
         self.assertEqual(obj.session.get.call_count, 1)
         self.assertEqual(resp, {"status_code": 200})
+        resp = obj.databricks_api("get", "cancel/endpoint", args="123")
+        self.assertEqual(resp, ({"status_code": 200}, 200))
 
     @patch("solnlib.server_info", return_value=MagicMock()) 
     @patch("databricks_com.DatabricksClient.get_requests_retry_session", return_value=MagicMock())
@@ -139,6 +144,8 @@ class TestDatabricksUtils(unittest.TestCase):
         resp = obj.databricks_api("post", "endpoint", args="123", data={"p1": "v1"})
         self.assertEqual(obj.session.post.call_count, 1)
         self.assertEqual(resp, {"status_code": 200})
+        resp = obj.databricks_api("post", "cancel/endpoint", args="123")
+        self.assertEqual(resp, ({"status_code": 200}, 200))
     
     @patch("solnlib.server_info", return_value=MagicMock()) 
     @patch("databricks_com.DatabricksClient.get_requests_retry_session", return_value=MagicMock())
@@ -185,8 +192,3 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual(obj.session.post.call_count, 2)
         self.assertEqual(
             "Invalid access token. Please enter the valid access token.", str(context.exception))
-
-
-
-    
-    

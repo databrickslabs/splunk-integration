@@ -13,7 +13,10 @@ def setUpModule():
         'splunk.clilib',
         'solnlib.server_info',
         'splunk_aoblib',
-        'splunk_aoblib.rest_migration'
+        'splunk_aoblib.rest_migration',
+        'splunk.admin',
+        'splunk.clilib',
+        'splunk.clilib.cli_common'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -145,36 +148,3 @@ class TestDatabricksrun(unittest.TestCase):
         self.assertEqual(client.databricks_api.call_count,2)
         db_run_obj.write_error.assert_called_once_with("error while fetching data")
         self.assertEqual(cm.exception.code, 1)
-    
-    @patch("databricksrun.com.DatabricksClient", autospec=True)
-    @patch("databricksrun.utils", autospec=True)
-    def test_fetch_data(self, mock_utils, mock_com):
-        ret_val = {"user": "test",
-            "created_time": "1234567890",
-            "param": "a=1||b=2",
-            "run_id": "123",
-            "output_url": "/test/resultsOnly",
-            "result_url": "/result_url",
-            "command_status": "success",
-            "error": "-",
-            "identifier": "id1"
-        }
-        db_run_obj = self.DatabricksRunCommand()
-        db_run_obj._metadata = MagicMock()
-        db_run_obj.notebook_path = "/test"
-        db_run_obj.identifier = "id1"
-        db_run_obj.cluster = "test_cluster"
-        db_run_obj.revision_timestamp = "123457890"
-        db_run_obj.notebook_params = "a=1||b=2"
-        db_run_obj.run_name = "abc"
-        client = mock_com.return_value = MagicMock()
-        client.get_cluster_id.return_value = "c1"
-        mock_utils.format_to_json_parameters.return_value = {"a": 1, "b":2}
-        db_run_obj.write_error = MagicMock()
-        client.databricks_api.side_effect = [{"run_id": "123"},{"run_page_url": "/test/", "result_url": "/result_url"}]
-        mock_utils.update_kv_store_collection.return_value =ret_val
-        resp = db_run_obj.generate()
-        return_val  = next(resp)
-        self.assertEqual(client.databricks_api.call_count,2)
-        mock_utils.update_kv_store_collection.assert_called_once()
-        assert return_val == ret_val

@@ -21,7 +21,10 @@ def setUpModule():
         'splunk.clilib',
         'solnlib.server_info',
         'splunk_aoblib',
-        'splunk_aoblib.rest_migration'
+        'splunk_aoblib.rest_migration',
+        'splunk.admin',
+        'splunk.clilib',
+        'splunk.clilib.cli_common'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -169,3 +172,41 @@ class TestDatabricksUtils(unittest.TestCase):
         ret_val = db_val_obj.validate_db_instance("instance", "token")
         mock_put.assert_called_once_with("Internal server error. Cannot verify Databricks instance.")
         self.assertEqual(ret_val, False)
+
+    @patch("databricks_validators.SessionKeyProvider", return_value=MagicMock())
+    @patch("databricks_validators.utils.get_proxy_uri", return_value="{}")
+    @patch("splunk_aoblib.rest_migration.ConfigMigrationHandler")
+    @patch("databricks_validators.Validator.put_msg", return_value=MagicMock())
+    @patch("databricks_validators.ValidateDatabricksInstance.validate_pat")
+    @patch("databricks_validators.ValidateDatabricksInstance.validate_aad")
+    def test_validate_empty_aad_credentials(self, mock_aad, mock_pat, mock_put, mock_conf, mock_proxy, mock_session):
+        db_val = import_module('databricks_validators')
+        db_val._LOGGER = MagicMock()
+        db_val_obj = db_val.ValidateDatabricksInstance()
+        db_val_obj.validate("AAD", {"auth_type": "AAD"})
+        mock_put.assert_called_once_with("Field Client Id is required")
+        self.assertEqual(mock_aad.call_count, 0)
+
+    @patch("databricks_validators.SessionKeyProvider", return_value=MagicMock())
+    @patch("databricks_validators.utils.get_proxy_uri", return_value="{}")
+    @patch("splunk_aoblib.rest_migration.ConfigMigrationHandler")
+    @patch("databricks_validators.Validator.put_msg", return_value=MagicMock())
+    @patch("databricks_validators.ValidateDatabricksInstance.validate_pat")
+    @patch("databricks_validators.ValidateDatabricksInstance.validate_aad")
+    def test_validate_empty_aad_tenant_id(self, mock_aad, mock_pat, mock_put, mock_conf, mock_proxy, mock_session):
+        db_val = import_module('databricks_validators')
+        db_val._LOGGER = MagicMock()
+        db_val_obj = db_val.ValidateDatabricksInstance()
+        db_val_obj.validate("AAD", {"auth_type": "AAD", "aad_client_id": "cl_id"})
+        mock_put.assert_called_once_with("Field Tenant Id is required")
+        self.assertEqual(mock_aad.call_count, 0)
+
+    @patch("databricks_validators.Validator.put_msg", return_value=MagicMock())
+    def test_validate_aad_missing_client_id(self, mock_put):
+        db_val = import_module('databricks_validators')
+        db_val._LOGGER = MagicMock()
+        db_val_obj = db_val.ValidateDatabricksInstance()
+        data = {"auth_type": "AAD"}
+        ret_val = db_val_obj.validate("AAD", data)
+        self.assertFalse(ret_val)
+        mock_put.assert_called_once_with('Field Client Id is required')
