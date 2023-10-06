@@ -4,9 +4,9 @@ import os
 CLUSTER_ENDPOINT = "/api/2.0/clusters/list"
 CONTEXT_ENDPOINT = "/api/1.2/contexts/create"
 CONTEXT_DESTROY_ENDPOINT = "/api/1.2/contexts/destroy"
-COMMAND_ENDPOINT = "/api/1.2/commands/execute"
-STATUS_ENDPOINT = "/api/1.2/commands/status"
-CANCEL_QUERY_ENDPOINT = "/api/1.2/commands/cancel"
+EXECUTE_QUERY_ENDPOINT = "/api/2.0/sql/statements/"
+QUERY_STATUS_ENDPOINT = "/api/2.0/sql/statements/{statement_id}"
+CANCEL_QUERY_ENDPOINT = "/api/2.0/sql/statements/{statement_id}/cancel"
 GET_RUN_ENDPOINT = "/api/2.0/jobs/runs/get"
 RUN_SUBMIT_ENDPOINT = "/api/2.0/jobs/runs/submit"
 EXECUTE_JOB_ENDPOINT = "/api/2.0/jobs/run-now"
@@ -20,14 +20,14 @@ SCOPE = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
 # App Name
 APP_NAME = __file__.split(os.sep)[-3]
 
-REQUIRED_ROLES = ['databricks_user', 'databricks_admin']
-
 # Command execution configs
 COMMAND_SLEEP_INTERVAL_IN_SECONDS = 3
 
 SPLUNK_SEARCH_STATUS_CHECK_INTERVAL = 10
 
 MINIMUM_COMMAND_TIMEOUT_VALUE = 30
+
+MINIMUM_QUERY_ROW_LIMIT = 1
 
 USER_AGENT_CONST = "Databricks-AddOnFor-Splunk-1.3.0"
 
@@ -40,12 +40,12 @@ STATUS_FORCELIST = [429, 500, 502, 503, 504]
 
 # Error codes and message
 ERROR_CODE = {
-    '700016': 'Invalid Client ID provided.',
-    '900023': 'Invalid Tenant ID provided.',
-    '7000215': 'Invalid Client Secret provided.',
-    '403': 'Client secret may have expired. Please configure a valid Client secret.',
-    '404': 'Invalid API endpoint.',
-    '500': 'Internal server error.',
-    '400': 'Bad request. The request is malformed.',
-    '429': 'API limit exceeded. Please try again after some time.'
+    "700016": "Invalid Client ID provided.",
+    "900023": "Invalid Tenant ID provided.",
+    "7000215": "Invalid Client Secret provided.",
+    "403": "Client secret may have expired. Please configure a valid Client secret.",
+    "404": "Invalid API endpoint.",
+    "500": "Internal server error.",
+    "400": "Bad request. The request is malformed.",
+    "429": "API limit exceeded. Please try again after some time.",
 }

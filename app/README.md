@@ -20,7 +20,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 # RELEASE NOTES VERSION 1.3.0
 
 * Introduced Run cancelation feature. Cancel the run from the "Databricks Job Execution Details" dashboard by clicking on the "Cancel Run" button and cancel the query execution by clicking on the Splunk search stop button. 
-* Introduced "Command Timeout Value" and "Index" option configurations on the "Configuration" page.
+* Introduced "Command Timeout Value", "Query Result Limit" and "Index" option configurations on the "Configuration" page.
 * Introduced the "Execution Status" column on the "Databricks Job Execution Details" dashboard to display the current status of the triggered run. The status will be updated every 5 minutes.
 * Introduced the "UID" column on the "Databricks Job Execution Details" dashboard to track more details of respective runs.
 * Added "Run Name" parameter in the "Launch Notebook" dashboard.
@@ -28,6 +28,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 * Updated DNS Resolution help text on the Proxy configuration screen.
 * Enhanced logs and introduced UID in logs to distinguish each command execution logs.
 * Removed the table command dependency from the custom command searches.
+* Removed limitation of number of results obtained in databricksquery command.
 
 # RELEASE NOTES VERSION 1.2.0
 * Updated the Add-on to allow non-admin users to execute the custom commands.
@@ -91,6 +92,7 @@ To configure Databricks Add-on for Splunk, navigate to Databricks Add-on for Spl
 | Account Name              | Unique name for account.                                                                                                                                                                                                                       |      Yes
 | Databricks Instance       | Databricks Instance URL.                                                                                                                                                                                                                           |      Yes
 | Databricks Cluster Name   | Name of the Databricks cluster to use for query and notebook execution. A user can override this value while executing the custom command.                                                                                                         |      No
+| Databricks Warehouse ID   | ID of the Databricks warehouse to use for query execution. A user can override this value while executing the custom command. | No
 | Authentication Method     | SingleSelect: Authentication via Azure Active Directory or using a Personal Access Token |      Yes
 | Databricks Access Token   | [Auth: Personal Access Token] Databricks personal access token to use for authentication. Refer [Generate Databricks Access Token](https://docs.databricks.com/dev-tools/api/latest/authentication.html#generate-a-personal-access-token) document to generate the access token. |      Yes                                                                                              |
 | Client Id   | [Auth: Azure Active Directory] Azure Active Directory Client Id from your Azure portal.|      Yes
@@ -134,6 +136,7 @@ Navigate to Databricks Add-on for Splunk, click on "Configuration", go to the "A
 | Field Name            | Field Description                                                           | Required  |
 | -------------------   | --------------------------------------------------------------------------- | --------- |
 | Command Timeout Value | Maximum value of command timeout to be allowed for databricksquery command. | Yes       |
+| Query Result Limit    | Maximum limit of rows in query result for databricksquery command.          | Yes       |
 | Index                 | Index in which you want to store the command execution details.             | Yes       |
 
 # CUSTOM COMMANDS:
@@ -153,12 +156,13 @@ This custom command helps users to query their data present in the Databricks ta
 | --------------- | -------- | ---------------------------------------------------------------- |
 | account_name    | Yes      | Configured account name.                                         |
 | query           | Yes      | SQL query to get data from Databricks delta table.               |
-| cluster         | No       | Name of the cluster to use for execution.                        |
+| warehouse_id    | No       | Warehouse ID to use for execution.                               |
+| limit           | No       | Limit of rows in SQL query execution result. Default value: 10000|
 | command_timeout | No       | Time to wait in seconds for query completion. Default value: 300 |
 
 * Syntax
 
-| databricksquery account_name="<account_name>" cluster="<cluster_name>" query="<SQL_query>" command_timeout=<timeout_in_seconds>
+| databricksquery account_name="<account_name>" warehouse_id="<warehouse_id>" query="<SQL_query>" command_timeout=<timeout_in_seconds> limit=<query_result_limit>
 
 * Output
 
@@ -166,7 +170,7 @@ The command gives the output of the query in tabular format. It will return an e
 
 * Example
 
-| databricksquery account_name="db_account" query="SELECT * FROM default.people WHERE age>30" cluster="test_cluster" command_timeout=60 |
+| databricksquery account_name="db_account" query="SELECT * FROM default.people WHERE age>30" warehouse_id=12345a67 command_timeout=60 limit=500
 
 ## 2. databricksrun
 
@@ -296,9 +300,6 @@ Some of the components included in "Databricks Add-on for Splunk" are licensed u
 # KNOWN ISSUES
 * When the commands fail, sometimes an indistinct/unclear error message is displayed in the UI, not giving a precise reason for the failure. To troubleshoot such cases, please check the logs at $SPLUNK_HOME/var/log/TA-Databricks/<command_name>_command.log to get the precise reason for the failure.
 * When the Adaptive response action `Launch Notebook` is run more than once for the same notable event in Enterprise Security security, clicking on any of the `launch_notebook` links will redirect to the Launch Notebook dashboard with the latest run details.
-
-# LIMITATIONS
-* The Databricks API used in the `databricksquery` custom command has a limit on the number of results to be returned. Hence, sometimes the results obtained from this custom command may not be complete. 
 
 # TROUBLESHOOTING
 * Authentication Failure: Check the network connectivity and verify that the configuration details provided are correct.

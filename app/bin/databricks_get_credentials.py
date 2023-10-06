@@ -80,6 +80,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'aad_client_secret': None,
             'aad_access_token': None,
             'cluster_name': None,
+            'warehouse_id': None,
             'databricks_pat': None,
             'auth_type': None,
             'proxy_enabled': None,
@@ -91,6 +92,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'proxy_rdns': None,
             'use_for_oauth': None,
             'admin_command_timeout': None,
+            'query_result_limit': None,
             'index': None
         }
         try:
@@ -112,6 +114,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             config_dict['auth_type'] = account_config.get('auth_type')
             config_dict['databricks_instance'] = account_config.get('databricks_instance')
             config_dict['cluster_name'] = account_config.get('cluster_name')
+            config_dict['warehouse_id'] = account_config.get('warehouse_id')
 
             # Get clear account password from passwords.conf
             account_manager = CredentialManager(
@@ -175,6 +178,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             additional_settings_config = additional_settings_json.get("entry")[0].get("content")
             _LOGGER.debug("Additional parameters configurations read successfully from settings.conf")
             config_dict['admin_command_timeout'] = additional_settings_config.get("admin_command_timeout")
+            config_dict['query_result_limit'] = additional_settings_config.get("query_result_limit")
             config_dict['index'] = additional_settings_config.get("index")
 
             self.status = 200

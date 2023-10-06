@@ -80,6 +80,16 @@ fields = [
         )
     ),
     field.RestField(
+        'warehouse_id',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=validator.String(
+            min_len=0,
+            max_len=500,
+        )
+    ),
+    field.RestField(
         'aad_access_token',
         required=False,
         encrypted=True

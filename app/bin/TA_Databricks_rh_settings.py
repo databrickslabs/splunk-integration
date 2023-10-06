@@ -107,6 +107,12 @@ fields_additional_parameters = [
         validator=None
     ),
     field.RestField(
+        'query_result_limit',
+        required=True,
+        default=10000,
+        validator=None
+    ),
+    field.RestField(
         'index',
         required=True,
         default='main',

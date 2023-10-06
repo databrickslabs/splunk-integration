@@ -169,7 +169,7 @@
         <p>The app provides three custom commands. Users can open the Splunk search bar and can execute the commands. Below are the command details.
           <ol>
             <li><b>databricksquery:</b> used to query data present in the Databricks table from Splunk. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#1-databricksquery" target="_blank">docs</a> for the command parameter details.
-            <br/><b>Syntax: </b>| databricksquery cluster="&lt;cluster_name&gt;" query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; account_name="&lt;account_name&gt;"
+            <br/><b>Syntax: </b>| databricksquery warehouse_id="&lt;warehouse_id&gt;" limit=&lt;query_result_limit&gt; query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; account_name="&lt;account_name&gt;"
             <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_query.png"/>
             <br/>
             </li>

@@ -98,6 +98,20 @@
                             }]
                         },
                         {
+                            "field": "warehouse_id",
+                            "label": "Databricks Warehouse ID",
+                            "type": "text",
+                            "help": "ID of the Databricks warehouse to use for query execution. A user can override this value while executing the custom command.",
+                            "required": false,
+                            "defaultValue": "",
+                            "validators": [{
+                                "type": "string",
+                                "minLength": 0,
+                                "maxLength": 500,
+                                "errorMsg": "Max length of text input is 500"
+                            }]
+                        },
+                        {
                             "field": "auth_type",
                             "label": "Authentication Method",
                             "type": "singleSelect",
@@ -332,7 +346,7 @@
                 },
                 {
                     "name": "additional_parameters",
-                    "title": "Additional Parameters",                  
+                    "title": "Additional Parameters",
                     "entity": [{
                         "field": "admin_command_timeout",
                         "label": "Command Timeout Value",
@@ -348,6 +362,24 @@
                             "type": "regex",
                             "pattern": "^[1-9]\\d*$",
                             "errorMsg": "Command Timeout Value must be a positive integer."
+                        }
+                    ]
+                    },
+                    {
+                        "field": "query_result_limit",
+                        "label": "Query Result Limit",
+                        "defaultValue": 10000,
+                        "options": {
+                            "placeholder": "Required"
+                        },
+                        "type": "text",
+                        "help": "Enter the maximum limit of rows in query result for databricksquery command.",
+                        "required": true,
+                        "encrypted": false,
+                        "validators": [{
+                            "type": "regex",
+                            "pattern": "^[1-9]\\d*$",
+                            "errorMsg": "Query Result Limit must be a positive integer."
                         }
                     ]
                     },

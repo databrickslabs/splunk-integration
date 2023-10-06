@@ -5,4 +5,5 @@ aad_tenant_id =
 aad_client_secret = 
 aad_access_token =
 cluster_name = 
+warehouse_id = 
 databricks_pat = 
