@@ -103,7 +103,7 @@ This topic explains how to setup DB Connect before you use it to access database
 Download and install the JDBC Driver. Follow the steps below to setup the driver:
 
 1. Configure Databricks JDBC Drivers:
-  1. Download the JDBC Databricks driver ([download](https://pages.databricks.com/ODBC-Driver-Download.html))
+  1. Download the JDBC Databricks driver ([download](https://www.databricks.com/spark/jdbc-drivers-download))
   2. From the backend, place the `SparkJDBC42.jar` and `EULA.txt` (downloaded driver file and EULA file) to `$SPLUNK_HOME/etc/apps/splunk_app_db_connect/drivers` directory.
   3. From the backend, navigate to the `$SPLUNK_HOME/etc/apps/splunk_app_db_connect/local` directory and create a file named `db_connection_types.conf`, and add the following content in the file. (Create the local directory if not exists)
 
@@ -111,9 +111,9 @@ Download and install the JDBC Driver. Follow the steps below to setup the driver
       [databricks_spark_sql]
       displayName = Databricks Spark SQL
       serviceClass = com.splunk.dbx2.SparkJDBC
-      jdbcUrlFormat = jdbc:spark://<host>:<port>/<database>
-      jdbcUrlSSLFormat = jdbc:spark://<host>:<port>/<database>?useSSL=true
-      jdbcDriverClass = com.simba.spark.jdbc.Driver
+      jdbcUrlFormat = jdbc:databricks://<host>:<port>/<database>
+      jdbcUrlSSLFormat = jdbc:databricks://<host>:<port>/<database>?useSSL=true
+      jdbcDriverClass = com.databricks.client.jdbc.Driver
       supportedVersions = 1.0
       port = 10000
       ui_default_catalog = $database$
