@@ -84,6 +84,26 @@
                             }
                         },
                         {
+                            "field": "config_for_dbquery",
+                            "label": "'databricksquery' to run on",
+                            "type": "singleSelect",
+                            "help": "",
+                            "required": true,
+                            "defaultValue": "dbsql",
+                            "options": {
+                                "autoCompleteFields": [
+                                    {
+                                        "value": "dbsql",
+                                        "label": "DBSQL (Recommended)"
+                                    },
+                                    {
+                                        "value": "interactive_cluster",
+                                        "label": "Interactive Cluster"
+                                    }
+                                ]
+                            }
+                        },
+                        {
                             "field": "cluster_name",
                             "label": "Databricks Cluster Name",
                             "type": "text",

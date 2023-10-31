@@ -79,6 +79,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'aad_tenant_id': None,
             'aad_client_secret': None,
             'aad_access_token': None,
+            'config_for_dbquery': None,
             'cluster_name': None,
             'warehouse_id': None,
             'databricks_pat': None,
@@ -113,6 +114,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
 
             config_dict['auth_type'] = account_config.get('auth_type')
             config_dict['databricks_instance'] = account_config.get('databricks_instance')
+            config_dict['config_for_dbquery'] = account_config.get('config_for_dbquery')
             config_dict['cluster_name'] = account_config.get('cluster_name')
             config_dict['warehouse_id'] = account_config.get('warehouse_id')
 

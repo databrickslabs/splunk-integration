@@ -70,6 +70,13 @@ fields = [
         validator=None
     ),
     field.RestField(
+        'config_for_dbquery',
+        required=True,
+        encrypted=False,
+        default='dbsql',
+        validator=None
+    ),
+    field.RestField(
         'cluster_name',
         required=False,
         encrypted=False,
