@@ -70,7 +70,24 @@ fields = [
         validator=None
     ),
     field.RestField(
+        'config_for_dbquery',
+        required=True,
+        encrypted=False,
+        default='dbsql',
+        validator=None
+    ),
+    field.RestField(
         'cluster_name',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=validator.String(
+            min_len=0,
+            max_len=500,
+        )
+    ),
+    field.RestField(
+        'warehouse_id',
         required=False,
         encrypted=False,
         default='',

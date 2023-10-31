@@ -136,7 +136,7 @@ class NotebookModularAction(ModularAction):
             self.message("Submitting the run", status="working")  # , level=logging.INFO)
             response = com.databricks_api("post", const.RUN_SUBMIT_ENDPOINT, data=payload)
 
-            # kv_log_info.update(response)
+            # info_to_process.update(response)
             run_id = response["run_id"]
             self.message(
                 "Successfully submitted the run with ID: {}".format(run_id)

@@ -1,0 +1,62 @@
+#run_name_text.input.input-text::after {
+    content: "Run Name to identify the run execution.";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;   
+  }
+
+#path_text.input.input-text::after {
+    content: "[Required] Absolute path of notebook to be run in Databricks. eg: /Users/user_1/notebook_1";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;   
+  }
+
+#revision_timestamp_text.input.input-text::after {
+    content: "The timestamp of the revision of the notebook.";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;   
+}
+
+#params_text.input.input-text::after {
+    content: "Parameters to pass while executing the notebook. eg: key1=value1||key2=value2";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;    
+}
+
+#cluster_text.input.input-text::after {
+    content: "Name of Databricks cluster to use for execution.";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;    
+}
+
+#acct_dropdown.input.input-dropdown::after {
+    content: "[Required] Name of Databricks Account to use for execution.";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic;    
+}
+
+#auto_fwd.input.input-dropdown::after {
+    content: "Whether to directly redirect to Databricks portal.";
+    display: inline-block;
+    color: black; 
+    margin-left: 5px; 
+    font-size: 12px; 
+    font-style: italic; 
+}

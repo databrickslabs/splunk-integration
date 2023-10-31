@@ -35,7 +35,7 @@ class TestDatabricksAlert(unittest.TestCase):
 
     def test_system_exit(self):
         helper = MagicMock()
-        helper.get_param.side_effect = [" ", "ts", "param", "cluster", "account_name"]
+        helper.get_param.side_effect = [" ", "ts", "param", "cluster", "account_name", "run_name"]
         helper.log_error = MagicMock()
         with self.assertRaises(SystemExit) as cm:
             self.alert.process_event(helper)
@@ -44,7 +44,7 @@ class TestDatabricksAlert(unittest.TestCase):
     
     def test_system_exit_account_name(self):
         helper = MagicMock()
-        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", ""]
+        helper.get_param.side_effect = ["/path", "ts", "param", "cluster", "", "run"]
         helper.log_error = MagicMock()
         with self.assertRaises(SystemExit) as cm:
             self.alert.process_event(helper)

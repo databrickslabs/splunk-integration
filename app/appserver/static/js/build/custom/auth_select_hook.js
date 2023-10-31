@@ -15,6 +15,13 @@ class AuthSelectHook {
                 this.toggleAADFields(false);
             }
         }
+        if (field == 'config_for_dbquery') {
+            if (value == 'interactive_cluster') {
+                this.hideWarehouseField(false);
+            } else {
+                this.hideWarehouseField(true);
+            }
+        }
     }
 
     onRender() {
@@ -24,7 +31,14 @@ class AuthSelectHook {
         } else {
             this.toggleAADFields(false);
         }
+    }
 
+    hideWarehouseField(state) {
+        this.util.setState((prevState) => {
+            let data = {...prevState.data };
+            data.warehouse_id.display = state;
+            return { data }
+        }); 
     }
 
     toggleAADFields(state) {

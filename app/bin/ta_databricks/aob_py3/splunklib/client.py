@@ -421,6 +421,7 @@ class Service(_BaseService):
         super(Service, self).__init__(**kwargs)
         self._splunk_version = None
         self._kvstore_owner = None
+        self._instance_type = None
 
     @property
     def apps(self):
@@ -572,7 +573,7 @@ class Service(_BaseService):
         :type kwargs: ``dict``
         :return: A semantic map of the parsed search query.
         """
-        if self.splunk_version >= (9,):
+        if not self.disable_v2_api:
             return self.post("search/v2/parser", q=query, **kwargs)
         return self.get("search/parser", q=query, **kwargs)
 
@@ -694,6 +695,22 @@ class Service(_BaseService):
         if self._splunk_version is None:
             self._splunk_version = tuple([int(p) for p in self.info['version'].split('.')])
         return self._splunk_version
+
+    @property
+    def splunk_instance(self):
+        if self._instance_type is None :
+            splunk_info = self.info;
+            if hasattr(splunk_info, 'instance_type') :
+                self._instance_type = splunk_info['instance_type']
+            else:
+                self._instance_type = ''
+        return self._instance_type
+
+    @property
+    def disable_v2_api(self):
+        if self.splunk_instance.lower() == 'cloud':
+            return self.splunk_version < (9,0,2209)
+        return self.splunk_version < (9,0,2)
 
     @property
     def kvstore_owner(self):
@@ -1197,6 +1214,36 @@ class Entity(Endpoint):
     def reload(self):
         """Reloads the entity."""
         self.post("_reload")
+        return self
+
+    def acl_update(self, **kwargs):
+        """To update Access Control List (ACL) properties for an endpoint.
+
+        :param kwargs: Additional entity-specific arguments (required).
+
+            - "owner" (``string``): The Splunk username, such as "admin". A value of "nobody" means no specific user (required).
+
+            - "sharing" (``string``): A mode that indicates how the resource is shared. The sharing mode can be "user", "app", "global", or "system" (required).
+
+        :type kwargs: ``dict``
+
+        **Example**::
+
+            import splunklib.client as client
+            service = client.connect(...)
+            saved_search = service.saved_searches["name"]
+            saved_search.acl_update(sharing="app", owner="nobody", app="search", **{"perms.read": "admin, nobody"})
+        """
+        if "body" not in kwargs:
+            kwargs = {"body": kwargs}
+
+        if "sharing" not in kwargs["body"]:
+            raise ValueError("Required argument 'sharing' is missing.")
+        if "owner" not in kwargs["body"]:
+            raise ValueError("Required argument 'owner' is missing.")
+
+        self.post("acl", **kwargs)
+        self.refresh()
         return self
 
     @property
@@ -2722,7 +2769,7 @@ class Job(Entity):
         # Default to v2 in Splunk Version 9+
         path = "{path}{sid}"
         # Formatting path based on the Splunk Version
-        if service.splunk_version < (9,):
+        if service.disable_v2_api:
             path = path.format(path=PATH_JOBS, sid=sid)
         else:
             path = path.format(path=PATH_JOBS_V2, sid=sid)
@@ -2782,7 +2829,7 @@ class Job(Entity):
         kwargs['segmentation'] = kwargs.get('segmentation', 'none')
         
         # Search API v1(GET) and v2(POST)
-        if self.service.splunk_version < (9,):
+        if self.service.disable_v2_api:
             return self.get("events", **kwargs).body
         return self.post("events", **kwargs).body
 
@@ -2874,7 +2921,7 @@ class Job(Entity):
         query_params['segmentation'] = query_params.get('segmentation', 'none')
         
         # Search API v1(GET) and v2(POST)
-        if self.service.splunk_version < (9,):
+        if self.service.disable_v2_api:
             return self.get("results", **query_params).body
         return self.post("results", **query_params).body
 
@@ -2919,7 +2966,7 @@ class Job(Entity):
         query_params['segmentation'] = query_params.get('segmentation', 'none')
         
         # Search API v1(GET) and v2(POST)
-        if self.service.splunk_version < (9,):
+        if self.service.disable_v2_api:
             return self.get("results_preview", **query_params).body
         return self.post("results_preview", **query_params).body
 
@@ -3011,7 +3058,7 @@ class Jobs(Collection):
     collection using :meth:`Service.jobs`."""
     def __init__(self, service):
         # Splunk 9 introduces the v2 endpoint
-        if service.splunk_version >= (9,):
+        if not service.disable_v2_api:
             path = PATH_JOBS_V2
         else:
             path = PATH_JOBS
@@ -3662,13 +3709,20 @@ class KVStoreCollections(Collection):
     def __init__(self, service):
         Collection.__init__(self, service, 'storage/collections/config', item=KVStoreCollection)
 
-    def create(self, name, indexes = {}, fields = {}, **kwargs):
+    def __getitem__(self, item):
+        res = Collection.__getitem__(self, item)
+        for k, v in res.content.items():
+            if "accelerated_fields" in k:
+                res.content[k] = json.loads(v)
+        return res
+
+    def create(self, name, accelerated_fields={}, fields={}, **kwargs):
         """Creates a KV Store Collection.
 
         :param name: name of collection to create
         :type name: ``string``
-        :param indexes: dictionary of index definitions
-        :type indexes: ``dict``
+        :param accelerated_fields: dictionary of accelerated_fields definitions
+        :type accelerated_fields: ``dict``
         :param fields: dictionary of field definitions
         :type fields: ``dict``
         :param kwargs: a dictionary of additional parameters specifying indexes and field definitions
@@ -3676,10 +3730,10 @@ class KVStoreCollections(Collection):
 
         :return: Result of POST request
         """
-        for k, v in six.iteritems(indexes):
+        for k, v in six.iteritems(accelerated_fields):
             if isinstance(v, dict):
                 v = json.dumps(v)
-            kwargs['index.' + k] = v
+            kwargs['accelerated_fields.' + k] = v
         for k, v in six.iteritems(fields):
             kwargs['field.' + k] = v
         return self.post(name=name, **kwargs)
@@ -3693,18 +3747,20 @@ class KVStoreCollection(Entity):
         """
         return KVStoreCollectionData(self)
 
-    def update_index(self, name, value):
-        """Changes the definition of a KV Store index.
+    def update_accelerated_field(self, name, value):
+        """Changes the definition of a KV Store accelerated_field.
 
-        :param name: name of index to change
+        :param name: name of accelerated_fields to change
         :type name: ``string``
-        :param value: new index definition
-        :type value: ``dict`` or ``string``
+        :param value: new accelerated_fields definition
+        :type value: ``dict``
 
         :return: Result of POST request
         """
         kwargs = {}
-        kwargs['index.' + name] = value if isinstance(value, six.string_types) else json.dumps(value)
+        if isinstance(value, dict):
+            value = json.dumps(value)
+        kwargs['accelerated_fields.' + name] = value
         return self.post(**kwargs)
 
     def update_field(self, name, value):

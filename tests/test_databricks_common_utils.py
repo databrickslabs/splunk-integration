@@ -17,8 +17,12 @@ def setUpModule():
         'splunk',
         'splunk.rest',
         'splunk.clilib',
+        'splunk.clilib.cli_common',
+        'splunklib',
+        'splunklib.binding',
         'splunklib.client',
-        'splunklib.results'
+        'splunklib.results',
+        'splunk.admin'
     ]
 
     mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
@@ -37,7 +41,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_user_agent(self, mock_user):
         db_utils = import_module('databricks_common_utils')
         response = db_utils.get_user_agent()
-        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.2.0")
+        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.3.0")
     
     @patch("databricks_common_utils.client.connect")
     @patch("databricks_common_utils.client.connect.jobs.oneshot")
@@ -65,7 +69,6 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_databricks_configs(self, mock_request):
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
-        # stanza_return_value = {"databricks_instance" : "123", "databricks_access_token" : "pat123"}
         mock_request.return_value = (200, json.dumps({"databricks_instance" : "123", "databricks_access_token" : "pat123", "auth_type":"PAT"}))
         response = db_utils.get_databricks_configs("session_key", "account_name")
         self.assertEqual(response, {"databricks_instance" : "123", "databricks_access_token" : "pat123", "auth_type":"PAT"})
@@ -124,20 +127,6 @@ class TestDatabricksUtils(unittest.TestCase):
         proxy_uri = db_utils.get_proxy_uri("session_key")
         db_utils._LOGGER.info.assert_called_with("Proxy is disabled. Skipping proxy mechanism.")
         self.assertEqual(proxy_uri, None)
-
-    @patch("databricks_common_utils.requests.post")
-    def test_update_kv_store_collection_if(self, mock_post):
-        db_utils = import_module('databricks_common_utils')
-        mock_post.return_value.status_code =  200
-        kv_resp = db_utils.update_kv_store_collection("splunk_uri", "run_collection","session_key", {})
-        self.assertEqual(kv_resp, {"kv_status": "KV Store updated successfully"})
-    
-    @patch("databricks_common_utils.requests.post")
-    def test_update_kv_store_collection_else(self, mock_post):
-        db_utils = import_module('databricks_common_utils')
-        mock_post.return_value.status_code =  400
-        kv_resp = db_utils.update_kv_store_collection("splunk_uri", "run_collection","session_key", {})
-        self.assertEqual(kv_resp, {"kv_status": "Error occurred while updating KV Store"})
     
     def test_format_to_json_parameters(self):
         db_utils = import_module('databricks_common_utils')
@@ -208,7 +197,83 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertEqual (return_val, ("Client secret may have expired. Please configure a valid Client secret.", False))
         self.assertEqual(mock_post.call_count, 3)
 
+    @patch("splunk.clilib.cli_common.getMgmtUri")
+    @patch("databricks_common_utils.client.connect")
+    @patch("databricks_common_utils.GetSessionKey")
+    def test_create_service(self, mock_get_session_key, mock_client_connect, mock_get_mgmt_uri):
+        mock_get_session_key.return_value.session_key = "test_session_key"
+        mock_get_mgmt_uri.return_value = "https://localhost:8089"
+        mock_client = MagicMock()
+        mock_client_connect.return_value = mock_client
+
+        db_utils = import_module('databricks_common_utils')
+
+        result = db_utils.create_service()
+
+        mock_get_mgmt_uri.assert_called_once()
+        mock_get_session_key.assert_called_once()
+        mock_client_connect.assert_called_once_with(port="8089", token="test_session_key", app="TA-Databricks")
+        self.assertEqual(result, mock_client)
+    
 
 
+    @patch("databricks_common_utils.get_mgmt_port")
+    @patch("databricks_common_utils.client.connect")
+    def test_ingest_data_to_splunk(self, mock_connect, mock_get_mgmt_port):
+        data = {
+            "user": "test",
+            "created_time": "1234567890",
+            "param": "a=1||b=2",
+            "run_id": "123",
+            "output_url": "/test/resultsOnly",
+            "result_url": "/result_url",
+            "command_status": "success",
+            "error": "-",
+            "identifier": "id1"
+        }
+        session_key = "some_session_key"
+        provided_index = "test_index"
+        sourcetype = "test_sourcetype"
+        mock_get_mgmt_port.return_value = "8089"
+
+        db_utils = import_module('databricks_common_utils')
+        db_utils._LOGGER = MagicMock()
+        db_utils.ingest_data_to_splunk(data, session_key, provided_index, sourcetype)
+
+        json_string = json.dumps(data, ensure_ascii=False).replace('"', '\\"')
+        searchquery = '| makeresults | eval _raw="{}" | collect index={} sourcetype={}'\
+            .format(json_string, provided_index, sourcetype)
+
+        mock_get_mgmt_port.assert_called_once_with(session_key, db_utils._LOGGER)
+        mock_connect.assert_called_once_with(
+            host="localhost",
+            port="8089",
+            scheme="https",
+            app="TA-Databricks",
+            token=session_key
+        )
+        mock_connect.return_value.jobs.oneshot.assert_called_once_with(searchquery)
+
     
+    @patch("databricks_common_utils.create_service")
+    def test_update_macros(self, mock_create_service):
+        service_mock = MagicMock()
+        db_utils = import_module('databricks_common_utils')
+        db_utils._LOGGER = MagicMock()
+        mock_create_service.return_value = service_mock
+        macro_manager = db_utils.IndexMacroManager()
+
+        macro_name = "test_macro"
+        index_string = "index_string"
+        macro_manager.update_macros(service_mock, macro_name, index_string)
+        service_mock.post.assert_called_once_with("properties/macros/{}".format(macro_name), definition=index_string)
     
+
+    def test_validate_success(self):
+        """Test the validate method with a validation failure."""
+        db_utils = import_module('databricks_common_utils')
+        macro_manager = db_utils.IndexMacroManager()
+        value = "abc"
+        data = {"index": "main"}
+        result = macro_manager.validate(value, data)
+        self.assertTrue(result)
