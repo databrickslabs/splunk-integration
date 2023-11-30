@@ -38,7 +38,7 @@ deltaOutputPath=dbutils.widgets.get("Delta Output Path")
 checkpointPath=dbutils.widgets.get("Checkpoint Path")
 tableName=dbutils.widgets.get("Table Name")
 regionName=dbutils.widgets.get("Region Name")
-if ((cloudTrailInsightsPath==None or cloudTrailInsightsPath=="")or(deltaOutputPath==None or deltaOutputPath=="")or(checkpointPath==None or checkpointPath=="")or(tableName==None or tableName=="")or(regionName==None or regionName=="")):
+if ((cloudTrailInsightsPath==None or cloudTrailInsightsPath=="") or (deltaOutputPath==None or deltaOutputPath=="") or (checkpointPath==None or checkpointPath=="") or (tableName==None or tableName=="") or (regionName==None or regionName=="")):
   dbutils.notebook.exit("All parameters are mandatory. Ensure correct values of all parameters are specified.")
 
 # COMMAND ----------
@@ -144,5 +144,5 @@ time.sleep(300)
 
 # COMMAND ----------
 
-create_table_query="CREATE TABLE IF NOT EXISTS "+tableName+" USING DELTA LOCATION '"+ deltaOutputPath +"'"
+create_table_query=f"CREATE TABLE IF NOT EXISTS {tableName} USING DELTA LOCATION '{deltaOutputPath}'"
 spark.sql(create_table_query)

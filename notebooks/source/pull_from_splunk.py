@@ -117,25 +117,25 @@ class Client:
             self.splunk_namespace = splunk_namespace
     @property
     def auth_url(self):
-        auth_url = "https://{}:{}/services/auth/login".format(self.splunk_address,self.splunk_port)
+        auth_url = f"https://{self.splunk_address}:{self.splunk_port}/services/auth/login"
         return (auth_url)
      
     @property
     def mgmt_segment(self):
-        mgmt_segment_part = "https://{}:{}/servicesNS/{}/{}/".format(self.splunk_address,self.splunk_port,self.splunk_username,self.splunk_namespace)
+        mgmt_segment_part = f"https://{self.splunk_address}:{self.splunk_port}/servicesNS/{self.splunk_username}/{self.splunk_namespace}/"
         return (mgmt_segment_part)
 
     def connect(self,splunk_password):
         try:
             response = requests.post(
                 self.auth_url,
-                data={"username":self.splunk_username,
-                "password":splunk_password},verify=self.ssl_verify) 
+                data={"username": self.splunk_username, "password": splunk_password},
+                verify=self.ssl_verify) 
             session = XML(response.text).findtext("./sessionKey")
             if (session=="" or session==None):
               dbutils.notebook.exit("Issue in Authentication : Type - "+XML(response.text).find("./messages/msg").attrib["type"]+"\n Message - "+XML(response.text).findtext("./messages/msg"))
             else :
-              self.token = "Splunk {}".format(session)
+              self.token = f"Splunk {session}"
         except HTTPError as e:
             if e.status == 401:
                 raise AuthenticationError("Login failed.", e)
