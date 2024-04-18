@@ -1,7 +1,7 @@
-<form version="1.1" script="js/handle_autoforward.js">
+<form version="1.1" script="js/handle_autoforward.js" stylesheet="dashboard.css">
   <label>Launch Notebook</label>
   <search id="notebookrun" rejects="$form.identifier$,$redirected$">
-    <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$ account_name=$account_name|s$</query>
+    <query>| databricksrun notebook_path=$notebook|s$ revision_timestamp=$revision_timestamp|s$ notebook_params=$params|s$ cluster=$cluster|s$ account_name=$account_name|s$ run_name=$run_name|s$</query>
     <progress>
       <unset token="redirected"></unset>
       <unset token="normal_change_notebook"></unset>
@@ -25,7 +25,9 @@
     </fail>
   </search>
   <search id="redirected_notebookrun" depends="$form.identifier$">
-    <query>|inputlookup submit_run_logs where identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time</query>
+    <query>`databricks_index_macro` sourcetype="databricks:databricksrun" identifier=$form.identifier|s$|eventstats max(created_time) as max_created_time | where created_time=max_created_time | table param{} account_name command_submission_status created_time error identifier number_in_job output_url result_url run_execution_status run_id uid user | rename param{} as param</query>
+    <earliest>0</earliest>
+    <latest>now</latest>
     <progress>
       <unset token="url"></unset>
       <unset token="failedAlertJob"></unset>
@@ -37,14 +39,17 @@
         <eval token="revision_index">mvfind(split($split_params$,","),"revision_timestamp=")</eval>
         <eval token="param_index">mvfind(split($split_params$,","),"notebook_params=")</eval>
         <eval token="cluster_index">mvfind(split($split_params$,","),"cluster=")</eval>
+        <eval token="run_index">mvfind(split($split_params$,","),"run_name=")</eval>
         <eval token="notebook_value">mvindex(split($split_params$,","),$notebook_index$)</eval>
         <eval token="param_value">mvindex(split($split_params$,","),$param_index$)</eval>
         <eval token="revision_value">mvindex(split($split_params$,","),$revision_index$)</eval>
         <eval token="cluster_value">mvindex(split($split_params$,","),$cluster_index$)</eval>
+        <eval token="run_value">mvindex(split($split_params$,","),$run_index$)</eval>
         <eval token="form.notebook">substr($notebook_value$,15)</eval>
         <eval token="form.revision_timestamp">substr($revision_value$,20)</eval>
         <eval token="form.params">substr($param_value$,17)</eval>
         <eval token="form.cluster">substr($cluster_value$,9)</eval>
+        <eval token="form.run_name">substr($run_value$,10)</eval>
         <unset token="form.identifier"></unset>
         <set token="url">$result.result_url$</set>
       </condition>
@@ -59,14 +64,17 @@
         <eval token="revision_index">mvfind(split($split_params$,","),"revision_timestamp=")</eval>
         <eval token="param_index">mvfind(split($split_params$,","),"notebook_params=")</eval>
         <eval token="cluster_index">mvfind(split($split_params$,","),"cluster=")</eval>
+        <eval token="run_index">mvfind(split($split_params$,","),"run_name=")</eval>
         <eval token="notebook_value">mvindex(split($split_params$,","),$notebook_index$)</eval>
         <eval token="param_value">mvindex(split($split_params$,","),$param_index$)</eval>
         <eval token="revision_value">mvindex(split($split_params$,","),$revision_index$)</eval>
         <eval token="cluster_value">mvindex(split($split_params$,","),$cluster_index$)</eval>
+        <eval token="run_value">mvindex(split($split_params$,","),$run_index$)</eval>
         <eval token="form.notebook">substr($notebook_value$,15)</eval>
         <eval token="form.revision_timestamp">substr($revision_value$,20)</eval>
         <eval token="form.params">substr($param_value$,17)</eval>
         <eval token="form.cluster">substr($cluster_value$,9)</eval>
+        <eval token="form.run_name">substr($run_value$,10)</eval>
         <unset token="form.identifier"></unset>
         <set token="failedAlertJob">$result.error$</set>
       </condition>
@@ -78,22 +86,26 @@
     </fail>
   </search>
   <fieldset submitButton="true">
-    <input type="text" token="notebook" searchWhenChanged="false">
-      <label>Notebook path</label>
+    <input type="text" token="run_name" id="run_name_text" searchWhenChanged="false">
+      <label>Run Name</label>
+      <default>TA-Databricks</default>
     </input>
-    <input type="text" token="revision_timestamp" searchWhenChanged="false">
-      <label>Notebook revision timestamp</label>
+    <input type="text" token="notebook" id="path_text" searchWhenChanged="false">
+      <label>Notebook Path</label>
+    </input>
+    <input type="text" token="revision_timestamp" id="revision_timestamp_text" searchWhenChanged="false">
+      <label>Notebook Revision Timestamp</label>
       <default></default>
     </input>
-    <input type="text" token="params" searchWhenChanged="false">
+    <input type="text" token="params" id="params_text" searchWhenChanged="false">
       <label>Notebook Parameters</label>
       <default></default>
     </input>
-    <input type="text" token="cluster" searchWhenChanged="false">
+    <input type="text" token="cluster" id="cluster_text" searchWhenChanged="false">
       <label>Cluster Name</label>
       <default></default>
     </input>
-    <input type="dropdown" token="account_name">
+    <input type="dropdown" token="account_name" id="acct_dropdown">
       <label>Account Name</label>
       <fieldForLabel>title</fieldForLabel>
       <fieldForValue>title</fieldForValue>
@@ -103,7 +115,7 @@
         <latest></latest>
       </search>
     </input>
-    <input type="dropdown" token="autoforward">
+    <input type="dropdown" token="autoforward" id="auto_fwd">
       <label>Auto Forward?</label>
       <choice value="No">No</choice>
       <choice value="Yes">Yes</choice>
@@ -153,7 +165,7 @@
     <panel>
       <title>Result URL</title>
       <html>
-        <center>Job running, <a href="$url$" target="_blank">click here</a> to redirect.</center>
+        <center>Job submitted, <a href="$url$" target="_blank">click here</a> to redirect.</center>
       </html>
     </panel>
   </row>

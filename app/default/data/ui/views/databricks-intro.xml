@@ -36,9 +36,13 @@
         <div>
           <img style="width: 80%; max-width: 1496px !important" src="/static/app/TA-Databricks/img/DB_config.png" alt="Add Screenshot here"/>
         </div>
+        <div>
+          <img style="width: 80%; max-width: 1496px !important" src="/static/app/TA-Databricks/img/databricksquery_run_mode.png" alt="Add Screenshot here"/>
+        </div>
         <p>To configure the Databricks Add-on, Navigate to the configuration page from the navigation bar above and Click on "Add" button and then follow these steps:</p>
         <ol>
           <li>Enter the databricks instance url in the "Databricks Instance" field without a schema (http or https)</li>
+          <li>Select the mode through which databricksquery command needs to be executed from "'databricksquery' to run on" dropdown.</li>
           <li>Select the authentication type from the dropdown.</li>
           <li>Based on the authentication type, enter the required credentials. (Refer the image above)</li>
           <li>If you select the "Personal Access Token" Authentication Type then, enter the personal access token for the same instance in the "Databricks Access Token" field. Else provide the "Client Id", "Tenant Id" and "Client Secret".</li>
@@ -62,7 +66,7 @@
         </style>
               <div>
                 <video style="width: 100%; max-width: 1496px !important;" autoplay="true" muted="true" loop="true">
-          <source src="/static/app/TA-Databricks/img/launch_notebook_dashboard.webm"
+          <source src="/static/app/TA-Databricks/img/launch_notebook_from_dashboard.webm"
                   type="video/webm" />
     Sorry, your browser doesn't support embedded videos.
                 </video>
@@ -83,17 +87,22 @@
                 <th>Description</th>
               </tr>
               <tr>
-                <td>Notebook path</td>
-                <td>Yes</td>
-                <td>The timestamp of the revision of the notebook.</td>
+                <td>Run Name</td>
+                <td>No</td>
+                <td>Run Name to identify the run execution.</td>
               </tr>
               <tr>
-                <td>Notebook revision timestamp</td>
-                <td>No</td>
+                <td>Notebook Path</td>
+                <td>Yes</td>
                 <td>The absolute path of the notebook to be run in the Databricks workspace. This path must begin with a slash.</td>
               </tr>
               <tr>
-                <td>Notebook parameters</td>
+                <td>Notebook Revision Timestamp</td>
+                <td>No</td>
+                <td>The timestamp of the revision of the notebook.</td>
+              </tr>
+              <tr>
+                <td>Notebook Parameters</td>
                 <td>No</td>
                 <td>Parameters to pass while executing the notebook. In the form of “key1=value1||key2=value2||...”</td>
               </tr>
@@ -122,7 +131,7 @@
             <html>
               <div>
                 <video style="width: 100%; max-width: 1496px !important;" autoplay="true" muted="true" loop="true">
-          <source src="/static/app/TA-Databricks/img/launch_notebook_ar.webm"
+          <source src="/static/app/TA-Databricks/img/launch_notebook_from_AR.webm"
                   type="video/webm" />
     Sorry, your browser doesn't support embedded videos.
                 </video>
@@ -147,7 +156,7 @@
             <title>Launching a Notebook through Splunk search</title>
             <html>
               <div>
-                <img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/dbrun_cc_example.png" alt="Add Screenshot here"/>
+                <img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_run.png" alt="Add Screenshot here"/>
               </div>
               <p>To launch a notebook via Splunk search, follow these steps:</p>
               <ol>
@@ -164,17 +173,19 @@
         <p>The app provides three custom commands. Users can open the Splunk search bar and can execute the commands. Below are the command details.
           <ol>
             <li><b>databricksquery:</b> used to query data present in the Databricks table from Splunk. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#1-databricksquery" target="_blank">docs</a> for the command parameter details.
-            <br/><b>Syntax: </b>| databricksquery cluster="&lt;cluster_name&gt;" query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; account_name="&lt;account_name&gt;" | table *
-            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksquery.png"/>
+            <br/><b>Syntax 1: </b>| databricksquery warehouse_id="&lt;warehouse_id&gt;" limit=&lt;query_result_limit&gt; query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; account_name="&lt;account_name&gt;"
+            <br/><b>Syntax 2: </b>| databricksquery cluster="&lt;cluster_name&gt;" query="&lt;SQL_query&gt;" command_timeout=&lt;timeout_in_seconds&gt; account_name="&lt;account_name&gt;"
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_query_dbsql.png"/>
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_query_cluster.png"/>
             <br/>
             </li>
             <li><b>databricksrun:</b> used to submit a one-time run for a notebook without creating a job. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#2-databricksrun" target="_blank">docs</a> for the command parameter details.
-            <br/><b>Syntax: </b>| databricksrun notebook_path="&lt;path_to_notebook&gt;" run_name="&lt;run_name&gt;" cluster="&lt;cluster_name&gt;" revision_timestamp=&lt;revision_timestamp&gt; notebook_params="&lt;params_for_job_execution&gt;" account_name="&lt;account_name&gt;" | table *
-            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksrun.png"/>
+            <br/><b>Syntax: </b>| databricksrun notebook_path="&lt;path_to_notebook&gt;" run_name="&lt;run_name&gt;" cluster="&lt;cluster_name&gt;" revision_timestamp=&lt;revision_timestamp&gt; notebook_params="&lt;params_for_job_execution&gt;" account_name="&lt;account_name&gt;" 
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_run.png"/>
             </li>
             <li><b>databricksjob:</b> used to run an already created job now from Splunk. Refer <a href="https://github.com/databrickslabs/splunk-integration/tree/master/app#3-databricksjob" target="_blank">docs</a> for the command parameter details.
-            <br/><b>Syntax: </b>| databricksjob job_id=&lt;job_id&gt; notebook_params="&lt;params_for_job_execution&gt;" account_name="&lt;account_name&gt;" | table *
-            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_databricksjob.png"/>
+            <br/><b>Syntax: </b>| databricksjob job_id=&lt;job_id&gt; notebook_params="&lt;params_for_job_execution&gt;" account_name="&lt;account_name&gt;" 
+            <br/><img style="height: 60%; width: 100%; max-width: 1496px !important;" src="/static/app/TA-Databricks/img/databricks_job.png"/>
             </li>
           </ol>
         </p>

@@ -24,11 +24,7 @@ class DatabricksClient(object):
         """
         databricks_configs = utils.get_databricks_configs(session_key, account_name)
         if not databricks_configs:
-            raise Exception(
-                "Account '{}' not found. Please provide valid Databricks account.".format(
-                    account_name
-                )
-            )
+            raise Exception("Account '{}' not found. Please provide valid Databricks account.".format(account_name))
         self.account_name = account_name
         databricks_instance = databricks_configs.get("databricks_instance")
         self.auth_type = databricks_configs.get("auth_type")
@@ -46,7 +42,7 @@ class DatabricksClient(object):
 
         self.session.verify = const.VERIFY_SSL
         self.session.timeout = const.TIMEOUT
-        if self.auth_type == 'PAT':
+        if self.auth_type == "PAT":
             self.databricks_token = databricks_configs.get("databricks_pat")
         else:
             self.databricks_token = databricks_configs.get("aad_access_token")
@@ -55,9 +51,7 @@ class DatabricksClient(object):
             self.aad_client_secret = databricks_configs.get("aad_client_secret")
 
         if not all([databricks_instance, self.databricks_token]):
-            raise Exception(
-                "Addon is not configured. Navigate to addon's configuration page to configure the addon."
-            )
+            raise Exception("Addon is not configured. Navigate to addon's configuration page to configure the addon.")
         self.databricks_instance_url = "{}{}".format("https://", databricks_instance.strip("/"))
         self.request_headers = {
             "Authorization": "Bearer {}".format(self.databricks_token),
@@ -67,6 +61,16 @@ class DatabricksClient(object):
         _LOGGER.debug(
             "Request made to the Databricks from Splunk user: {}".format(utils.get_current_user(self.session_key))
         )
+
+        # Separate session to call external APIs
+        self.external_session = self.get_requests_retry_session()
+        self.external_session.proxies = self.session.proxies
+        self.external_session.verify = self.session.verify and False
+        # Setting timeout in session does not work but kept here for sake of
+        # consistency. Reference: https://requests.readthedocs.io/en/latest/api/#sessionapi
+        self.external_session.timeout = self.session.timeout
+
+        # Set session headers with auth tokens
         self.session.headers.update(self.request_headers)
         if self.session.proxies:
             _LOGGER.info("Proxy is configured. Using proxy to execute the request.")
@@ -119,29 +123,32 @@ class DatabricksClient(object):
                     response = None
                     run_again = False
                     _LOGGER.info("Refreshing AAD token.")
-                    proxy_settings = utils.get_proxy_uri(self.session_key)  # Reinitializing the proxy
+                    databricks_configs = utils.get_databricks_configs(self.session_key, self.account_name)
+                    proxy_config = databricks_configs.get("proxy_uri")
                     db_token = utils.get_aad_access_token(
                         self.session_key,
                         self.account_name,
                         self.aad_tenant_id,
                         self.aad_client_id,
                         self.aad_client_secret,
-                        proxy_settings,   # Using the reinit proxy. As proxy is getting updated on Line no: 43, 45
+                        proxy_config,  # Using the reinit proxy. As proxy is getting updated on Line no: 43, 45
                         retry=const.RETRIES,  # based on the condition and for this call we will always need proxy.
+                        conf_update=True,  # By passing True, the AAD access token will be updated in conf
                     )
                     if isinstance(db_token, tuple):
                         raise Exception(db_token[0])
                     else:
                         self.databricks_token = db_token
-                    self.request_headers["Authorization"] = "Bearer {}".format(
-                        self.databricks_token
-                    )
+                    self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
                     self.session.headers.update(self.request_headers)
                 elif status_code != 200:
                     response.raise_for_status()
                 else:
                     break
-            return response.json()
+            if "cancel" in endpoint:
+                return response.json(), status_code
+            else:
+                return response.json()
         except Exception as e:
             msg = (
                 "Unable to request Databricks instance. "
@@ -174,9 +181,7 @@ class DatabricksClient(object):
         resp = self.databricks_api("get", const.CLUSTER_ENDPOINT)
         response = resp.get("clusters")
         if response is None:
-            raise Exception(
-                "No cluster found with name {}. Provide a valid cluster name.".format(cluster_name)
-            )
+            raise Exception("No cluster found with name {}. Provide a valid cluster name.".format(cluster_name))
 
         for r in response:
 
@@ -187,10 +192,36 @@ class DatabricksClient(object):
                     return cluster_id
 
                 raise Exception(
-                    "Ensure that the cluster is in running state. Current cluster state is {}.".format(
-                        r.get("state")
-                    )
+                    "Ensure that the cluster is in running state. Current cluster state is {}.".format(r.get("state"))
                 )
-        raise Exception(
-            "No cluster found with name {}. Provide a valid cluster name.".format(cluster_name)
-        )
+        raise Exception("No cluster found with name {}. Provide a valid cluster name.".format(cluster_name))
+
+    def external_api(self, method, url, data=None, args=None):
+        """
+        Common method to request data from external APIs.
+
+        :param method: "get" or "post"
+        :param url: URL to get the data from
+        :param data: Payload to be send over post call
+        :param args: Arguments to be add into the url
+        :return: response in the form of dictionary
+        """
+        # Request arguments
+        kwargs = {
+            "timeout": self.external_session.timeout,
+        }
+        if args:
+            kwargs["params"] = args
+        if data:
+            kwargs["json"] = data
+
+        # Call APIs
+        if method.lower() == "get":
+            _LOGGER.info("Executing REST call: {}.".format(url))
+            response = self.external_session.get(url, **kwargs)
+        elif method.lower() == "post":
+            _LOGGER.info("Executing REST call: {} Payload: {}.".format(url, str(data)))
+            response = self.external_session.post(url, **kwargs)
+        response.raise_for_status()
+
+        return response.json()

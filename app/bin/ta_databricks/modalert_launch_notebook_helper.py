@@ -20,6 +20,7 @@ def process_event(helper, *args, **kwargs):
     notebook_parameters = helper.get_param("notebook_parameters")
     cluster_name = helper.get_param("cluster_name")
     account_name = helper.get_param("account_name")
+    run_name = helper.get_param("run_name")
 
     if not (notebook_path and notebook_path.strip()):
         helper.log_error("Notebook path is a required parameter which is not provided.")
@@ -35,6 +36,8 @@ def process_event(helper, *args, **kwargs):
         search_string = search_string + " notebook_params=\"" + notebook_parameters.strip() + "\""
     if cluster_name:
         search_string = search_string + " cluster=\"" + cluster_name.strip() + "\""
+    if run_name:
+        search_string = search_string + " run_name=\"" + run_name.strip() + "\""
     try:
         if helper.action_mode == "adhoc":
             sid = helper.orig_sid
