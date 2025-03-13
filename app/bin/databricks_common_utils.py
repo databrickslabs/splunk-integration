@@ -1,14 +1,23 @@
 import ta_databricks_declare  # noqa: F401
 import json
 import requests
+import os
 import traceback
 import re
 from urllib.parse import urlencode
 import databricks_const as const
 from log_manager import setup_logging
 
+import splunklib.client as client_
+from splunktaucclib.rest_handler.endpoint.validator import Validator
+from splunktaucclib.rest_handler.endpoint import (
+    validator
+)
+import splunk.admin as admin
+import splunk.clilib.cli_common
 import splunk.rest as rest
 from six.moves.urllib.parse import quote
+from splunklib.binding import HTTPError
 from solnlib.utils import is_true
 from solnlib.credentials import CredentialManager, CredentialNotExistException
 import splunklib.results as results
@@ -188,54 +197,6 @@ def get_proxy_uri(session_key):
         return None
 
 
-def update_kv_store_collection(splunkd_uri, kv_collection_name, session_key, kv_log_info):
-    """
-    Create and update KV store collection.
-
-    :param splunkd_uri: Splunk management URI
-    :param kv_collection_name: KV Store collection to create/update
-    :param session_key: Splunk Session Key
-    :param kv_log_info: Information that needs to be updated
-    :return: Dictionary with updated value of KV Store update status
-    """
-    header = {
-        "Authorization": "Bearer {}".format(session_key),
-        "Content-Type": "application/json",
-        "User-Agent": "{}".format(const.USER_AGENT_CONST),
-    }
-
-    # Add the log of record into the KV Store
-    _LOGGER.info(
-        "Adding the command log info to KV Store. Command Log Info: {}".format(kv_log_info)
-    )
-
-    kv_update_url = "{}/servicesNS/nobody/{}/storage/collections/data/{}".format(
-        splunkd_uri,
-        const.APP_NAME,
-        kv_collection_name,
-    )
-
-    _LOGGER.info(
-        "Executing REST call, URL: {}, Payload: {}.".format(kv_update_url, str(kv_log_info))
-    )
-    response = requests.post(
-        kv_update_url,
-        headers=header,
-        data=json.dumps(kv_log_info),
-        verify=const.INTERNAL_VERIFY_SSL,
-        timeout=const.TIMEOUT
-    )
-
-    if response.status_code in {200, 201}:
-        _LOGGER.info("KV Store updated successfully.")
-        kv_log_info.update({"kv_status": "KV Store updated successfully"})
-    else:
-        _LOGGER.info("Error occurred while updating KV Store.")
-        kv_log_info.update({"kv_status": "Error occurred while updating KV Store"})
-
-    return kv_log_info
-
-
 def format_to_json_parameters(params):
     """
     Split the provided string by `||` and make dictionary of that splitted key-value pair string.
@@ -282,7 +243,7 @@ def get_mgmt_port(session_key, logger):
     try:
         content = json.loads(content)
         content = re.findall(r':(\d+)', content["entry"][0]["content"]["mgmtHostPort"])[0]
-        logger.info("Databricks Info: Get managemant port from web.conf is {} ".format(content))
+        logger.info("Databricks Info: Get management port from web.conf is {} ".format(content))
     except Exception as e:
         logger.error("Databricks Error: Error while parsing" " web.conf file. Error: " + str(e))
         logger.debug(
@@ -336,6 +297,7 @@ def get_aad_access_token(
     aad_client_secret,
     proxy_settings=None,
     retry=1,
+    conf_update=False,
 ):
     """
     Method to acquire a new AAD access token.
@@ -371,7 +333,7 @@ def get_aad_access_token(
             resp.raise_for_status()
             response = resp.json()
             aad_access_token = response.get("access_token")
-            if not all([aad_tenant_id, aad_client_id, aad_client_secret]):
+            if conf_update:
                 save_databricks_aad_access_token(
                     account_name, session_key, aad_access_token, aad_client_secret
                 )
@@ -407,3 +369,72 @@ def get_aad_access_token(
 def get_user_agent():
     """Method to get user agent."""
     return "{}".format(const.USER_AGENT_CONST)
+
+
+class GetSessionKey(admin.MConfigHandler):
+    """To get Splunk session key."""
+
+    def __init__(self):
+        """Initialize."""
+        self.session_key = self.getSessionKey()
+
+
+def create_service(sessionkey=None):
+    """Create Service to communicate with splunk."""
+    mgmt_port = splunk.clilib.cli_common.getMgmtUri().split(":")[-1]
+    if not sessionkey:
+        sessionkey = GetSessionKey().session_key
+    service = client.connect(port=mgmt_port, token=sessionkey, app=APP_NAME)
+    return service
+
+
+class IndexMacroManager(Validator):
+    """Class provides methods for handling Macros."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the parameters."""
+        super(IndexMacroManager, self).__init__(*args, **kwargs)
+        self._validator = validator
+        self._args = args
+        self._kwargs = kwargs
+        self.path = os.path.abspath(__file__)
+
+    def update_macros(self, service, macro_name, index_string):
+        """Update macro with the selected index."""
+        service.post("properties/macros/{}".format(macro_name), definition=index_string)
+        _LOGGER.info("Macro: {} is updated Successfully with defintion: {}.".format(macro_name, index_string))
+
+    def validate(self, value, data):
+        """Update the macros with the selected index."""
+        try:
+            service = create_service()
+            selected_index = data.get("index")
+            response_string = "index IN ({})".format(selected_index)
+            self.update_macros(service, "databricks_index_macro", response_string)
+            return True
+        except HTTPError:
+            _LOGGER.error("Error while updating Macros: {}".format(traceback.format_exc()))
+            self.put_msg("Error while updating Macros. Kindly check log file for more details.")
+            return False
+        except Exception as e:
+            msg = "Unrecognized error: {}".format(str(e))
+            _LOGGER.error(msg)
+            self.put_msg(msg)
+            _LOGGER.error(traceback.format_exc())
+            return False
+
+
+def ingest_data_to_splunk(data, session_key, provided_index, sourcetype):
+    """Method to ingest data to Splunk."""
+    json_string = json.dumps(data, ensure_ascii=False).replace('"', '\\"')
+    port = get_mgmt_port(session_key, _LOGGER)
+    searchquery = '| makeresults | eval _raw="{}" | collect index={} sourcetype={}'\
+        .format(json_string, provided_index, sourcetype)
+    service = client_.connect(
+        host="localhost",
+        port=port,
+        scheme="https",
+        app=APP_NAME,
+        token=session_key
+    )
+    service.jobs.oneshot(searchquery)

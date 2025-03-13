@@ -2,6 +2,8 @@
 from email.policy import default
 import ta_databricks_declare
 from databricks_validators import ValidateDatabricksInstance
+from splunktaucclib.rest_handler.endpoint.validator import Validator
+from databricks_common_utils import IndexMacroManager
 from splunktaucclib.rest_handler.endpoint import (
     field,
     validator,
@@ -10,9 +12,18 @@ from splunktaucclib.rest_handler.endpoint import (
 )
 from splunktaucclib.rest_handler import admin_external, util
 from splunk_aoblib.rest_migration import ConfigMigrationHandler
+import os
 
 util.remove_http_proxy_env_vars()
 
+class ValidateThread(Validator):
+    def validate(self, value, data):
+        thread_count_value = data.get("thread_count")
+        cpu_core = os.cpu_count()
+        if int(thread_count_value) > 2*int(cpu_core):
+            self.put_msg('Suggested Value for Max Thread Count is within twice of CPU Count. CPU Count is {}. Please enter a value equal to or lesser than {}.'.format(cpu_core, 2*int(cpu_core)))
+            return False
+        return True
 
 fields_proxy = [
     field.RestField(
@@ -98,11 +109,42 @@ fields_logging = [
 ]
 model_logging = RestModel(fields_logging, name='logging')
 
+fields_additional_parameters = [
+    field.RestField(
+        'admin_command_timeout',
+        required=True,
+        default=300,
+        validator=None
+    ),
+    field.RestField(
+        'query_result_limit',
+        required=True,
+        default=10000,
+        validator=None
+    ),
+    field.RestField(
+        'index',
+        required=True,
+        default='main',
+        encrypted=False,
+        validator=IndexMacroManager()
+    ),
+    field.RestField(
+        'thread_count',
+        required=True,
+        default=5,
+        encrypted=False,
+        validator=ValidateThread()
+    )
+]
+model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
+
 endpoint = MultipleModel(
     'ta_databricks_settings',
     models=[
         model_proxy,
-        model_logging
+        model_logging,
+        model_additional_parameters
     ],
 )
 
