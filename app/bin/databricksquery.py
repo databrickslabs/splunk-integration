@@ -325,22 +325,58 @@ class DatabricksQueryCommand(GeneratingCommand):
 
             def handle_dbsql_method(row_limit, thread_count):
 
-                def fetch_warehouse_status(id_of_warehouse):
+                def ensure_warehouse_running(id_of_warehouse):
+                    """Ensure warehouse is in RUNNING state, starting it if necessary.
+                    
+                    Handles all warehouse states:
+                    - RUNNING: Returns immediately
+                    - STARTING: Waits for startup to complete
+                    - STOPPING: Waits for stop to complete, then starts
+                    - STOPPED: Starts the warehouse and waits
+                    - Other states (DELETED, DELETING, etc.): Raises an error
+                    
+                    Args:
+                        id_of_warehouse: The warehouse ID to ensure is running
+                    """
+                    start_was_requested = False
+                    
                     while True:
                         warehouse_resp = client.databricks_api(
                             "get",
                             const.SPECIFIC_WAREHOUSE_STATUS_ENDPOINT.format(id_of_warehouse)
                         )
-                        if warehouse_resp.get("state").lower() == "starting":
-                            time.sleep(30)
-                        elif warehouse_resp.get("state").lower() == "running":
-                            _LOGGER.info("Warehouse started successfully.")
+                        current_state = warehouse_resp.get("state", "").lower()
+                        
+                        if current_state == "running":
+                            if start_was_requested:
+                                _LOGGER.info("Warehouse started successfully.")
+                            else:
+                                _LOGGER.info("Warehouse is already running.")
                             break
+                        elif current_state == "starting":
+                            _LOGGER.info("Warehouse is in STARTING state, waiting...")
+                            time.sleep(3)
+                        elif current_state == "stopping":
+                            _LOGGER.info("Warehouse is in STOPPING state, waiting for it to stop...")
+                            time.sleep(3)
+                        elif current_state == "stopped":
+                            if start_was_requested:
+                                # After calling start API, warehouse may briefly still show as STOPPED
+                                # before transitioning to STARTING. Wait and retry.
+                                _LOGGER.info("Warehouse still in STOPPED state after start request, "
+                                             "waiting for state transition...")
+                                time.sleep(3)
+                            else:
+                                _LOGGER.info("Warehouse is in STOPPED state. Starting the warehouse.")
+                                client.databricks_api(
+                                    "post", const.WAREHOUSE_START_ENDPOINT.format(id_of_warehouse)
+                                )
+                                start_was_requested = True
                         else:
-                            err = "Warehouse is not in RUNNING or STARTING state. Current SQL warehouse state is {}."
+                            err = "Warehouse cannot be started. Current SQL warehouse state is {}."
                             raise Exception(err.format(warehouse_resp.get("state")))
 
-                # Check whether SQL Warehouse exists. If yes, check its status.
+                # Check whether SQL Warehouse exists. If yes, ensure it's running.
                 warehouse_exist = False
                 list_of_links = []
                 list_of_chunk_number = []
@@ -350,20 +386,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                     if res.get("id") == self.warehouse_id:
                         warehouse_exist = True
                         if res.get("state").lower() != "running":
-                            try:
-                                if res.get("state").lower() == "starting":
-                                    _LOGGER.info("Warehouse is not in RUNNING state. It is in STARTING state.")
-                                    time.sleep(30)
-                                    fetch_warehouse_status(self.warehouse_id)
-                                else:
-                                    _LOGGER.info("Warehouse is not in RUNNING or STARTING state. "
-                                                 "Starting the warehouse.")
-                                    client.databricks_api(
-                                        "post", const.WAREHOUSE_START_ENDPOINT.format(self.warehouse_id)
-                                    )
-                                    fetch_warehouse_status(self.warehouse_id)
-                            except Exception as err:
-                                raise Exception(err)
+                            ensure_warehouse_running(self.warehouse_id)
                         break
                 if not warehouse_exist:
                     raise Exception("No SQL warehouse found with ID: {}. Provide a valid SQL warehouse ID."

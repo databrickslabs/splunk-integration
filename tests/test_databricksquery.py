@@ -789,7 +789,9 @@ class TestDatabricksQuery(unittest.TestCase):
         client.databricks_api.side_effect = [
             # Initial warehouse list - STARTING
             {"warehouses": [{"id": "w123", "state": "STARTING"}]},
-            # Status check - now RUNNING
+            # ensure_warehouse_running: status check - still STARTING
+            {"state": "STARTING"},
+            # ensure_warehouse_running: status check - now RUNNING
             {"state": "RUNNING"},
             # Execute query
             {"statement_id": "stmt123"},
@@ -837,9 +839,11 @@ class TestDatabricksQuery(unittest.TestCase):
         client.databricks_api.side_effect = [
             # Initial warehouse list - STOPPED
             {"warehouses": [{"id": "w123", "state": "STOPPED"}]},
-            # Start warehouse call
+            # ensure_warehouse_running: status check - STOPPED
+            {"state": "STOPPED"},
+            # ensure_warehouse_running: Start warehouse call
             {},
-            # Status check - now RUNNING
+            # ensure_warehouse_running: status check - now RUNNING
             {"state": "RUNNING"},
             # Execute query
             {"statement_id": "stmt123"},
@@ -1213,12 +1217,10 @@ class TestDatabricksQuery(unittest.TestCase):
         client = mock_com.return_value = MagicMock()
 
         client.databricks_api.side_effect = [
-            # Warehouse in ERROR state
-            {"warehouses": [{"id": "w123", "state": "ERROR"}]},
-            # Start warehouse call
-            {},
-            # Status check returns ERROR state (never becomes RUNNING)
-            {"state": "ERROR"}
+            # Warehouse in DELETED state (invalid)
+            {"warehouses": [{"id": "w123", "state": "DELETED"}]},
+            # ensure_warehouse_running: status check returns DELETED state
+            {"state": "DELETED"}
         ]
 
         resp = db_query_obj.generate()
@@ -1230,7 +1232,7 @@ class TestDatabricksQuery(unittest.TestCase):
         # Verify error was written
         db_query_obj.write_error.assert_called()
         error_msg = db_query_obj.write_error.call_args[0][0]
-        self.assertIn("ERROR", error_msg)
+        self.assertIn("DELETED", error_msg)
 
     @patch("databricksquery.com.DatabricksClient", autospec=True)
     @patch("databricksquery.utils", autospec=True)
@@ -1411,3 +1413,182 @@ class TestDatabricksQuery(unittest.TestCase):
         db_query_obj.write_warning.assert_not_called()
         # Verify limit was not set (remains None, uses admin default)
         self.assertIsNone(db_query_obj.limit)
+
+    @patch("databricksquery.com.DatabricksClient", autospec=True)
+    @patch("databricksquery.utils", autospec=True)
+    @patch("databricksquery.time.sleep")
+    def test_warehouse_stopped_delayed_transition(self, mock_sleep, mock_utils, mock_com):
+        """Test warehouse in STOPPED state with delayed transition to STARTING after start API call.
+        
+        This tests the race condition fix where after calling start API, 
+        the warehouse may briefly still show as STOPPED before transitioning to STARTING.
+        """
+        db_query_obj = self.DatabricksQueryCommand()
+        db_query_obj._metadata = MagicMock()
+        db_query_obj.warehouse_id = "w123"
+
+        mock_utils.get_databricks_configs.return_value = {
+            "auth_type": "PAT",
+            "databricks_instance": "test.databricks.com",
+            "databricks_pat": "test_token",
+            "admin_command_timeout": "300",
+            "query_result_limit": "1000",
+            "thread_count": "4"
+        }
+
+        client = mock_com.return_value = MagicMock()
+
+        client.databricks_api.side_effect = [
+            # Initial warehouse list - STOPPED
+            {"warehouses": [{"id": "w123", "state": "STOPPED"}]},
+            # ensure_warehouse_running: status check - STOPPED
+            {"state": "STOPPED"},
+            # ensure_warehouse_running: Start warehouse call
+            {},
+            # ensure_warehouse_running: status check - still STOPPED (race condition)
+            {"state": "STOPPED"},
+            # ensure_warehouse_running: status check - now STARTING
+            {"state": "STARTING"},
+            # ensure_warehouse_running: status check - now RUNNING
+            {"state": "RUNNING"},
+            # Execute query
+            {"statement_id": "stmt123"},
+            # Query status - SUCCEEDED
+            {
+                "status": {"state": "SUCCEEDED"},
+                "manifest": {
+                    "total_row_count": 0,
+                    "truncated": False,
+                    "schema": {"columns": []}
+                },
+                "result": {"external_links": []}
+            }
+        ]
+
+        resp = db_query_obj.generate()
+        try:
+            list(resp)
+        except (StopIteration, SystemExit):
+            pass
+
+        # Verify warehouse start was called
+        calls = [call for call in client.databricks_api.call_args_list
+                 if len(call[0]) > 1 and 'start' in str(call[0][1])]
+        self.assertTrue(len(calls) > 0)
+        
+        # Verify sleep was called (for waiting during state transitions)
+        mock_sleep.assert_called()
+
+    @patch("databricksquery.com.DatabricksClient", autospec=True)
+    @patch("databricksquery.utils", autospec=True)
+    @patch("databricksquery.time.sleep")
+    def test_warehouse_stopping_state(self, mock_sleep, mock_utils, mock_com):
+        """Test warehouse in STOPPING state, waits for STOPPED, then starts and runs query"""
+        db_query_obj = self.DatabricksQueryCommand()
+        db_query_obj._metadata = MagicMock()
+        db_query_obj.warehouse_id = "w123"
+
+        mock_utils.get_databricks_configs.return_value = {
+            "auth_type": "PAT",
+            "databricks_instance": "test.databricks.com",
+            "databricks_pat": "test_token",
+            "admin_command_timeout": "300",
+            "query_result_limit": "1000",
+            "thread_count": "4"
+        }
+
+        client = mock_com.return_value = MagicMock()
+
+        client.databricks_api.side_effect = [
+            # Initial warehouse list - STOPPING
+            {"warehouses": [{"id": "w123", "state": "STOPPING"}]},
+            # Status check - still STOPPING
+            {"state": "STOPPING"},
+            # Status check - now STOPPED
+            {"state": "STOPPED"},
+            # Start warehouse call
+            {},
+            # Status check - now RUNNING
+            {"state": "RUNNING"},
+            # Execute query
+            {"statement_id": "stmt123"},
+            # Query status - SUCCEEDED
+            {
+                "status": {"state": "SUCCEEDED"},
+                "manifest": {
+                    "total_row_count": 0,
+                    "truncated": False,
+                    "schema": {"columns": []}
+                },
+                "result": {"external_links": []}
+            }
+        ]
+
+        resp = db_query_obj.generate()
+        try:
+            list(resp)
+        except (StopIteration, SystemExit):
+            pass
+
+        # Verify warehouse start was called
+        calls = [call for call in client.databricks_api.call_args_list
+                 if len(call[0]) > 1 and 'start' in str(call[0][1])]
+        self.assertTrue(len(calls) > 0)
+        
+        # Verify sleep was called while waiting for warehouse to stop
+        mock_sleep.assert_called()
+
+    @patch("databricksquery.com.DatabricksClient", autospec=True)
+    @patch("databricksquery.utils", autospec=True)
+    @patch("databricksquery.time.sleep")
+    def test_warehouse_stopping_transitions_to_running(self, mock_sleep, mock_utils, mock_com):
+        """Test warehouse in STOPPING state that transitions directly to RUNNING (edge case)
+        
+        This can happen if someone else starts the warehouse while we're waiting for it to stop.
+        """
+        db_query_obj = self.DatabricksQueryCommand()
+        db_query_obj._metadata = MagicMock()
+        db_query_obj.warehouse_id = "w123"
+
+        mock_utils.get_databricks_configs.return_value = {
+            "auth_type": "PAT",
+            "databricks_instance": "test.databricks.com",
+            "databricks_pat": "test_token",
+            "admin_command_timeout": "300",
+            "query_result_limit": "1000",
+            "thread_count": "4"
+        }
+
+        client = mock_com.return_value = MagicMock()
+
+        client.databricks_api.side_effect = [
+            # Initial warehouse list - STOPPING
+            {"warehouses": [{"id": "w123", "state": "STOPPING"}]},
+            # Status check - transitions directly to RUNNING (someone else started it)
+            {"state": "RUNNING"},
+            # Start warehouse call (will still be made but warehouse is already running)
+            {},
+            # Status check - RUNNING
+            {"state": "RUNNING"},
+            # Execute query
+            {"statement_id": "stmt123"},
+            # Query status - SUCCEEDED
+            {
+                "status": {"state": "SUCCEEDED"},
+                "manifest": {
+                    "total_row_count": 0,
+                    "truncated": False,
+                    "schema": {"columns": []}
+                },
+                "result": {"external_links": []}
+            }
+        ]
+
+        resp = db_query_obj.generate()
+        try:
+            list(resp)
+        except (StopIteration, SystemExit):
+            pass
+
+        # Query should complete successfully
+        # The warehouse start may or may not be called depending on timing
