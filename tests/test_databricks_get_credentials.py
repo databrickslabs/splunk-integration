@@ -1,13 +1,17 @@
 import declare
-import os
-import sys
 import unittest
-from utility import Response
 import json
-import traceback
-import base64
+from utility import Response
 from importlib import import_module
 from mock import patch, MagicMock
+
+# Import shared test utilities
+from conftest import (
+    create_module_mocks,
+    teardown_module_mocks,
+    setup_persistconn_mock,
+    CREDENTIALS_MODULES,
+)
 
 
 mocked_modules = {}
@@ -15,24 +19,14 @@ mocked_modules = {}
 
 def setUpModule():
     global mocked_modules
-
-    module_to_be_mocked = [
-        "log_manager",
-        "splunk",
-        "splunk.persistconn.application",
-        "splunk.rest",
-    ]
-
-    mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
-
-    for module, magicmock in mocked_modules.items():
-        if module == "splunk.persistconn.application":
-            magicmock.PersistentServerConnectionApplication = object
-        patch.dict("sys.modules", **{module: magicmock}).start()
+    special_handlers = {
+        "splunk.persistconn.application": setup_persistconn_mock,
+    }
+    mocked_modules = create_module_mocks(CREDENTIALS_MODULES, special_handlers)
 
 
 def tearDownModule():
-    patch.stopall()
+    teardown_module_mocks()
 
 
 class TestDatabricksGetCredentials(unittest.TestCase):
@@ -44,6 +38,7 @@ class TestDatabricksGetCredentials(unittest.TestCase):
         self.assertIsInstance(obj1, db_cm.DatabricksGetCredentials)
 
     def test_handle_save_access_token_success(self):
+        """Test successful saving of AAD access token with expiration."""
         db_cm = import_module("databricks_get_credentials")
         input_string = json.dumps({
             "system_authtoken": "dummy_token",
@@ -51,11 +46,12 @@ class TestDatabricksGetCredentials(unittest.TestCase):
                 "name": "test",
                 "update_token": "1",
                 "aad_client_secret": "client_secret",
-                "aad_access_token": "access_token"
+                "aad_access_token": "access_token",
+                "aad_token_expiration": "1234567890.0"
             }
         })
         
-        # mock the CredentialManager to raise an exception when set_password is called
+        # mock the CredentialManager
         credential_manager_mock = MagicMock()
         credential_manager_mock.set_password.return_value = "Saved AAD access token successfully."
         db_cm.CredentialManager = MagicMock(return_value=credential_manager_mock)
@@ -65,8 +61,12 @@ class TestDatabricksGetCredentials(unittest.TestCase):
 
         assert result["payload"] == "Saved AAD access token successfully."
         assert result["status"] == 200
+        
+        # Verify the credential manager was called with correct parameters including expiration
+        credential_manager_mock.set_password.assert_called_once()
 
     def test_handle_save_access_token_failure(self):
+        """Test failure when saving AAD access token."""
         db_cm = import_module("databricks_get_credentials")
         input_string = json.dumps({
             "system_authtoken": "dummy_token",
@@ -74,7 +74,8 @@ class TestDatabricksGetCredentials(unittest.TestCase):
                 "name": "test",
                 "update_token": "1",
                 "aad_client_secret": "client_secret",
-                "aad_access_token": "access_token"
+                "aad_access_token": "access_token",
+                "aad_token_expiration": "1234567890.0"
             }
         })
 
@@ -334,6 +335,85 @@ class TestDatabricksGetCredentials(unittest.TestCase):
         payload = result["payload"]
         assert payload["auth_type"] == "PAT"
         assert payload["databricks_pat"] == "pat_token_value"
+
+    @patch("databricks_get_credentials.rest.simpleRequest")
+    @patch("databricks_get_credentials.CredentialManager")
+    def test_handle_retrieve_aad_config(self, mock_cred_manager, mock_request):
+        """Test retrieving AAD configuration with token expiration."""
+        db_cm = import_module("databricks_get_credentials")
+        db_cm._LOGGER = MagicMock()
+        
+        # Mock account manager
+        account_manager_mock = MagicMock()
+        account_manager_mock.get_password.return_value = json.dumps({
+            "aad_client_secret": "aad_secret",
+            "aad_access_token": "aad_token",
+            "aad_token_expiration": "1234567890.0"
+        })
+        
+        # Mock proxy manager
+        proxy_manager_mock = MagicMock()
+        proxy_manager_mock.get_password.return_value = json.dumps({})
+        
+        mock_cred_manager.side_effect = [account_manager_mock, proxy_manager_mock]
+        
+        input_string = json.dumps({
+            "system_authtoken": "dummy_token",
+            "form": {
+                "name": "test_account"
+            }
+        })
+        
+        # Mock REST calls
+        def mock_request_side_effect(*args, **kwargs):
+            if "ta_databricks_account" in args[0]:
+                return (200, json.dumps({
+                    "entry": [{
+                        "content": {
+                            "auth_type": "AAD",
+                            "databricks_instance": "test.databricks.azure.net",
+                            "aad_client_id": "aad_client_id",
+                            "aad_tenant_id": "aad_tenant_id",
+                            "config_for_dbquery": "warehouse",
+                            "warehouse_id": "warehouse123",
+                            "cluster_name": None
+                        }
+                    }]
+                }))
+            elif "proxy" in args[0]:
+                return (200, json.dumps({
+                    "entry": [{
+                        "content": {
+                            "proxy_enabled": "0",
+                            "proxy_password": ""
+                        }
+                    }]
+                }))
+            elif "additional_parameters" in args[0]:
+                return (200, json.dumps({
+                    "entry": [{
+                        "content": {
+                            "admin_command_timeout": "300",
+                            "query_result_limit": "1000",
+                            "index": "main",
+                            "thread_count": "4"
+                        }
+                    }]
+                }))
+        
+        mock_request.side_effect = mock_request_side_effect
+        
+        obj1 = db_cm.DatabricksGetCredentials("command_line", "command_args")
+        result = obj1.handle(input_string)
+        
+        assert result["status"] == 200
+        payload = result["payload"]
+        assert payload["auth_type"] == "AAD"
+        assert payload["aad_client_id"] == "aad_client_id"
+        assert payload["aad_tenant_id"] == "aad_tenant_id"
+        assert payload["aad_access_token"] == "aad_token"
+        assert payload["aad_token_expiration"] == "1234567890.0"
+        assert payload["aad_client_secret"] == "aad_secret"
 
     @patch("databricks_get_credentials.rest.simpleRequest")
     def test_handle_retrieve_config_error(self, mock_request):

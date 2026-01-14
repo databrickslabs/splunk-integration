@@ -1,39 +1,28 @@
 import declare
-import os
-import sys
 import unittest
-import json
 
 from utility import Response
 from importlib import import_module
 from mock import patch, MagicMock
 
+# Import shared test utilities
+from conftest import (
+    create_module_mocks,
+    teardown_module_mocks,
+    VALIDATOR_MODULES,
+)
 
 
 mocked_modules = {}
+
+
 def setUpModule():
     global mocked_modules
-
-    module_to_be_mocked = [
-        'log_manager',
-        'splunk',
-        'splunk.rest',
-        'splunk.admin',
-        'splunk.clilib',
-        'splunk.clilib.cli_common',
-        'solnlib.server_info',
-        'splunk_aoblib',
-        'splunk_aoblib.rest_migration'
-    ]
-
-    mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
-
-    for module, magicmock in mocked_modules.items():
-        patch.dict('sys.modules', **{module: magicmock}).start()
+    mocked_modules = create_module_mocks(VALIDATOR_MODULES)
 
 
 def tearDownModule():
-    patch.stopall()
+    teardown_module_mocks()
 
 class TestDatabricksUtils(unittest.TestCase):
     """Test Databricks Validators."""
@@ -128,10 +117,11 @@ class TestDatabricksUtils(unittest.TestCase):
         db_val_obj.validate_pat({"auth_type": "PAT", "databricks_pat": "pat_token", "databricks_instance": "db_instance"})
         mock_valid_inst.assert_called_once_with(db_val_obj, "db_instance", "pat_token")
 
-    @patch("databricks_validators.utils.get_aad_access_token", return_value="access_token")
+    @patch("databricks_validators.utils.get_aad_access_token", return_value=("access_token", 3600))
     @patch("databricks_validators.Validator", autospec=True)
     @patch("databricks_validators.ValidateDatabricksInstance.validate_db_instance", autospec=True)
     def test_validate_aad_function(self, mock_valid_inst, mock_validator, mock_access):
+        """Test successful AAD validation flow with token expiration."""
         db_val = import_module('databricks_validators')
         db_val._LOGGER = MagicMock()
         db_val_obj = db_val.ValidateDatabricksInstance()
@@ -139,8 +129,24 @@ class TestDatabricksUtils(unittest.TestCase):
         db_val_obj._splunk_version = "splunk_version"
         db_val_obj._proxy_settings = {}
         mock_valid_inst.return_value = True
-        db_val_obj.validate_aad({"auth_type": "AAD", "aad_client_id": "cl_id", "aad_tenant_id": "tenant_id", "aad_client_secret": "client_secret", "databricks_instance": "db_instance"})
+        
+        data = {
+            "auth_type": "AAD", 
+            "aad_client_id": "cl_id", 
+            "aad_tenant_id": "tenant_id", 
+            "aad_client_secret": "client_secret", 
+            "databricks_instance": "db_instance",
+            "name": "test_account"
+        }
+        result = db_val_obj.validate_aad(data)
+        
         mock_valid_inst.assert_called_once_with(db_val_obj, "db_instance", "access_token")
+        self.assertTrue(result)
+        self.assertEqual(data["aad_access_token"], "access_token")
+        self.assertEqual(data["databricks_pat"], "")
+        # Verify aad_token_expiration is set
+        self.assertIn("aad_token_expiration", data)
+        self.assertTrue(float(data["aad_token_expiration"]) > 0)
     
     @patch("databricks_validators.Validator.put_msg", return_value=MagicMock())
     @patch("databricks_validators.utils.get_aad_access_token", return_value=("test", False))
@@ -298,7 +304,7 @@ class TestDatabricksUtils(unittest.TestCase):
     # Additional AAD Validation Tests  
     # =========================================================================
 
-    @patch("databricks_validators.utils.get_aad_access_token", return_value="access_token")
+    @patch("databricks_validators.utils.get_aad_access_token", return_value=("access_token", 3600))
     @patch("databricks_validators.Validator", autospec=True)
     @patch("databricks_validators.ValidateDatabricksInstance.validate_db_instance", autospec=True)
     def test_validate_aad_function_instance_failure(self, mock_valid_inst, mock_validator, mock_access):
@@ -316,7 +322,8 @@ class TestDatabricksUtils(unittest.TestCase):
             "aad_client_id": "cl_id", 
             "aad_tenant_id": "tenant_id", 
             "aad_client_secret": "client_secret", 
-            "databricks_instance": "db_instance"
+            "databricks_instance": "db_instance",
+            "name": "test_account"
         })
         
         mock_valid_inst.assert_called_once()

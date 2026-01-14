@@ -49,6 +49,8 @@ class DatabricksClient(object):
             self.aad_client_id = databricks_configs.get("aad_client_id")
             self.aad_tenant_id = databricks_configs.get("aad_tenant_id")
             self.aad_client_secret = databricks_configs.get("aad_client_secret")
+            aad_token_expiration_str = databricks_configs.get("aad_token_expiration")
+            self.aad_token_expiration = float(aad_token_expiration_str) if aad_token_expiration_str else 0
         elif self.auth_type == "OAUTH_M2M":
             self.databricks_token = databricks_configs.get("oauth_access_token")
             self.oauth_client_id = databricks_configs.get("oauth_client_id")
@@ -104,6 +106,22 @@ class DatabricksClient(object):
         session.mount("https://", adapter)
         return session
 
+    def should_refresh_aad_token(self):
+        """
+        Check if AAD token should be refreshed proactively.
+
+        :return: Boolean - True if token expires within 5 minutes
+        """
+        if not hasattr(self, 'aad_token_expiration') or self.aad_token_expiration == 0:
+            return False
+
+        import time
+        current_time = time.time()
+        time_until_expiry = self.aad_token_expiration - current_time
+
+        # Refresh if token expires within 5 minutes (300 seconds)
+        return time_until_expiry < 300
+
     def should_refresh_oauth_token(self):
         """
         Check if OAuth token should be refreshed proactively.
@@ -119,6 +137,74 @@ class DatabricksClient(object):
 
         # Refresh if token expires within 5 minutes (300 seconds)
         return time_until_expiry < 300
+
+    def _is_token_expired_response(self, response):
+        """
+        Check if the API response indicates an expired token.
+
+        Databricks API may return different status codes for expired tokens:
+        - 403 Forbidden (legacy)
+        - 401 Unauthorized with "Token is expired"
+        - 400 Bad Request with "ExpiredJwtException"
+
+        :param response: requests.Response object
+        :return: Boolean - True if response indicates expired token
+        """
+        if response is None:
+            return False
+
+        status_code = response.status_code
+
+        # 403 Forbidden - legacy expired token response
+        if status_code == 403:
+            return True
+
+        # 401 Unauthorized - check for token expiry message
+        if status_code == 401:
+            try:
+                response_text = response.text.lower()
+                if "token is expired" in response_text or "expired" in response_text:
+                    return True
+            except Exception:
+                pass
+            return True  # Treat all 401s as potentially expired tokens
+
+        # 400 Bad Request - check for ExpiredJwtException
+        if status_code == 400:
+            try:
+                response_text = response.text.lower()
+                if "expiredjwtexception" in response_text or "expired" in response_text:
+                    return True
+            except Exception:
+                pass
+
+        return False
+
+    def _refresh_aad_token(self):
+        """Refresh AAD access token and update session headers."""
+        databricks_configs = utils.get_databricks_configs(self.session_key, self.account_name)
+        proxy_config = databricks_configs.get("proxy_uri")
+
+        result = utils.get_aad_access_token(
+            self.session_key,
+            self.account_name,
+            self.aad_tenant_id,
+            self.aad_client_id,
+            self.aad_client_secret,
+            proxy_config,
+            retry=const.RETRIES,
+            conf_update=True
+        )
+
+        if isinstance(result, tuple) and result[1] == False:
+            raise Exception(result[0])
+
+        access_token, expires_in = result
+        self.databricks_token = access_token
+        import time
+        self.aad_token_expiration = time.time() + expires_in
+        self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
+        self.session.headers.update(self.request_headers)
 
     def _refresh_oauth_token(self):
         """Refresh OAuth M2M access token and update session headers."""
@@ -156,8 +242,11 @@ class DatabricksClient(object):
         :param args: Arguments to be add into the url
         :return: response in the form of dictionary
         """
-        # Proactive OAuth token refresh
-        if self.auth_type == "OAUTH_M2M" and self.should_refresh_oauth_token():
+        # Proactive token refresh
+        if self.auth_type == "AAD" and self.should_refresh_aad_token():
+            _LOGGER.info("AAD token expiring soon, refreshing proactively.")
+            self._refresh_aad_token()
+        elif self.auth_type == "OAUTH_M2M" and self.should_refresh_oauth_token():
             _LOGGER.info("OAuth token expiring soon, refreshing proactively.")
             self._refresh_oauth_token()
 
@@ -172,32 +261,16 @@ class DatabricksClient(object):
                     _LOGGER.info("Executing REST call: {} Payload: {}.".format(endpoint, str(data)))
                     response = self.session.post(request_url, params=args, json=data, timeout=self.session.timeout)
                 status_code = response.status_code
-                if status_code == 403 and self.auth_type == "AAD" and run_again:
+                # Check if token is expired and needs refresh (handles 403, 401, 400 with expiry messages)
+                if self._is_token_expired_response(response) and self.auth_type == "AAD" and run_again:
+                    _LOGGER.info("Token expired (status: {}). Refreshing AAD token.".format(status_code))
                     response = None
                     run_again = False
-                    _LOGGER.info("Refreshing AAD token.")
-                    databricks_configs = utils.get_databricks_configs(self.session_key, self.account_name)
-                    proxy_config = databricks_configs.get("proxy_uri")
-                    db_token = utils.get_aad_access_token(
-                        self.session_key,
-                        self.account_name,
-                        self.aad_tenant_id,
-                        self.aad_client_id,
-                        self.aad_client_secret,
-                        proxy_config,  # Using the reinit proxy. As proxy is getting updated on Line no: 43, 45
-                        retry=const.RETRIES,  # based on the condition and for this call we will always need proxy.
-                        conf_update=True,  # By passing True, the AAD access token will be updated in conf
-                    )
-                    if isinstance(db_token, tuple):
-                        raise Exception(db_token[0])
-                    else:
-                        self.databricks_token = db_token
-                    self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
-                    self.session.headers.update(self.request_headers)
-                elif status_code == 403 and self.auth_type == "OAUTH_M2M" and run_again:
+                    self._refresh_aad_token()
+                elif self._is_token_expired_response(response) and self.auth_type == "OAUTH_M2M" and run_again:
+                    _LOGGER.info("Token expired (status: {}). Refreshing OAuth M2M token.".format(status_code))
                     response = None
                     run_again = False
-                    _LOGGER.info("Refreshing OAuth M2M token.")
                     self._refresh_oauth_token()
                 elif status_code != 200:
                     response.raise_for_status()
@@ -215,6 +288,7 @@ class DatabricksClient(object):
             if "response" in locals() and response is not None:
                 status_code_messages = {
                     400: response.json().get("message", "Bad request. The request is malformed."),
+                    401: "Unauthorized. Access token may be invalid or expired.",
                     403: "Invalid access token. Please enter the valid access token.",
                     404: "Invalid API endpoint.",
                     429: "API limit exceeded. Please try again after some time.",

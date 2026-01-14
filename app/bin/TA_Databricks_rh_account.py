@@ -129,6 +129,13 @@ fields = [
         'aad_access_token',
         required=False,
         encrypted=True
+    ),
+    field.RestField(
+        'aad_token_expiration',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=None
     )
 ]
 model_databricks_credentials = RestModel(fields, name=None)

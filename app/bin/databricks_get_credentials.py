@@ -53,7 +53,12 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                     _LOGGER.info("Saving databricks AAD access token.")
                     client_sec = form_data.get("aad_client_secret")
                     access_token = form_data.get("aad_access_token")
-                    new_creds = json.dumps({"aad_client_secret": client_sec, "aad_access_token": access_token})
+                    token_expiration = form_data.get("aad_token_expiration")
+                    new_creds = json.dumps({
+                        "aad_client_secret": client_sec,
+                        "aad_access_token": access_token,
+                        "aad_token_expiration": token_expiration
+                    })
                     success_msg = 'Saved AAD access token successfully.'
                 elif form_data.get("oauth_access_token"):
                     _LOGGER.info("Saving databricks OAuth access token.")
@@ -96,6 +101,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'aad_tenant_id': None,
             'aad_client_secret': None,
             'aad_access_token': None,
+            'aad_token_expiration': None,
             'oauth_client_id': None,
             'oauth_client_secret': None,
             'oauth_access_token': None,
@@ -156,6 +162,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                 config_dict['aad_tenant_id'] = account_config.get('aad_tenant_id')
                 config_dict['aad_client_secret'] = account_password.get('aad_client_secret')
                 config_dict['aad_access_token'] = account_password.get('aad_access_token')
+                config_dict['aad_token_expiration'] = account_password.get('aad_token_expiration')
             elif config_dict['auth_type'] == 'OAUTH_M2M':
                 config_dict['oauth_client_id'] = account_config.get('oauth_client_id')
                 config_dict['oauth_client_secret'] = account_password.get('oauth_client_secret')

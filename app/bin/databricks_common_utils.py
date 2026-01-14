@@ -83,16 +83,25 @@ def get_databricks_configs(session_key, account_name):
     return configs_dict
 
 
-def save_databricks_aad_access_token(account_name, session_key, access_token, client_sec):
+def save_databricks_aad_access_token(account_name, session_key, access_token, client_sec, expires_in=None):
     """
-    Method to store new AAD access token.
+    Method to store new AAD access token with expiration timestamp.
 
+    :param account_name: Account name
+    :param session_key: Splunk session key
+    :param access_token: AAD access token
+    :param client_sec: AAD client secret
+    :param expires_in: Token lifetime in seconds (optional, defaults to 3600)
     :return: None
     """
+    import time
+    if expires_in is None:
+        expires_in = 3600  # Default to 1 hour if not provided
     new_creds = {
         "name": account_name,
         "aad_client_secret": client_sec,
         "aad_access_token": access_token,
+        "aad_token_expiration": str(time.time() + expires_in),
         "update_token": True
     }
     try:
@@ -434,7 +443,14 @@ def get_aad_access_token(
     Method to acquire a new AAD access token.
 
     :param session_key: Splunk session key
-    :return: access token
+    :param account_name: Account name for configuration storage
+    :param aad_tenant_id: Azure AD tenant ID
+    :param aad_client_id: Azure AD client ID
+    :param aad_client_secret: Azure AD client secret
+    :param proxy_settings: Proxy configuration dict
+    :param retry: Number of retry attempts
+    :param conf_update: If True, store token in configuration
+    :return: tuple (access_token, expires_in) or (error_message, False)
     """
     token_url = const.AAD_TOKEN_ENDPOINT.format(aad_tenant_id)
     headers = {
@@ -464,11 +480,12 @@ def get_aad_access_token(
             resp.raise_for_status()
             response = resp.json()
             aad_access_token = response.get("access_token")
+            expires_in = response.get("expires_in", 3600)  # Default to 1 hour
             if conf_update:
                 save_databricks_aad_access_token(
-                    account_name, session_key, aad_access_token, aad_client_secret
+                    account_name, session_key, aad_access_token, aad_client_secret, expires_in
                 )
-            return aad_access_token
+            return aad_access_token, expires_in
         except Exception as e:
             retry -= 1
             if "resp" in locals():

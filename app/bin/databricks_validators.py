@@ -46,23 +46,28 @@ class ValidateDatabricksInstance(Validator):
         :param data: Dictionary containing values from configuration UI.
         :return: Boolean depending on the sucess of the connection
         """
+        import time
         _LOGGER.info('Obtaining Azure Active Directory access token')
         aad_client_id = data.get("aad_client_id").strip()
         client_sec = data.get("aad_client_secret").strip()
         aad_tenant_id = data.get("aad_tenant_id").strip()
         account_name = data.get("name")
-        aad_access_token = utils.get_aad_access_token(
+        result = utils.get_aad_access_token(
             self._splunk_session_key, account_name,
             aad_tenant_id, aad_client_id, client_sec, self._proxy_settings)
-        if isinstance(aad_access_token, tuple):
-            _LOGGER.error(aad_access_token[0])
-            self.put_msg(aad_access_token[0])
+
+        if isinstance(result, tuple) and result[1] == False:
+            _LOGGER.error(result[0])
+            self.put_msg(result[0])
             return False
+
+        access_token, expires_in = result
         _LOGGER.info('Obtained Azure Active Directory access token Successfully.')
         databricks_instance = data.get("databricks_instance").strip("/")
-        valid_instance = self.validate_db_instance(databricks_instance, aad_access_token)
+        valid_instance = self.validate_db_instance(databricks_instance, access_token)
         if valid_instance:
-            data["aad_access_token"] = aad_access_token
+            data["aad_access_token"] = access_token
+            data["aad_token_expiration"] = str(time.time() + expires_in)
             data["databricks_pat"] = ""
             return True
         else:

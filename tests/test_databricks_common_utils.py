@@ -1,36 +1,28 @@
 import declare
-import os
-import sys
 import unittest
 import json
 from utility import Response
-
 from importlib import import_module
 from mock import patch, MagicMock
 
+# Import shared test utilities
+from conftest import (
+    create_module_mocks,
+    teardown_module_mocks,
+    COMMON_UTILS_MODULES,
+)
+
+
 mocked_modules = {}
+
+
 def setUpModule():
     global mocked_modules
-
-    module_to_be_mocked = [
-        'log_manager',
-        'splunk',
-        'splunk.rest',
-        'splunk.admin',
-        'splunk.clilib',
-        'splunk.clilib.cli_common',
-        'splunklib.client',
-        'splunklib.results'
-    ]
-
-    mocked_modules = {module: MagicMock() for module in module_to_be_mocked}
-
-    for module, magicmock in mocked_modules.items():
-        patch.dict('sys.modules', **{module: magicmock}).start()
+    mocked_modules = create_module_mocks(COMMON_UTILS_MODULES)
 
 
 def tearDownModule():
-    patch.stopall()
+    teardown_module_mocks()
 
 class TestDatabricksUtils(unittest.TestCase):
     """Test Databricks utils."""
@@ -144,14 +136,16 @@ class TestDatabricksUtils(unittest.TestCase):
     @patch("databricks_common_utils.save_databricks_aad_access_token")
     @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token_200(self, mock_post, mock_save, mock_conf, mock_proxy):
+        """Test successful AAD token acquisition returns tuple (token, expires_in)."""
         db_utils = import_module('databricks_common_utils')
         mock_save.return_value = MagicMock()
         mock_conf.return_value = MagicMock()
         mock_proxy.return_value = MagicMock()
-        mock_post.return_value.json.return_value = {"access_token": "123"}
+        mock_post.return_value.json.return_value = {"access_token": "123", "expires_in": 3600}
         mock_post.return_value.status_code = 200
         return_val = db_utils.get_aad_access_token("session_key", "user_agent", "account_name", "aad_client_id", "aad_client_secret")
-        self.assertEqual(return_val, "123")
+        # Now returns tuple (access_token, expires_in)
+        self.assertEqual(return_val, ("123", 3600))
 
     
     @patch("databricks_common_utils.get_proxy_uri")
@@ -528,23 +522,24 @@ class TestDatabricksUtils(unittest.TestCase):
     @patch("databricks_common_utils.get_current_user")
     @patch("databricks_common_utils.requests.post")
     def test_get_aad_access_token_with_conf_update(self, mock_post, mock_user):
-        """Test AAD token acquisition with configuration update."""
+        """Test AAD token acquisition with configuration update returns tuple."""
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
         mock_user.return_value = "test_user"
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {"access_token": "aad_token_123"}
+        mock_response.json.return_value = {"access_token": "aad_token_123", "expires_in": 3600}
         mock_response.status_code = 200
         mock_post.return_value = mock_response
 
         with patch("databricks_common_utils.save_databricks_aad_access_token") as mock_save:
-            token = db_utils.get_aad_access_token(
+            result = db_utils.get_aad_access_token(
                 "session_key", "account_name", "tenant_id",
                 "client_id", "client_secret", conf_update=True
             )
 
-            self.assertEqual(token, "aad_token_123")
+            # Now returns tuple (access_token, expires_in)
+            self.assertEqual(result, ("aad_token_123", 3600))
             mock_save.assert_called_once()
 
     @patch("databricks_common_utils.get_current_user")
@@ -556,13 +551,13 @@ class TestDatabricksUtils(unittest.TestCase):
         mock_user.return_value = "test_user"
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {"access_token": "aad_token_123"}
+        mock_response.json.return_value = {"access_token": "aad_token_123", "expires_in": 3600}
         mock_response.status_code = 200
         mock_post.return_value = mock_response
 
         proxy_settings = {"http": "http://proxy:8080", "https": "http://proxy:8080", "use_for_oauth": "1"}
 
-        token = db_utils.get_aad_access_token(
+        result = db_utils.get_aad_access_token(
             "session_key", "account_name", "tenant_id",
             "client_id", "client_secret", proxy_settings=proxy_settings
         )
@@ -570,6 +565,8 @@ class TestDatabricksUtils(unittest.TestCase):
         # Verify use_for_oauth key is removed from proxy_settings
         call_args = mock_post.call_args
         self.assertNotIn("use_for_oauth", call_args[1]['proxies'])
+        # Now returns tuple (access_token, expires_in)
+        self.assertEqual(result, ("aad_token_123", 3600))
 
     @patch("databricks_common_utils.get_current_user")
     @patch("databricks_common_utils.requests.post")
