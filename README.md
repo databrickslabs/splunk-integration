@@ -71,7 +71,7 @@ Pull events, alerts data from Splunk into Databricks
 ## Compatibility
 
 Databricks Add-on for Splunk, notebooks and documentation provided in this project are compatible with:
-  * Splunk Enterprise version: 9.3.x, 9.2.x and 9.1.x
+  * Splunk Enterprise, Splunk Cloud: 10.1, 10.0, 9.4, 9.3, 9.2
   * Databricks REST API: 1.2 and 2.0:
     * Azure Databricks
     * AWS SaaS, E2 and PVC deployments

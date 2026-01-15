@@ -12,7 +12,7 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
 * Prerequisites -
   * This application requires appropriate credentials to query data from the Databricks platform. For Details refer to Configuration > Add Databricks Credentials section.
 * Compatible with:
-    * Splunk Enterprise version: 9.3.x, 9.2.x and 9.1.x
+    * Splunk Enterprise, Splunk Cloud: 10.1, 10.0, 9.4, 9.3, 9.2
     * REST API: 1.2 and 2.0
     * OS: Platform independent
     * Browser: Safari, Chrome and Firefox
