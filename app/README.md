@@ -7,7 +7,7 @@ This is an add-on powered by the Splunk Add-on Builder.
 The Databricks Add-on for Splunk is used to query Databricks data and execute Databricks notebooks from Splunk.
 
 * Author - Databricks, Inc.
-* Version - 1.4.2
+* Version - 1.4.3
 * Creates Index - False
 * Prerequisites -
   * This application requires appropriate credentials to query data from the Databricks platform. For Details refer to Configuration > Add Databricks Credentials section.
@@ -16,6 +16,13 @@ The Databricks Add-on for Splunk is used to query Databricks data and execute Da
     * REST API: 1.2 and 2.0
     * OS: Platform independent
     * Browser: Safari, Chrome and Firefox
+
+# RELEASE NOTES VERSION 1.4.3
+
+* Added support for Databricks M2M OAuth
+* Fixed problems with AAD token expiration
+* Improved handling of not running SQL warehouse
+* Code refactoring to unify code, remove duplication, etc.
 
 # RELEASE NOTES VERSION 1.4.2
 * Updated the Splunk SDK to v2.1.0 to ensure Splunk Cloud compatibility
