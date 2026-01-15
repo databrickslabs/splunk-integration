@@ -7,10 +7,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..')))
 import splunk.rest as rest  # noqa: E402
 import ta_databricks_declare  # noqa: E402 F401
 import databricks_const as const  # noqa: E402
-import traceback  # noqa: E402
 from solnlib.credentials import CredentialManager  # noqa: E402
 from splunk.persistconn.application import PersistentServerConnectionApplication  # noqa: E402
-from log_manager import setup_logging  # noqa: E402
+from log_manager import setup_logging, log_exception  # noqa: E402
 
 APP_NAME = const.APP_NAME
 _LOGGER = setup_logging("ta_databricks_get_credentials")
@@ -77,7 +76,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                 manager = CredentialManager(
                     self.admin_session_key,
                     app=APP_NAME,
-                    realm="__REST_CREDENTIAL__#{0}#{1}".format(APP_NAME, "configs/conf-ta_databricks_account"),
+                    realm=f"__REST_CREDENTIAL__#{APP_NAME}#configs/conf-ta_databricks_account",
                 )
                 manager.set_password(self.account_name, new_creds)
                 _LOGGER.info(success_msg)
@@ -86,9 +85,8 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                     'status': 200
                 }
             except Exception as e:
-                error_msg = "Databricks Error: Exception while saving access token: {}".format(str(e))
-                _LOGGER.error(error_msg)
-                _LOGGER.debug(traceback.format_exc())
+                error_msg = f"Databricks Error: Exception while saving access token: {e}"
+                log_exception(_LOGGER, "Exception while saving access token", e)
                 return {
                     'payload': error_msg,
                     'status': 500
@@ -129,9 +127,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
 
             # Get account settings from conf
             _, account_response_content = rest.simpleRequest(
-                "/servicesNS/nobody/TA-Databricks/configs/conf-ta_databricks_account/{}".format(
-                    self.account_name
-                ),
+                f"/servicesNS/nobody/TA-Databricks/configs/conf-ta_databricks_account/{self.account_name}",
                 sessionKey=self.admin_session_key,
                 getargs={"output_mode": "json"},
                 raiseAllErrors=True,
@@ -150,7 +146,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             account_manager = CredentialManager(
                 self.admin_session_key,
                 app=APP_NAME,
-                realm="__REST_CREDENTIAL__#{}#configs/conf-ta_databricks_account".format(APP_NAME),
+                realm=f"__REST_CREDENTIAL__#{APP_NAME}#configs/conf-ta_databricks_account",
             )
             account_password = json.loads(account_manager.get_password(self.account_name))
             _LOGGER.debug("Clear account password read successfully from passwords.conf.")
@@ -171,9 +167,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
 
             # Get proxy settings from conf
             _, proxy_response_content = rest.simpleRequest(
-                "/servicesNS/nobody/{}/TA_Databricks_settings/proxy".format(
-                    APP_NAME
-                ),
+                f"/servicesNS/nobody/{APP_NAME}/TA_Databricks_settings/proxy",
                 sessionKey=self.admin_session_key,
                 getargs={"output_mode": "json"},
                 raiseAllErrors=True,
@@ -187,7 +181,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                 proxy_manager = CredentialManager(
                     self.admin_session_key,
                     app=APP_NAME,
-                    realm="__REST_CREDENTIAL__#{}#configs/conf-ta_databricks_settings".format(APP_NAME),
+                    realm=f"__REST_CREDENTIAL__#{APP_NAME}#configs/conf-ta_databricks_settings",
                 )
                 proxy_password = json.loads(proxy_manager.get_password('proxy'))
                 config_dict['proxy_password'] = proxy_password.get('proxy_password')
@@ -203,9 +197,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
 
             # Get additional settings from conf
             _, additional_settings_response_content = rest.simpleRequest(
-                "/servicesNS/nobody/{}/TA_Databricks_settings/additional_parameters".format(
-                    APP_NAME
-                ),
+                f"/servicesNS/nobody/{APP_NAME}/TA_Databricks_settings/additional_parameters",
                 sessionKey=self.admin_session_key,
                 getargs={"output_mode": "json"},
                 raiseAllErrors=True,
@@ -223,12 +215,10 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
                 'payload': config_dict,
                 'status': self.status
             }
-        except Exception:
-            error_msg = "Databricks Error: Error occured while retrieving account and proxy configurations - {}".format(
-                traceback.format_exc())
-            _LOGGER.error(error_msg)
+        except Exception as e:
+            log_exception(_LOGGER, "Error retrieving account and proxy configurations", e)
             return {
-                'payload': error_msg,
+                'payload': f"Databricks Error: Error occured while retrieving account and proxy configurations - {e}",
                 'status': 500
             }
 

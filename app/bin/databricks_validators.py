@@ -122,9 +122,7 @@ class ValidateDatabricksInstance(Validator):
         :param access_token: AAD access token | Personal access token
         """
         _LOGGER.info('Validating Databricks instance')
-        req_url = "{}{}{}".format(
-            "https://", instance_url, const.CLUSTER_ENDPOINT
-        )
+        req_url = f"https://{instance_url}{const.CLUSTER_ENDPOINT}"
         self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
         if self._proxy_settings:
             if is_true(self._proxy_settings.get("use_for_oauth")):
@@ -136,14 +134,12 @@ class ValidateDatabricksInstance(Validator):
                 self._proxy_settings.pop("use_for_oauth")
 
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
+            "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
-            "User-Agent": "{}".format(const.USER_AGENT_CONST)
+            "User-Agent": const.USER_AGENT_CONST
         }
         _LOGGER.debug(
-            "Request made to the Databricks from Splunk user: {}".format(
-                utils.get_current_user(self._splunk_session_key)
-            )
+            f"Request made to the Databricks from Splunk user: {utils.get_current_user(self._splunk_session_key)}"
         )
         try:
             resp = requests.get(
@@ -159,10 +155,8 @@ class ValidateDatabricksInstance(Validator):
             return True
         except requests.exceptions.SSLError as sslerror:
             self.put_msg("SSL certificate validation failed. Please verify the SSL certificate.")
-            _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
-                          " certificate: {}".format(sslerror))
-            _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
-                          " certificate: {}".format(traceback.format_exc()))
+            _LOGGER.error(f"Databricks Error: SSL certificate validation failed. Please verify the SSL certificate: {sslerror}")
+            _LOGGER.debug(f"Databricks Error: SSL certificate validation failed. Please verify the SSL certificate: {traceback.format_exc()}")
             return False
         except Exception as e:
             if "resp" in locals() and resp.status_code == 403:
@@ -236,15 +230,13 @@ class ValidateDatabricksInstance(Validator):
         except Exception as e:
             if "_ssl.c" in str(e):
                 self.put_msg("SSL certificate verification failed. Please add a valid SSL certificate.")
-                _LOGGER.error("Databricks Error : SSL certificate validation failed. Please verify the SSL"
-                              " certificate: {}".format(e))
-                _LOGGER.debug("Databricks Error : SSL certificate validation failed. Please verify the SSL"
-                              " certificate: {}".format(traceback.format_exc()))
+                _LOGGER.error(f"Databricks Error: SSL certificate validation failed. Please verify the SSL certificate: {e}")
+                _LOGGER.debug(f"Databricks Error: SSL certificate validation failed. Please verify the SSL certificate: {traceback.format_exc()}")
                 return False
             else:
-                self.put_msg("Unexpected error occured. check *databricks*.log file for more detail. ")
-                _LOGGER.error("Databricks Error : Unexpected error occured: {}".format(e))
-                _LOGGER.debug("Databricks Error : Unexpected error occured: {}".format(traceback.format_exc()))
+                self.put_msg("Unexpected error occurred. Check *databricks*.log file for more details.")
+                _LOGGER.error(f"Databricks Error: Unexpected error occurred: {e}")
+                _LOGGER.debug(f"Databricks Error: Unexpected error occurred: {traceback.format_exc()}")
                 return False
         if auth_type == "PAT":
             return self.validate_pat(data)

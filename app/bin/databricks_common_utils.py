@@ -6,7 +6,7 @@ import traceback
 import re
 from urllib.parse import urlencode
 import databricks_const as const
-from log_manager import setup_logging
+from log_manager import setup_logging, log_exception
 
 import splunklib.client as client_
 from splunktaucclib.rest_handler.endpoint.validator import Validator
@@ -27,6 +27,45 @@ _LOGGER = setup_logging("ta_databricks_utils")
 APP_NAME = const.APP_NAME
 
 
+def build_proxy_uri(proxy_settings):
+    """
+    Build proxy URI from settings dict.
+
+    :param proxy_settings: Dict with proxy_url, proxy_port, proxy_username,
+                          proxy_password, proxy_type, proxy_enabled keys
+    :return: Dict with http/https URIs and use_for_oauth flag, or None if disabled
+    """
+    if not proxy_settings:
+        return None
+
+    if not all([
+        is_true(proxy_settings.get("proxy_enabled")),
+        proxy_settings.get("proxy_url"),
+        proxy_settings.get("proxy_type"),
+    ]):
+        return None
+
+    http_uri = proxy_settings["proxy_url"]
+
+    if proxy_settings.get("proxy_port"):
+        http_uri = f"{http_uri}:{proxy_settings['proxy_port']}"
+
+    if proxy_settings.get("proxy_username") and proxy_settings.get("proxy_password"):
+        http_uri = "{}:{}@{}".format(
+            quote(proxy_settings["proxy_username"], safe=""),
+            quote(proxy_settings["proxy_password"], safe=""),
+            http_uri,
+        )
+
+    http_uri = f"{proxy_settings['proxy_type']}://{http_uri}"
+
+    return {
+        "http": http_uri,
+        "https": http_uri,
+        "use_for_oauth": proxy_settings.get("use_for_oauth")
+    }
+
+
 def get_databricks_configs(session_key, account_name):
     """
     Get configuration details from ta_databricks_settings.conf.
@@ -45,112 +84,78 @@ def get_databricks_configs(session_key, account_name):
         )
         configs_dict = json.loads(response_content)
 
-        # Setting proxy uri
-        if all(
-            [
-                is_true(configs_dict.get("proxy_enabled")),
-                configs_dict.get("proxy_url"),
-                configs_dict.get("proxy_type"),
-            ]
-        ):
-            http_uri = configs_dict["proxy_url"]
-
-            if configs_dict.get("proxy_port"):
-                http_uri = "{}:{}".format(http_uri, configs_dict.get("proxy_port"))
-
-            if configs_dict.get("proxy_username") and configs_dict.get("proxy_password"):
-                http_uri = "{}:{}@{}".format(
-                    quote(configs_dict["proxy_username"], safe=""),
-                    quote(configs_dict["proxy_password"], safe=""),
-                    http_uri,
-                )
-
-            http_uri = "{}://{}".format(configs_dict["proxy_type"], http_uri)
-            proxy_data = {"http": http_uri, "https": http_uri, "use_for_oauth": configs_dict.get("use_for_oauth")}
-            configs_dict["proxy_uri"] = proxy_data
+        # Setting proxy uri using consolidated builder
+        proxy_uri = build_proxy_uri(configs_dict)
+        if proxy_uri:
+            configs_dict["proxy_uri"] = proxy_uri
 
     except Exception as e:
-        _LOGGER.error(
-            "Databricks Error : Error occured while fetching databricks account and proxy configs - {}".format(
-                e
-            )
-        )
-        _LOGGER.debug(
-            "Databricks Error : Error occured while fetching databricks account and proxy configs - {}".format(
-                traceback.format_exc()
-            )
-        )
+        log_exception(_LOGGER, "Databricks Error: Error occurred while fetching databricks account and proxy configs", e)
     return configs_dict
 
 
-def save_databricks_aad_access_token(account_name, session_key, access_token, client_sec, expires_in=None):
+def _save_databricks_token(account_name, session_key, token_type, access_token, client_secret, expires_in=None):
     """
-    Method to store new AAD access token with expiration timestamp.
+    Store access token with expiration timestamp.
 
     :param account_name: Account name
     :param session_key: Splunk session key
-    :param access_token: AAD access token
-    :param client_sec: AAD client secret
+    :param token_type: 'aad' or 'oauth'
+    :param access_token: Access token
+    :param client_secret: Client secret
     :param expires_in: Token lifetime in seconds (optional, defaults to 3600)
     :return: None
     """
     import time
     if expires_in is None:
         expires_in = 3600  # Default to 1 hour if not provided
-    new_creds = {
-        "name": account_name,
-        "aad_client_secret": client_sec,
-        "aad_access_token": access_token,
-        "aad_token_expiration": str(time.time() + expires_in),
-        "update_token": True
-    }
+
+    # Preserve original display names for log messages
+    display_names = {'aad': 'AAD', 'oauth': 'OAuth'}
+    token_display_name = display_names.get(token_type, token_type)
+
+    if token_type == 'aad':
+        new_creds = {
+            "name": account_name,
+            "aad_client_secret": client_secret,
+            "aad_access_token": access_token,
+            "aad_token_expiration": str(time.time() + expires_in),
+            "update_token": True
+        }
+    elif token_type == 'oauth':
+        new_creds = {
+            "name": account_name,
+            "oauth_client_secret": client_secret,
+            "oauth_access_token": access_token,
+            "oauth_token_expiration": str(time.time() + expires_in),
+            "update_token": True
+        }
+    else:
+        raise ValueError(f"Unknown token_type: {token_type}")
+
     try:
-        _LOGGER.info("Saving databricks AAD access token.")
+        _LOGGER.info(f"Saving databricks {token_display_name} access token.")
         rest.simpleRequest(
             "/databricks_get_credentials",
             sessionKey=session_key,
             postargs=new_creds,
             raiseAllErrors=True,
         )
-        _LOGGER.info("Saved AAD access token successfully.")
+        _LOGGER.info(f"Saved {token_display_name} access token successfully.")
     except Exception as e:
-        _LOGGER.error("Exception while saving AAD access token: {}".format(str(e)))
+        _LOGGER.error(f"Exception while saving {token_display_name} access token: {str(e)}")
         _LOGGER.debug(traceback.format_exc())
-        raise Exception("Exception while saving AAD access token.")
+        raise Exception(f"Exception while saving {token_display_name} access token.")
+
+
+def save_databricks_aad_access_token(account_name, session_key, access_token, client_sec, expires_in=None):
+    """Store new AAD access token with expiration timestamp."""
+    _save_databricks_token(account_name, session_key, 'aad', access_token, client_sec, expires_in)
 
 
 def save_databricks_oauth_access_token(account_name, session_key, access_token, expires_in, client_secret):
-    """
-    Method to store new OAuth access token with expiration timestamp.
-
-    :param account_name: Account name
-    :param session_key: Splunk session key
-    :param access_token: OAuth access token
-    :param expires_in: Token lifetime in seconds
-    :param client_secret: OAuth client secret
-    :return: None
-    """
-    import time
-    new_creds = {
-        "name": account_name,
-        "oauth_client_secret": client_secret,
-        "oauth_access_token": access_token,
-        "oauth_token_expiration": str(time.time() + expires_in),
-        "update_token": True
-    }
-    try:
-        _LOGGER.info("Saving databricks OAuth access token.")
-        rest.simpleRequest(
-            "/databricks_get_credentials",
-            sessionKey=session_key,
-            postargs=new_creds,
-            raiseAllErrors=True,
-        )
-        _LOGGER.info("Saved OAuth access token successfully.")
-    except Exception as e:
-        _LOGGER.error("Exception while saving OAuth access token: {}".format(str(e)))
-        _LOGGER.debug(traceback.format_exc())
-        raise Exception("Exception while saving OAuth access token.")
+    """Store new OAuth access token with expiration timestamp."""
+    _save_databricks_token(account_name, session_key, 'oauth', access_token, client_secret, expires_in)
 
 
 def get_oauth_access_token(
@@ -179,12 +184,12 @@ def get_oauth_access_token(
     import time
     from requests.auth import HTTPBasicAuth
 
-    token_url = "https://{}/oidc/v1/token".format(databricks_instance)
+    token_url = f"https://{databricks_instance}/oidc/v1/token"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "{}".format(const.USER_AGENT_CONST),
+        "User-Agent": const.USER_AGENT_CONST,
     }
-    _LOGGER.debug("Request made to the Databricks from Splunk user: {}".format(get_current_user(session_key)))
+    _LOGGER.debug(f"Request made to the Databricks from Splunk user: {get_current_user(session_key)}")
     data_dict = {"grant_type": "client_credentials", "scope": "all-apis"}
     data_encoded = urlencode(data_dict)
 
@@ -234,8 +239,8 @@ def get_oauth_access_token(
                     msg = const.ERROR_CODE[str(resp.status_code)]
                 elif resp.status_code not in (200, 201):
                     msg = (
-                        "Response status: {}. Unable to validate OAuth credentials. "
-                        "Check logs for more details.".format(str(resp.status_code))
+                        f"Response status: {resp.status_code}. Unable to validate OAuth credentials. "
+                        "Check logs for more details."
                     )
             else:
                 msg = (
@@ -243,7 +248,7 @@ def get_oauth_access_token(
                     "Please validate the provided Databricks and "
                     "Proxy configurations or check the network connectivity."
                 )
-                _LOGGER.error("Error while trying to generate OAuth access token: {}".format(str(e)))
+                _LOGGER.error(f"Error while trying to generate OAuth access token: {e}")
                 _LOGGER.debug(traceback.format_exc())
             _LOGGER.error(msg)
             if retry == 0:
@@ -260,9 +265,7 @@ def get_proxy_clear_password(session_key):
         manager = CredentialManager(
             session_key,
             app=APP_NAME,
-            realm="__REST_CREDENTIAL__#{0}#{1}".format(
-                APP_NAME, "configs/conf-ta_databricks_settings"
-            ),
+            realm=f"__REST_CREDENTIAL__#{APP_NAME}#configs/conf-ta_databricks_settings",
         )
         return json.loads(manager.get_password("proxy")).get("proxy_password")
     except CredentialNotExistException:
@@ -275,7 +278,7 @@ def get_proxy_configuration(session_key):
 
     :return: proxy configuration dict.
     """
-    rest_endpoint = "/servicesNS/nobody/{}/TA_Databricks_settings/proxy".format(APP_NAME)
+    rest_endpoint = f"/servicesNS/nobody/{APP_NAME}/TA_Databricks_settings/proxy"
 
     _, content = rest.simpleRequest(
         rest_endpoint,
@@ -293,8 +296,7 @@ def get_proxy_uri(session_key):
     Generate proxy uri from provided configurations.
 
     :param session_key: Splunk Session Key
-    :param proxy_settings: Proxy configuration dict. Defaults to None.
-    :return: if proxy configuration available returns uri string else None.
+    :return: if proxy configuration available returns uri dict else None.
     """
     _LOGGER.info("Reading proxy configurations from file.")
 
@@ -303,38 +305,14 @@ def get_proxy_uri(session_key):
     if proxy_settings.get("proxy_username"):
         proxy_settings["proxy_password"] = get_proxy_clear_password(session_key)
 
-    if all(
-        [
-            proxy_settings,
-            is_true(proxy_settings.get("proxy_enabled")),
-            proxy_settings.get("proxy_url"),
-            proxy_settings.get("proxy_type"),
-        ]
-    ):
-        http_uri = proxy_settings["proxy_url"]
+    proxy_data = build_proxy_uri(proxy_settings)
 
-        if proxy_settings.get("proxy_port"):
-            http_uri = "{}:{}".format(http_uri, proxy_settings.get("proxy_port"))
-
-        if proxy_settings.get("proxy_username") and proxy_settings.get(
-            "proxy_password"
-        ):
-            http_uri = "{}:{}@{}".format(
-                quote(proxy_settings["proxy_username"], safe=""),
-                quote(proxy_settings["proxy_password"], safe=""),
-                http_uri,
-            )
-
-        http_uri = "{}://{}".format(proxy_settings['proxy_type'], http_uri)
-
-        proxy_data = {"http": http_uri, "https": http_uri, "use_for_oauth": proxy_settings.get("use_for_oauth")}
-
+    if proxy_data:
         _LOGGER.info("Proxy is enabled. Returning proxy configurations.")
-
-        return proxy_data
     else:
         _LOGGER.info("Proxy is disabled. Skipping proxy mechanism.")
-        return None
+
+    return proxy_data
 
 
 def format_to_json_parameters(params):
@@ -371,25 +349,14 @@ def get_mgmt_port(session_key, logger):
             raiseAllErrors=True,
         )
     except Exception as e:
-        logger.error(
-            "Databricks Get Management Port Error: Error while making request to read"
-            " web.conf file. Error: " + str(e)
-        )
-        logger.debug(
-            "Databricks Get Management Port Error: Error while making request to read"
-            " web.conf file. Error: " + traceback.format_exc()
-        )
+        log_exception(logger, "Databricks Get Management Port Error: Error while making request to read web.conf file", e)
     # Parse Result
     try:
         content = json.loads(content)
         content = re.findall(r':(\d+)', content["entry"][0]["content"]["mgmtHostPort"])[0]
         logger.info("Databricks Info: Get management port from web.conf is {} ".format(content))
     except Exception as e:
-        logger.error("Databricks Error: Error while parsing" " web.conf file. Error: " + str(e))
-        logger.debug(
-            "Databricks Error: Error while parsing"
-            " web.conf file. Error: " + traceback.format_exc()
-        )
+        log_exception(logger, "Databricks Error: Error while parsing web.conf file", e)
     return content
 
 
@@ -402,13 +369,7 @@ def get_current_user(session_key):
     try:
         service = client.connect(port=get_mgmt_port(session_key, _LOGGER), token=session_key)
     except Exception as e:
-        _LOGGER.error(
-            "Databricks Error: Error while connecting to" " splunklib client. Error: " + str(e)
-        )
-        _LOGGER.debug(
-            "Databricks Error: Error while connecting to"
-            " splunklib client. Error: " + traceback.format_exc()
-        )
+        log_exception(_LOGGER, "Databricks Error: Error while connecting to splunklib client", e)
 
     try:
         oneshotsearch_results = service.jobs.oneshot(searchquery_oneshot, **kwargs_oneshot)
@@ -420,13 +381,7 @@ def get_current_user(session_key):
                 return item.get("username", None)
         raise Exception("No username found.")
     except Exception as e:
-        _LOGGER.error(
-            "Databricks Error: Error while fetching" " logged in username. Error: " + str(e)
-        )
-        _LOGGER.debug(
-            "Databricks Error: Error while fetching"
-            " logged in username. Error: " + traceback.format_exc()
-        )
+        log_exception(_LOGGER, "Databricks Error: Error while fetching logged in username", e)
 
 
 def get_aad_access_token(
@@ -455,9 +410,9 @@ def get_aad_access_token(
     token_url = const.AAD_TOKEN_ENDPOINT.format(aad_tenant_id)
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "{}".format(const.USER_AGENT_CONST),
+        "User-Agent": const.USER_AGENT_CONST,
     }
-    _LOGGER.debug("Request made to the Databricks from Splunk user: {}".format(get_current_user(session_key)))
+    _LOGGER.debug(f"Request made to the Databricks from Splunk user: {get_current_user(session_key)}")
     data_dict = {"grant_type": "client_credentials", "scope": const.SCOPE}
 
     data_dict["client_id"] = aad_client_id
@@ -498,8 +453,8 @@ def get_aad_access_token(
                     msg = const.ERROR_CODE[str(resp.status_code)]
                 elif resp.status_code not in (200, 201):
                     msg = (
-                        "Response status: {}. Unable to validate Azure Active Directory Credentials."
-                        "Check logs for more details.".format(str(resp.status_code))
+                        f"Response status: {resp.status_code}. Unable to validate Azure Active Directory Credentials. "
+                        "Check logs for more details."
                     )
             else:
                 msg = (
@@ -507,7 +462,7 @@ def get_aad_access_token(
                     "Please validate the provided Databricks and "
                     "Proxy configurations or check the network connectivity."
                 )
-                _LOGGER.error("Error while trying to generate AAD access token: {}".format(str(e)))
+                _LOGGER.error(f"Error while trying to generate AAD access token: {e}")
                 _LOGGER.debug(traceback.format_exc())
             _LOGGER.error(msg)
             if retry == 0:
@@ -516,7 +471,7 @@ def get_aad_access_token(
 
 def get_user_agent():
     """Method to get user agent."""
-    return "{}".format(const.USER_AGENT_CONST)
+    return const.USER_AGENT_CONST
 
 
 class GetSessionKey(admin.MConfigHandler):
@@ -549,23 +504,23 @@ class IndexMacroManager(Validator):
 
     def update_macros(self, service, macro_name, index_string):
         """Update macro with the selected index."""
-        service.post("properties/macros/{}".format(macro_name), definition=index_string)
-        _LOGGER.info("Macro: {} is updated Successfully with defintion: {}.".format(macro_name, index_string))
+        service.post(f"properties/macros/{macro_name}", definition=index_string)
+        _LOGGER.info(f"Macro: {macro_name} is updated Successfully with definition: {index_string}.")
 
     def validate(self, value, data):
         """Update the macros with the selected index."""
         try:
             service = create_service()
             selected_index = data.get("index")
-            response_string = "index IN ({})".format(selected_index)
+            response_string = f"index IN ({selected_index})"
             self.update_macros(service, "databricks_index_macro", response_string)
             return True
         except HTTPError:
-            _LOGGER.error("Error while updating Macros: {}".format(traceback.format_exc()))
+            _LOGGER.error(f"Error while updating Macros: {traceback.format_exc()}")
             self.put_msg("Error while updating Macros. Kindly check log file for more details.")
             return False
         except Exception as e:
-            msg = "Unrecognized error: {}".format(str(e))
+            msg = f"Unrecognized error: {e}"
             _LOGGER.error(msg)
             self.put_msg(msg)
             _LOGGER.error(traceback.format_exc())
@@ -576,8 +531,7 @@ def ingest_data_to_splunk(data, session_key, provided_index, sourcetype):
     """Method to ingest data to Splunk."""
     json_string = json.dumps(data, ensure_ascii=False).replace('"', '\\"')
     port = get_mgmt_port(session_key, _LOGGER)
-    searchquery = '| makeresults | eval _raw="{}" | collect index={} sourcetype={}'\
-        .format(json_string, provided_index, sourcetype)
+    searchquery = f'| makeresults | eval _raw="{json_string}" | collect index={provided_index} sourcetype={sourcetype}'
     service = client_.connect(
         host="localhost",
         port=port,

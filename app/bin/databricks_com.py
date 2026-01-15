@@ -1,5 +1,6 @@
 import ta_databricks_declare  # noqa: F401
 import requests
+import time
 import traceback
 
 import databricks_const as const
@@ -11,6 +12,9 @@ from requests.adapters import HTTPAdapter
 from solnlib.utils import is_true
 
 _LOGGER = setup_logging("ta_databricks_com")
+
+# Token refresh buffer in seconds (5 minutes)
+TOKEN_REFRESH_BUFFER = 300
 
 
 class DatabricksClient(object):
@@ -24,7 +28,7 @@ class DatabricksClient(object):
         """
         databricks_configs = utils.get_databricks_configs(session_key, account_name)
         if not databricks_configs:
-            raise Exception("Account '{}' not found. Please provide valid Databricks account.".format(account_name))
+            raise Exception(f"Account '{account_name}' not found. Please provide valid Databricks account.")
         self.account_name = account_name
         databricks_instance = databricks_configs.get("databricks_instance")
         self.auth_type = databricks_configs.get("auth_type")
@@ -60,14 +64,14 @@ class DatabricksClient(object):
 
         if not all([databricks_instance, self.databricks_token]):
             raise Exception("Addon is not configured. Navigate to addon's configuration page to configure the addon.")
-        self.databricks_instance_url = "{}{}".format("https://", databricks_instance.strip("/"))
+        self.databricks_instance_url = f"https://{databricks_instance.strip('/')}"
         self.request_headers = {
-            "Authorization": "Bearer {}".format(self.databricks_token),
+            "Authorization": f"Bearer {self.databricks_token}",
             "Content-Type": "application/json",
-            "User-Agent": "{}".format(const.USER_AGENT_CONST),
+            "User-Agent": const.USER_AGENT_CONST,
         }
         _LOGGER.debug(
-            "Request made to the Databricks from Splunk user: {}".format(utils.get_current_user(self.session_key))
+            f"Request made to the Databricks from Splunk user: {utils.get_current_user(self.session_key)}"
         )
 
         # Separate session to call external APIs
@@ -99,44 +103,32 @@ class DatabricksClient(object):
             total=const.RETRIES,
             backoff_factor=const.BACKOFF_FACTOR,
             status_forcelist=const.STATUS_FORCELIST,
-            method_whitelist=["POST", "GET"],
+            allowed_methods=["POST", "GET"],
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
         return session
 
-    def should_refresh_aad_token(self):
+    def _should_refresh_token(self, expiration_attr):
         """
-        Check if AAD token should be refreshed proactively.
+        Check if token should be refreshed proactively.
 
-        :return: Boolean - True if token expires within 5 minutes
+        :param expiration_attr: Name of the expiration attribute to check
+        :return: Boolean - True if token expires within TOKEN_REFRESH_BUFFER seconds
         """
-        if not hasattr(self, 'aad_token_expiration') or self.aad_token_expiration == 0:
+        expiration = getattr(self, expiration_attr, None)
+        if expiration is None or expiration == 0:
             return False
+        return (expiration - time.time()) < TOKEN_REFRESH_BUFFER
 
-        import time
-        current_time = time.time()
-        time_until_expiry = self.aad_token_expiration - current_time
-
-        # Refresh if token expires within 5 minutes (300 seconds)
-        return time_until_expiry < 300
+    def should_refresh_aad_token(self):
+        """Check if AAD token should be refreshed proactively."""
+        return self._should_refresh_token('aad_token_expiration')
 
     def should_refresh_oauth_token(self):
-        """
-        Check if OAuth token should be refreshed proactively.
-
-        :return: Boolean - True if token expires within 5 minutes
-        """
-        if not hasattr(self, 'oauth_token_expiration'):
-            return False
-
-        import time
-        current_time = time.time()
-        time_until_expiry = self.oauth_token_expiration - current_time
-
-        # Refresh if token expires within 5 minutes (300 seconds)
-        return time_until_expiry < 300
+        """Check if OAuth token should be refreshed proactively."""
+        return self._should_refresh_token('oauth_token_expiration')
 
     def _is_token_expired_response(self, response):
         """
@@ -200,11 +192,7 @@ class DatabricksClient(object):
             raise Exception(result[0])
 
         access_token, expires_in = result
-        self.databricks_token = access_token
-        import time
-        self.aad_token_expiration = time.time() + expires_in
-        self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
-        self.session.headers.update(self.request_headers)
+        self._update_token(access_token, expires_in, 'aad_token_expiration')
 
     def _refresh_oauth_token(self):
         """Refresh OAuth M2M access token and update session headers."""
@@ -226,10 +214,13 @@ class DatabricksClient(object):
             raise Exception(result[0])
 
         access_token, expires_in = result
+        self._update_token(access_token, expires_in, 'oauth_token_expiration')
+
+    def _update_token(self, access_token, expires_in, expiration_attr):
+        """Update token and session headers after refresh."""
         self.databricks_token = access_token
-        import time
-        self.oauth_token_expiration = time.time() + expires_in
-        self.request_headers["Authorization"] = "Bearer {}".format(self.databricks_token)
+        setattr(self, expiration_attr, time.time() + expires_in)
+        self.request_headers["Authorization"] = f"Bearer {self.databricks_token}"
         self.session.headers.update(self.request_headers)
 
     def databricks_api(self, method, endpoint, data=None, args=None):
@@ -251,24 +242,24 @@ class DatabricksClient(object):
             self._refresh_oauth_token()
 
         run_again = True
-        request_url = "{}{}".format(self.databricks_instance_url, endpoint)
+        request_url = f"{self.databricks_instance_url}{endpoint}"
         try:
             while True:
                 if method.lower() == "get":
-                    _LOGGER.info("Executing REST call: {}.".format(endpoint))
+                    _LOGGER.info(f"Executing REST call: {endpoint}.")
                     response = self.session.get(request_url, params=args, timeout=self.session.timeout)
                 elif method.lower() == "post":
-                    _LOGGER.info("Executing REST call: {} Payload: {}.".format(endpoint, str(data)))
+                    _LOGGER.info(f"Executing REST call: {endpoint} Payload: {data}.")
                     response = self.session.post(request_url, params=args, json=data, timeout=self.session.timeout)
                 status_code = response.status_code
                 # Check if token is expired and needs refresh (handles 403, 401, 400 with expiry messages)
                 if self._is_token_expired_response(response) and self.auth_type == "AAD" and run_again:
-                    _LOGGER.info("Token expired (status: {}). Refreshing AAD token.".format(status_code))
+                    _LOGGER.info(f"Token expired (status: {status_code}). Refreshing AAD token.")
                     response = None
                     run_again = False
                     self._refresh_aad_token()
                 elif self._is_token_expired_response(response) and self.auth_type == "OAUTH_M2M" and run_again:
-                    _LOGGER.info("Token expired (status: {}). Refreshing OAuth M2M token.".format(status_code))
+                    _LOGGER.info(f"Token expired (status: {status_code}). Refreshing OAuth M2M token.")
                     response = None
                     run_again = False
                     self._refresh_oauth_token()
@@ -313,20 +304,18 @@ class DatabricksClient(object):
         resp = self.databricks_api("get", const.CLUSTER_ENDPOINT)
         response = resp.get("clusters")
         if response is None:
-            raise Exception("No cluster found with name {}. Provide a valid cluster name.".format(cluster_name))
+            raise Exception(f"No cluster found with name {cluster_name}. Provide a valid cluster name.")
 
         for r in response:
-
             if r.get("cluster_name") == cluster_name:
-
                 if r.get("state").lower() in ["running", "resizing"]:
                     cluster_id = r.get("cluster_id")
                     return cluster_id
 
                 raise Exception(
-                    "Ensure that the cluster is in running state. Current cluster state is {}.".format(r.get("state"))
+                    f"Ensure that the cluster is in running state. Current cluster state is {r.get('state')}."
                 )
-        raise Exception("No cluster found with name {}. Provide a valid cluster name.".format(cluster_name))
+        raise Exception(f"No cluster found with name {cluster_name}. Provide a valid cluster name.")
 
     def external_api(self, method, url, data=None, args=None):
         """
@@ -349,10 +338,10 @@ class DatabricksClient(object):
 
         # Call APIs
         if method.lower() == "get":
-            _LOGGER.info("Executing REST call: {}.".format(url))
+            _LOGGER.info(f"Executing REST call: {url}.")
             response = self.external_session.get(url, **kwargs)
         elif method.lower() == "post":
-            _LOGGER.info("Executing REST call: {} Payload: {}.".format(url, str(data)))
+            _LOGGER.info(f"Executing REST call: {url} Payload: {data}.")
             response = self.external_session.post(url, **kwargs)
         response.raise_for_status()
 

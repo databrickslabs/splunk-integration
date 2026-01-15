@@ -3,6 +3,7 @@ import os
 import datetime
 import logging
 import logging.handlers
+import traceback
 import databricks_const as const
 
 # Splunk imports
@@ -11,6 +12,22 @@ from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 
 APP_NAME = const.APP_NAME
 DEFAULT_LOG_LEVEL = logging.INFO
+
+
+def log_exception(logger, message, exception=None):
+    """
+    Log error message with optional exception details.
+    Logs the error at ERROR level and full traceback at DEBUG level.
+
+    :param logger: Logger instance to use
+    :param message: Error message prefix
+    :param exception: Optional exception object
+    """
+    if exception:
+        logger.error(f"{message}: {str(exception)}")
+    else:
+        logger.error(message)
+    logger.debug(traceback.format_exc())
 
 
 def setup_logging(log_name, uid_value=None):

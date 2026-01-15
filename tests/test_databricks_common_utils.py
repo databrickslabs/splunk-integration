@@ -506,8 +506,9 @@ class TestDatabricksUtils(unittest.TestCase):
         self.assertNotIn("@", response["proxy_uri"]["http"])
         self.assertIn("proxy.example.com:8080", response["proxy_uri"]["http"])
 
+    @patch("databricks_common_utils.log_exception")
     @patch("databricks_common_utils.rest.simpleRequest")
-    def test_get_databricks_configs_exception(self, mock_request):
+    def test_get_databricks_configs_exception(self, mock_request, mock_log_exception):
         """Test get_databricks_configs with exception."""
         db_utils = import_module('databricks_common_utils')
         db_utils._LOGGER = MagicMock()
@@ -517,7 +518,8 @@ class TestDatabricksUtils(unittest.TestCase):
         response = db_utils.get_databricks_configs("session_key", "account_name")
 
         self.assertIsNone(response)
-        self.assertEqual(db_utils._LOGGER.error.call_count, 1)
+        # Now uses log_exception helper instead of direct _LOGGER.error
+        self.assertEqual(mock_log_exception.call_count, 1)
 
     @patch("databricks_common_utils.get_current_user")
     @patch("databricks_common_utils.requests.post")

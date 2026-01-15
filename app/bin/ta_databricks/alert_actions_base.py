@@ -3,6 +3,7 @@ from builtins import str
 import csv
 import gzip
 import sys
+import traceback
 
 try:
     from splunk.clilib.bundle_paths import make_splunkhome_path
@@ -17,6 +18,7 @@ from logging_helper import get_logger
 import logging
 from splunk_aoblib.rest_helper import TARestHelper
 from splunk_aoblib.setup_util import Setup_Util
+import databricks_common_utils as utils
 
 
 class ModularAlertBase(ModularAction):
@@ -92,18 +94,24 @@ class ModularAlertBase(ModularAction):
         return self.setup_util.get_proxy_settings()
 
     def _get_proxy_uri(self):
-        uri = None
+        """Get proxy URI using the common utility for consistent formatting."""
         proxy = self.get_proxy()
-        if proxy and proxy.get('proxy_url') and proxy.get('proxy_type'):
-            uri = proxy['proxy_url']
-            if proxy.get('proxy_port'):
-                uri = '{0}:{1}'.format(uri, proxy.get('proxy_port'))
-            if proxy.get('proxy_username') and proxy.get('proxy_password'):
-                uri = '{0}://{1}:{2}@{3}/'.format(proxy['proxy_type'], proxy[
-                                                  'proxy_username'], proxy['proxy_password'], uri)
-            else:
-                uri = '{0}://{1}'.format(proxy['proxy_type'], uri)
-        return uri
+        if not proxy:
+            return None
+
+        # Convert to format expected by build_proxy_uri
+        proxy_settings = {
+            'proxy_enabled': True,  # If we got proxy settings, it's enabled
+            'proxy_url': proxy.get('proxy_url'),
+            'proxy_port': proxy.get('proxy_port'),
+            'proxy_username': proxy.get('proxy_username'),
+            'proxy_password': proxy.get('proxy_password'),
+            'proxy_type': proxy.get('proxy_type'),
+        }
+
+        proxy_data = utils.build_proxy_uri(proxy_settings)
+        # Return just the http URI for compatibility with rest_helper
+        return proxy_data.get('http') if proxy_data else None
 
     def send_http_request(self, url, method, parameters=None, payload=None, headers=None, cookies=None, verify=True, cert=None, timeout=None, use_proxy=True):
         return self.rest_helper.send_http_request(url=url, method=method, parameters=parameters, payload=payload,
@@ -181,19 +189,18 @@ class ModularAlertBase(ModularAction):
         try:
             try:
                 self.result_handle = gzip.open(self.results_file, 'rt')
-            except ValueError: # Workaround for Python 2.7 on Windows
+            except ValueError:  # Workaround for Python 2.7 on Windows
                 self.result_handle = gzip.open(self.results_file, 'r')
             return (self.pre_handle(num, result) for num, result in enumerate(csv.DictReader(self.result_handle)))
         except IOError:
-            msg = "Error: {}."
-            self.log_error(msg.format("No search result. Cannot send alert action."))
+            self.log_error("Error: No search result. Cannot send alert action.")
             sys.exit(2)
 
     def prepare_meta_for_cam(self):
         try:
             try:
                 rf = gzip.open(self.results_file, 'rt')
-            except ValueError: # Workaround for Python 2.7 on Windows
+            except ValueError:  # Workaround for Python 2.7 on Windows
                 rf = gzip.open(self.results_file, 'r')
             for num, result in enumerate(csv.DictReader(rf)):
                 result.setdefault('rid', str(num))
@@ -207,8 +214,7 @@ class ModularAlertBase(ModularAction):
     def run(self, argv):
         status = 0
         if len(argv) < 2 or argv[1] != "--execute":
-            msg = 'Error: argv="{}", expected="--execute"'.format(argv)
-            print(msg, file=sys.stderr)
+            print(f'Error: argv="{argv}", expected="--execute"', file=sys.stderr)
             sys.exit(1)
 
         # prepare meta first for permission lack error handling: TAB-2455
@@ -227,16 +233,13 @@ class ModularAlertBase(ModularAction):
         try:
             status = self.process_event()
         except IOError:
-            msg = "Error: {}."
-            self.log_error(msg.format("No search result. Cannot send alert action."))
+            self.log_error("Error: No search result. Cannot send alert action.")
             sys.exit(2)
         except Exception as e:
-            msg = "Unexpected error: {}."
             if e:
-                self.log_error(msg.format(str(e)))
+                self.log_error(f"Unexpected error: {e}.")
             else:
-                import traceback
-                self.log_error(msg.format(traceback.format_exc()))
+                self.log_error(f"Unexpected error: {traceback.format_exc()}.")
             sys.exit(2)
         finally:
             if self.result_handle:

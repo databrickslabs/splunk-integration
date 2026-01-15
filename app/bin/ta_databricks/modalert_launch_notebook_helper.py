@@ -25,19 +25,23 @@ def process_event(helper, *args, **kwargs):
     if not (notebook_path and notebook_path.strip()):
         helper.log_error("Notebook path is a required parameter which is not provided.")
         exit(1)
-    if not (account_name):
+    if not account_name:
         helper.log_error("Databricks Account is a required parameter which is not provided.")
         exit(1)
-    search_string = "|databricksrun account_name=\"" + account_name + "\"  notebook_path=\"" + \
-        notebook_path.strip() + "\""
+
+    # Build search string using f-strings
+    search_parts = [
+        f'|databricksrun account_name="{account_name}" notebook_path="{notebook_path.strip()}"'
+    ]
     if revision_timestamp:
-        search_string = search_string + " revision_timestamp=\"" + revision_timestamp.strip() + "\""
+        search_parts.append(f'revision_timestamp="{revision_timestamp.strip()}"')
     if notebook_parameters:
-        search_string = search_string + " notebook_params=\"" + notebook_parameters.strip() + "\""
+        search_parts.append(f'notebook_params="{notebook_parameters.strip()}"')
     if cluster_name:
-        search_string = search_string + " cluster=\"" + cluster_name.strip() + "\""
+        search_parts.append(f'cluster="{cluster_name.strip()}"')
     if run_name:
-        search_string = search_string + " run_name=\"" + run_name.strip() + "\""
+        search_parts.append(f'run_name="{run_name.strip()}"')
+
     try:
         if helper.action_mode == "adhoc":
             sid = helper.orig_sid
@@ -45,11 +49,13 @@ def process_event(helper, *args, **kwargs):
         else:
             sid = helper.sid
             rid = helper.settings.get("rid")
-        identifier = "{}:{}".format(rid, sid)
-        search_string = search_string + " identifier=\"" + identifier + "\""
+        identifier = f"{rid}:{sid}"
+        search_parts.append(f'identifier="{identifier}"')
+        search_string = " ".join(search_parts)
+
         # Using message() instead of log_info() to prevent the status of Adaptive action to be set
         # before completion of Adaptive Response.
-        helper.message("Search query: {}".format(search_string), level=logging.INFO)
+        helper.message(f"Search query: {search_string}", level=logging.INFO)
         _, host, mgmt_port = get_splunkd_access_info()
         service = client.connect(host=host,
                                  port=mgmt_port,
@@ -59,9 +65,10 @@ def process_event(helper, *args, **kwargs):
         search_job = service.jobs.create(search_string, **search_kwargs)  # noqa F841
 
     except Exception as e:
-        helper.log_error(e)
-        helper.log_error("Error occured for launch_notebook alert action. {}".format(traceback.format_exc()))
+        helper.log_error(str(e))
+        helper.log_error(f"Error occured for launch_notebook alert action. {traceback.format_exc()}")
         exit(1)
 
-    helper.log_info("Exiting alert action. Time taken: {} seconds.".format(time.time() - start_time))
+    elapsed_time = time.time() - start_time
+    helper.log_info(f"Exiting alert action. Time taken: {elapsed_time} seconds.")
     return 0

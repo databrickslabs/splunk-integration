@@ -43,8 +43,8 @@ class CancelRunningExecution(PersistentServerConnectionApplication):
             self.run_id = form_data.get("run_id")
             self.account_name = form_data.get("account_name")
             self.uid = form_data.get("uid")
-            LOG_PREFIX = "[UID: {}] Run ID: {}.".format(self.uid, self.run_id)
-            _LOGGER.info("{} Initiating cancelation request.".format(LOG_PREFIX))
+            LOG_PREFIX = f"[UID: {self.uid}] Run ID: {self.run_id}."
+            _LOGGER.info(f"{LOG_PREFIX} Initiating cancelation request.")
             session = dict(req_data.get("session"))
             self.session_key = session.get("authtoken")
             client_ = com.DatabricksClient(self.account_name, self.session_key)
@@ -54,23 +54,21 @@ class CancelRunningExecution(PersistentServerConnectionApplication):
             try:
                 resp, status_code = client_.databricks_api("post", const.CANCEL_JOB_RUN_ENDPOINT, data=payload)
                 if status_code == 200:
-                    _LOGGER.info("{} Successfully canceled.".format(LOG_PREFIX))
-                    _LOGGER.info("{} An updated event with canceled execution status will be ingested in Splunk "
-                                 "in few minutes.".format(LOG_PREFIX))
+                    _LOGGER.info(f"{LOG_PREFIX} Successfully canceled.")
+                    _LOGGER.info(f"{LOG_PREFIX} An updated event with canceled execution status will be ingested in Splunk in few minutes.")
                     self.payload['canceled'] = "Success"
                     self.status = 200
                 else:
-                    _LOGGER.info("{} Unable to cancel. Response returned from API: {}. Status Code: {}"
-                                 .format(LOG_PREFIX, resp, status_code))
+                    _LOGGER.info(f"{LOG_PREFIX} Unable to cancel. Response returned from API: {resp}. Status Code: {status_code}")
                     self.payload['canceled'] = "Failed"
                     self.status = 500
             except Exception as e:
-                _LOGGER.error("{} Error while canceling. Error: {}".format(LOG_PREFIX, str(e)))
+                _LOGGER.error(f"{LOG_PREFIX} Error while canceling. Error: {e}")
                 self.payload['canceled'] = "Failed"
                 self.status = 500
 
         except Exception as err:
-            _LOGGER.error("{} Error while canceling. Error: {}".format(LOG_PREFIX, str(err)))
+            _LOGGER.error(f"{LOG_PREFIX} Error while canceling. Error: {err}")
             self.payload['canceled'] = "Failed"
             self.status = 500
         return {'payload': self.payload, 'status': self.status}

@@ -1,7 +1,4 @@
-
-from email.policy import default
 import ta_databricks_declare
-from databricks_validators import ValidateDatabricksInstance
 from splunktaucclib.rest_handler.endpoint.validator import Validator
 from databricks_common_utils import IndexMacroManager
 from splunktaucclib.rest_handler.endpoint import (
@@ -20,8 +17,9 @@ class ValidateThread(Validator):
     def validate(self, value, data):
         thread_count_value = data.get("thread_count")
         cpu_core = os.cpu_count()
-        if int(thread_count_value) > 2*int(cpu_core):
-            self.put_msg('Suggested Value for Max Thread Count is within twice of CPU Count. CPU Count is {}. Please enter a value equal to or lesser than {}.'.format(cpu_core, 2*int(cpu_core)))
+        max_threads = 2 * int(cpu_core)
+        if int(thread_count_value) > max_threads:
+            self.put_msg(f'Suggested Value for Max Thread Count is within twice of CPU Count. CPU Count is {cpu_core}. Please enter a value equal to or lesser than {max_threads}.')
             return False
         return True
 

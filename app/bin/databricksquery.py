@@ -41,7 +41,7 @@ class DatabricksQueryCommand(GeneratingCommand):
         """Method to cancel query execution based on splunk search status."""
         while True:
             try:
-                URL = "{}/services/search/jobs/{}".format(get_splunkd_uri(), search_sid)
+                URL = f"{get_splunkd_uri()}/services/search/jobs/{search_sid}"
                 _, content = rest.simpleRequest(
                     URL, sessionKey=session_key, method="GET", raiseAllErrors=True, getargs=None
                 )
@@ -62,28 +62,27 @@ class DatabricksQueryCommand(GeneratingCommand):
                     if status_code == 200:
                         _LOGGER.info("Successfully canceled the query execution.")
                     else:
-                        _LOGGER.error("Error while attempting to cancel the query execution."
-                                      " Response returned from API : {}"
-                                      .format(response))
+                        _LOGGER.error(f"Error while attempting to cancel the query execution."
+                                      f" Response returned from API : {response}")
                     break
                 else:
                     time.sleep(const.SPLUNK_SEARCH_STATUS_CHECK_INTERVAL)
             except Exception as e:
                 if "unknown sid" in str(e).lower():
-                    _LOGGER.debug("Query execution can not be canceled anymore as Splunk's search "
-                                  "ID does not exist. Error: {}".format(str(e)))
+                    _LOGGER.debug(f"Query execution can not be canceled anymore as Splunk's search "
+                                  f"ID does not exist. Error: {e}")
                 else:
-                    _LOGGER.debug("Unknown error occured. Error: {}".format(str(e)))
+                    _LOGGER.debug(f"Unknown error occured. Error: {e}")
                 break
 
     def generate(self):
         """Generating custom command."""
         _LOGGER.info("Initiating databricksquery command.")
-        _LOGGER.info("Warehouse ID: {}".format(self.warehouse_id))
-        _LOGGER.info("Cluster: {}".format(self.cluster))
-        _LOGGER.info("Query: {}".format(self.query))
-        _LOGGER.info("Command Timeout: {}".format(self.command_timeout))
-        _LOGGER.info("Limit: {}".format(self.limit))
+        _LOGGER.info(f"Warehouse ID: {self.warehouse_id}")
+        _LOGGER.info(f"Cluster: {self.cluster}")
+        _LOGGER.info(f"Query: {self.query}")
+        _LOGGER.info(f"Command Timeout: {self.command_timeout}")
+        _LOGGER.info(f"Limit: {self.limit}")
 
         # Get session key and sid
         session_key = self._metadata.searchinfo.session_key
@@ -92,24 +91,22 @@ class DatabricksQueryCommand(GeneratingCommand):
         try:
             if self.command_timeout and self.command_timeout < const.MINIMUM_COMMAND_TIMEOUT_VALUE:
                 self.write_error(
-                    "Command Timeout value must be greater than or equal to {} seconds.".format(
-                        const.MINIMUM_COMMAND_TIMEOUT_VALUE
-                    )
+                    f"Command Timeout value must be greater than or equal to {const.MINIMUM_COMMAND_TIMEOUT_VALUE} seconds."
                 )
                 _LOGGER.warning(
-                    "Command Timeout value must be greater than or equal to {} seconds."
-                    " Exiting the command.".format(const.MINIMUM_COMMAND_TIMEOUT_VALUE)
+                    f"Command Timeout value must be greater than or equal to {const.MINIMUM_COMMAND_TIMEOUT_VALUE} seconds."
+                    " Exiting the command."
                 )
                 sys.exit(0)
 
             def handle_invalid_limit_value():
                 if self.limit and self.limit < const.MINIMUM_QUERY_ROW_LIMIT:
                     self.write_error(
-                        "Limit value must be greater than or equal to {} rows.".format(const.MINIMUM_QUERY_ROW_LIMIT)
+                        f"Limit value must be greater than or equal to {const.MINIMUM_QUERY_ROW_LIMIT} rows."
                     )
                     _LOGGER.error(
-                        "Limit value must be greater than or equal to {} rows."
-                        " Exiting the command.".format(const.MINIMUM_QUERY_ROW_LIMIT)
+                        f"Limit value must be greater than or equal to {const.MINIMUM_QUERY_ROW_LIMIT} rows."
+                        " Exiting the command."
                     )
                     sys.exit(0)
 
@@ -117,11 +114,11 @@ class DatabricksQueryCommand(GeneratingCommand):
             databricks_configs = utils.get_databricks_configs(session_key, self.account_name)
             if not databricks_configs:
                 self.write_error(
-                    "Account '{}' not found. Please provide valid Databricks account.".format(self.account_name)
+                    f"Account '{self.account_name}' not found. Please provide valid Databricks account."
                 )
                 _LOGGER.error(
-                    "Account '{}' not found. Please provide valid Databricks account."
-                    " Exiting the command.".format(self.account_name)
+                    f"Account '{self.account_name}' not found. Please provide valid Databricks account."
+                    " Exiting the command."
                 )
                 sys.exit(0)
 
@@ -133,29 +130,25 @@ class DatabricksQueryCommand(GeneratingCommand):
                 command_timeout_in_seconds = self.command_timeout
             if self.command_timeout and self.command_timeout > int(admin_com_timeout):
                 _LOGGER.warning(
-                    "Provided value of Command Timeout ({} seconds) by the user is greater than the maximum"
-                    " allowed/permitted value. Using the maximum allowed/permitted value ({} seconds).".format(
-                        self.command_timeout, int(admin_com_timeout)
-                    )
+                    f"Provided value of Command Timeout ({self.command_timeout} seconds) by the user is greater than the maximum"
+                    f" allowed/permitted value. Using the maximum allowed/permitted value ({int(admin_com_timeout)} seconds)."
                 )
                 self.write_warning(
-                    "Setting Command Timeout to maximum allowed/permitted value ({} seconds) as a"
-                    " greater value has been specified ({} seconds) in search.".format(
-                        admin_com_timeout, self.command_timeout
-                    )
+                    f"Setting Command Timeout to maximum allowed/permitted value ({admin_com_timeout} seconds) as a"
+                    f" greater value has been specified ({self.command_timeout} seconds) in search."
                 )
             else:
                 if self.command_timeout:
                     _LOGGER.info(
-                        "Provided value of Command Timeout ({} seconds) by the user is within the maximum"
-                        " allowed/permitted value ({} seconds).".format(self.command_timeout, int(admin_com_timeout))
+                        f"Provided value of Command Timeout ({self.command_timeout} seconds) by the user is within the maximum"
+                        f" allowed/permitted value ({int(admin_com_timeout)} seconds)."
                     )
                 else:
                     _LOGGER.info(
-                        "No value for Command Timeout is provided. "
-                        "Using the maximum allowed value ({} seconds).".format(admin_com_timeout)
+                        f"No value for Command Timeout is provided. "
+                        f"Using the maximum allowed value ({admin_com_timeout} seconds)."
                     )
-            _LOGGER.info("Setting Command Timeout to {} seconds.".format(command_timeout_in_seconds))
+            _LOGGER.info(f"Setting Command Timeout to {command_timeout_in_seconds} seconds.")
 
             def fetch_limit_value():
                 # Fetching limit value
@@ -166,36 +159,34 @@ class DatabricksQueryCommand(GeneratingCommand):
                     row_limit = self.limit
                 if self.limit and self.limit > int(query_result_limit):
                     _LOGGER.warning(
-                        "Provided value of Result Limit ({} rows) by the user is greater than the maximum"
-                        " allowed/permitted value. Using the maximum allowed/permitted value ({} rows).".format(
-                            self.limit, int(query_result_limit)
-                        )
+                        f"Provided value of Result Limit ({self.limit} rows) by the user is greater than the maximum"
+                        f" allowed/permitted value. Using the maximum allowed/permitted value ({int(query_result_limit)} rows)."
                     )
                     self.write_warning(
-                        "Setting Result Limit to maximum allowed/permitted value ({} rows) as a"
-                        " greater value has been specified ({} rows) in search.".format(query_result_limit, self.limit)
+                        f"Setting Result Limit to maximum allowed/permitted value ({query_result_limit} rows) as a"
+                        f" greater value has been specified ({self.limit} rows) in search."
                     )
                 else:
                     if self.limit:
                         _LOGGER.info(
-                            "Provided value of Result Limit ({} rows) by the user is within the maximum"
-                            " allowed/permitted value ({} rows).".format(self.limit, int(query_result_limit))
+                            f"Provided value of Result Limit ({self.limit} rows) by the user is within the maximum"
+                            f" allowed/permitted value ({int(query_result_limit)} rows)."
                         )
                     else:
                         _LOGGER.info(
-                            "No value for Result Limit is provided. "
-                            "Using the maximum allowed value ({} rows).".format(query_result_limit)
+                            f"No value for Result Limit is provided. "
+                            f"Using the maximum allowed value ({query_result_limit} rows)."
                         )
-                _LOGGER.info("Setting Result Limit to {} rows.".format(row_limit))
+                _LOGGER.info(f"Setting Result Limit to {row_limit} rows.")
                 return row_limit
 
             client = com.DatabricksClient(self.account_name, session_key)
 
             def handle_cluster_method():
                 # Request to get cluster ID
-                _LOGGER.info("Requesting cluster ID for cluster: {}.".format(self.cluster))
+                _LOGGER.info(f"Requesting cluster ID for cluster: {self.cluster}.")
                 cluster_id = client.get_cluster_id(self.cluster)
-                _LOGGER.info("Cluster ID received: {}.".format(cluster_id))
+                _LOGGER.info(f"Cluster ID received: {cluster_id}.")
 
                 # Request to create context
                 _LOGGER.info("Creating Context in cluster.")
@@ -203,7 +194,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                 response = client.databricks_api("post", const.CONTEXT_ENDPOINT, data=payload)
 
                 context_id = response.get("id")
-                _LOGGER.info("Context created: {}.".format(context_id))
+                _LOGGER.info(f"Context created: {context_id}.")
 
                 # Request to execute command
                 _LOGGER.info("Submitting SQL query for execution.")
@@ -212,7 +203,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                 response = client.databricks_api("post", const.COMMAND_ENDPOINT, data=payload)
 
                 command_id = response.get("id")
-                _LOGGER.info("Query submitted, command id: {}.".format(command_id))
+                _LOGGER.info(f"Query submitted, command id: {command_id}.")
 
                 # pulling mechanism
                 _LOGGER.info("Fetching query execution status.")
@@ -234,11 +225,11 @@ class DatabricksQueryCommand(GeneratingCommand):
                 while total_wait_time <= command_timeout_in_seconds:
                     response = client.databricks_api("get", const.STATUS_ENDPOINT, args=args)
                     status = response.get("status")
-                    _LOGGER.info("Query execution status: {}.".format(status))
+                    _LOGGER.info(f"Query execution status: {status}.")
 
                     if status in ("Canceled", "Cancelled", "Error"):
                         raise Exception(
-                            "Could not complete the query execution. Status: {}.".format(status)
+                            f"Could not complete the query execution. Status: {status}."
                         )
 
                     elif status == "Finished":
@@ -274,7 +265,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                         # Fetch Data
                         data = response["results"]["data"]
                         count_of_result = len(data) if data else 0
-                        _LOGGER.info("Total number of rows obtained in query's result: {}".format(count_of_result))
+                        _LOGGER.info(f"Total number of rows obtained in query's result: {count_of_result}")
                         for d in data:
                             yield dict(zip(schema, d))
 
@@ -290,25 +281,20 @@ class DatabricksQueryCommand(GeneratingCommand):
                             continue
 
                         _LOGGER.info(
-                            "Query execution in progress, will retry after {} seconds.".format(
-                                str(seconds_to_timeout)
-                            )
+                            f"Query execution in progress, will retry after {seconds_to_timeout} seconds."
                         )
                         time.sleep(seconds_to_timeout)
                         total_wait_time += seconds_to_timeout
                         continue
 
                     _LOGGER.info(
-                        "Query execution in progress, will retry after {} seconds.".format(
-                            str(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
-                        )
+                        f"Query execution in progress, will retry after {const.COMMAND_SLEEP_INTERVAL_IN_SECONDS} seconds."
                     )
                     time.sleep(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
                     total_wait_time += const.COMMAND_SLEEP_INTERVAL_IN_SECONDS
                 else:
                     # Timeout scenario
-                    msg = "Command execution timed out. Last status: {}.".format(status)
-                    _LOGGER.info(msg)
+                    _LOGGER.info(f"Command execution timed out. Last status: {status}.")
                     _LOGGER.info("Canceling the query execution")
                     resp_, status_code = client.databricks_api("post", const.CANCEL_QUERY_ENDPOINT_CLUSTER, data=args)
                     if status_code == 200:
@@ -373,8 +359,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                                 )
                                 start_was_requested = True
                         else:
-                            err = "Warehouse cannot be started. Current SQL warehouse state is {}."
-                            raise Exception(err.format(warehouse_resp.get("state")))
+                            raise Exception(f"Warehouse cannot be started. Current SQL warehouse state is {warehouse_resp.get('state')}.")
 
                 # Check whether SQL Warehouse exists. If yes, ensure it's running.
                 warehouse_exist = False
@@ -389,8 +374,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                             ensure_warehouse_running(self.warehouse_id)
                         break
                 if not warehouse_exist:
-                    raise Exception("No SQL warehouse found with ID: {}. Provide a valid SQL warehouse ID."
-                                    .format(self.warehouse_id))
+                    raise Exception(f"No SQL warehouse found with ID: {self.warehouse_id}. Provide a valid SQL warehouse ID.")
 
                 # SQL statement execution payload
                 payload = {
@@ -407,7 +391,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                 response = client.databricks_api("post", const.EXECUTE_QUERY_ENDPOINT, data=payload)
 
                 statement_id = response.get("statement_id")
-                _LOGGER.info("Query submitted, statement id: {}.".format(statement_id))
+                _LOGGER.info(f"Query submitted, statement id: {statement_id}.")
 
                 cancel_endpoint = const.CANCEL_QUERY_ENDPOINT_DBSQL.format(statement_id=statement_id)
 
@@ -430,12 +414,12 @@ class DatabricksQueryCommand(GeneratingCommand):
                         const.QUERY_STATUS_ENDPOINT.format(statement_id=statement_id)
                     )
                     status = response.get("status", {}).get("state")
-                    _LOGGER.info("Query execution status: {}.".format(status))
+                    _LOGGER.info(f"Query execution status: {status}.")
 
                     if status in ("CANCELED", "CLOSED", "FAILED"):
-                        err_message = "Could not complete the query execution. Status: {}.".format(status)
+                        err_message = f"Could not complete the query execution. Status: {status}."
                         if status == "FAILED":
-                            err_message += " Error: {}".format(response["status"].get("error", {}).get("message"))
+                            err_message += f" Error: {response['status'].get('error', {}).get('message')}"
                         raise Exception(err_message)
 
                     elif status == "SUCCEEDED":
@@ -446,7 +430,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                             self.write_warning("Result limit exceeded, hence results are truncated.")
 
                         total_row_count = response["manifest"]["total_row_count"]
-                        _LOGGER.info("Total number of rows obtained in query's result: {}".format(total_row_count))
+                        _LOGGER.info(f"Total number of rows obtained in query's result: {total_row_count}")
                         if int(total_row_count) == 0:
                             _LOGGER.info("Successfully executed databricksquery command.")
                             sys.exit(0)
@@ -458,7 +442,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                             field = header.get("name")
                             schema.append(field)
 
-                        _LOGGER.info("Result table schema: {}".format(schema))
+                        _LOGGER.info(f"Result table schema: {schema}")
 
                         # Method to fetch data of every chunk
                         def fetch_data_executor(args):
@@ -467,9 +451,7 @@ class DatabricksQueryCommand(GeneratingCommand):
                             response = client.external_api("get", external_link)
 
                             _LOGGER.info(
-                                "Total number of rows obtained in chunk-{} of query result: {}".format(
-                                    chunk_index, len(response)
-                                )
+                                f"Total number of rows obtained in chunk-{chunk_index} of query result: {len(response)}"
                             )
                             return response
 
@@ -513,23 +495,20 @@ class DatabricksQueryCommand(GeneratingCommand):
                             continue
 
                         _LOGGER.info(
-                            "Query execution in progress, will retry after {} seconds.".format(str(seconds_to_timeout))
+                            f"Query execution in progress, will retry after {seconds_to_timeout} seconds."
                         )
                         time.sleep(seconds_to_timeout)
                         total_wait_time += seconds_to_timeout
                         continue
 
                     _LOGGER.info(
-                        "Query execution in progress, will retry after {} seconds.".format(
-                            str(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
-                        )
+                        f"Query execution in progress, will retry after {const.COMMAND_SLEEP_INTERVAL_IN_SECONDS} seconds."
                     )
                     time.sleep(const.COMMAND_SLEEP_INTERVAL_IN_SECONDS)
                     total_wait_time += const.COMMAND_SLEEP_INTERVAL_IN_SECONDS
                 else:
                     # Timeout scenario
-                    msg = "Command execution timed out. Last status: {}.".format(status)
-                    _LOGGER.info(msg)
+                    _LOGGER.info(f"Command execution timed out. Last status: {status}.")
                     _LOGGER.info("Canceling the query execution")
                     resp_, status_code = client.databricks_api(
                         "post", const.CANCEL_QUERY_ENDPOINT_DBSQL.format(statement_id=statement_id)

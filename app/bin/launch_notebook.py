@@ -5,9 +5,11 @@ import ta_databricks_declare
 
 import os
 import sys
+import traceback
 
 from alert_actions_base import ModularAlertBase
 import modalert_launch_notebook_helper
+
 
 class AlertActionWorkerlaunch_notebook(ModularAlertBase):
 
@@ -28,17 +30,16 @@ class AlertActionWorkerlaunch_notebook(ModularAlertBase):
                 return 3
             status = modalert_launch_notebook_helper.process_event(self, *args, **kwargs)
         except (AttributeError, TypeError) as ae:
-            self.log_error("Error: {}. Please double check spelling and also verify that a compatible version of Splunk_SA_CIM is installed.".format(str(ae)))
+            self.log_error(f"Error: {ae}. Please double check spelling and also verify that a compatible version of Splunk_SA_CIM is installed.")
             return 4
         except Exception as e:
-            msg = "Unexpected error: {}."
             if e:
-                self.log_error(msg.format(str(e)))
+                self.log_error(f"Unexpected error: {e}.")
             else:
-                import traceback
-                self.log_error(msg.format(traceback.format_exc()))
+                self.log_error(f"Unexpected error: {traceback.format_exc()}.")
             return 5
         return status
+
 
 if __name__ == "__main__":
     exitcode = AlertActionWorkerlaunch_notebook("TA-Databricks", "launch_notebook").run(sys.argv)

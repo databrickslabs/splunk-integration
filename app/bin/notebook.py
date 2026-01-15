@@ -41,7 +41,7 @@ class NotebookModularAction(ModularAction):
             self.limit = int(self.configuration.get("limit", 1))
             if self.limit < 1 or self.limit > 30:
                 self.limit = 30
-        except:
+        except (ValueError, TypeError):
             self.limit = 1
 
     ## This method will handle validation
@@ -69,7 +69,7 @@ class NotebookModularAction(ModularAction):
         # service    = self.configuration.get('service', '')
         ## build sourcetype
         sourcetype = "databricks:notebook"
-        self.message(f"Successfully started Databricks Notebook Action", status="success")
+        self.message("Successfully started Databricks Notebook Action", status="success")
         # self.message(f'Settings: {self.settings}', status='success')
         # self.message(f'Configuration: {self.configuration}', status='success')
 
@@ -77,7 +77,7 @@ class NotebookModularAction(ModularAction):
         paramTwo = None
         try:
             paramTwo = self.configuration.get("paramtwo")
-        except:
+        except (KeyError, AttributeError):
             pass
         notebook = self.configuration.get("notebook")
         params = {}
@@ -96,8 +96,7 @@ class NotebookModularAction(ModularAction):
                 rid = self.settings.get("rid")
             elif self.settings.get("orig_rid"):
                 rid = self.settings.get("orig_rid")
-            # self.message(f"RID: \"{rid}\" orig_rid in result?=\"{'orig_rid' in result}\" rid in result?=\"{'rid' in result}\" rid in settings?=\"{self.settings.get('rid')}\" orig_rid in settings?=\"{self.settings.get('rid')}\"", status="working")
-        except:
+        except (KeyError, AttributeError):
             pass
 
         sid = ""
@@ -110,14 +109,13 @@ class NotebookModularAction(ModularAction):
                 sid = self.settings.get("sid")
             elif self.settings.get("orig_sid"):
                 sid = self.settings.get("orig_sid")
-            # self.message(f"SID: \"{sid}\" orig_sid in result?=\"{'orig_sid' in result}\" sid in result?=\"{'sid' in result}\" sid in settings?=\"{self.settings.get('sid')}\" orig_sid in settings?=\"{self.settings.get('sid')}\"", status="working")
-        except:
+        except (KeyError, AttributeError):
             pass
 
         try:
             cluster_id = com.get_cluster_id(self.cluster_name)
             self.message(
-                "Cluster ID received: {}".format(cluster_id), status="working"
+                f"Cluster ID received: {cluster_id}", status="working"
             )  # , level=logging.INFO)
 
             # Request to submit the run
@@ -139,18 +137,16 @@ class NotebookModularAction(ModularAction):
             # info_to_process.update(response)
             run_id = response["run_id"]
             self.message(
-                "Successfully submitted the run with ID: {}".format(run_id)
+                f"Successfully submitted the run with ID: {run_id}"
             )  # , status="working", level=logging.INFO)
 
             # Request to get the run_id details
-            # self.message("Fetching details for run ID: {}".format(run_id))#, status="working", level=logging.INFO)
             args = {"run_id": run_id}
             response = com.databricks_api("get", const.GET_RUN_ENDPOINT, args=args)
             result_url = ""
             output_url = response.get("run_page_url")
             if output_url:
                 result_url = output_url.rstrip("/") + "/resultsOnly"
-                # self.message("Output url returned: {}".format(output_url), status="working")#, level=logging.INFO)
             self.message(
                 f'Start result_url="{result_url}" output_url="{output_url}" End', status="success"
             )
@@ -172,7 +168,6 @@ class NotebookModularAction(ModularAction):
                     ),
                     sourcetype=sourcetype,
                 )
-            # self.message('Reported status for Databricks notebook action', status='success')#, level=logging.INFO)
         except Exception as e:
             modaction.message(
                 f"Failure during job submission: {traceback.format_exc()}",
@@ -185,7 +180,7 @@ if __name__ == "__main__":
     ## This is standard chrome for validating that
     ## the script is being executed by splunkd accordingly
     if len(sys.argv) < 2 or sys.argv[1] != "--execute":
-        print >> sys.stderr, "FATAL Unsupported execution mode (expected --execute flag)"
+        print("FATAL Unsupported execution mode (expected --execute flag)", file=sys.stderr)
         sys.exit(1)
 
     ## The entire execution is wrapped in an outer try/except
@@ -215,12 +210,11 @@ if __name__ == "__main__":
         modaction.account_name = json.loads(stdindata).get("configuration").get("account_name")
         com = com.DatabricksClient(modaction.account_name, modaction.session_key)
         try:
-            modaction.cluster_name = utils.get_databricks_configs(
+            databricks_config = utils.get_databricks_configs(
                 modaction.session_key, modaction.account_name
-            ).get("cluster_name")
-            modaction.databricks_instance = utils.get_databricks_configs(
-                modaction.session_key, modaction.account_name
-            ).get("databricks_instance")
+            )
+            modaction.cluster_name = databricks_config.get("cluster_name")
+            modaction.databricks_instance = databricks_config.get("databricks_instance")
         except Exception as e:
             modaction.message(
                 f"Failure getting cluster name config: {traceback.format_exc()}",
@@ -237,7 +231,7 @@ if __name__ == "__main__":
                 ## We also use enumerate which provides "num" which
                 ## can be used as the result ID (rid)
                 modaction.message(
-                    "Got a file: {}".format(modaction.results_file),
+                    f"Got a file: {modaction.results_file}",
                     status="working",
                     level=logging.CRITICAL,
                 )
@@ -273,7 +267,7 @@ if __name__ == "__main__":
         ## adding additional logging since adhoc search invocations do not write to stderr
         try:
             modaction.message(traceback.format_exc(), status="failure", level=logging.CRITICAL)
-        except:
+        except NameError:
             logger.critical(e)
-        print >> sys.stderr, "ERROR: %s" % e
+        print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(3)
