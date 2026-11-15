@@ -136,6 +136,13 @@ fields = [
         encrypted=False,
         default='',
         validator=None
+    ),
+    field.RestField(
+        'force_proxy',
+        required=False,
+        encrypted=False,
+        default=0,
+        validator=None
     )
 ]
 model_databricks_credentials = RestModel(fields, name=None)

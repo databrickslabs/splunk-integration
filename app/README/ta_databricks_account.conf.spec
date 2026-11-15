@@ -14,3 +14,4 @@ config_for_dbquery =
 cluster_name = 
 warehouse_id = 
 databricks_pat = 
+force_proxy = 
