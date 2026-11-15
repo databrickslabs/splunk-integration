@@ -31,7 +31,7 @@ class TestDatabricksUtils(unittest.TestCase):
     def test_get_user_agent(self, mock_user):
         db_utils = import_module('databricks_common_utils')
         response = db_utils.get_user_agent()
-        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.4.2")
+        self.assertEqual(response, "Databricks-AddOnFor-Splunk-1.4.3")
     
     @patch("databricks_common_utils.client.connect")
     @patch("databricks_common_utils.client.connect.jobs.oneshot")

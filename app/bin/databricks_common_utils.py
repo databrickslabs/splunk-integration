@@ -2,6 +2,7 @@ import ta_databricks_declare  # noqa: F401
 import json
 import requests
 import os
+import socket
 import traceback
 import re
 from urllib.parse import urlencode
@@ -167,6 +168,7 @@ def get_oauth_access_token(
     proxy_settings=None,
     retry=1,
     conf_update=False,
+    force_proxy=False
 ):
     """
     Method to acquire OAuth M2M access token for Databricks service principal.
@@ -198,7 +200,7 @@ def get_oauth_access_token(
     # Since OAuth M2M endpoint is on the Databricks instance (not AAD),
     # we should skip proxy when use_for_oauth is true
     if proxy_settings:
-        if is_true(proxy_settings.get("use_for_oauth")):
+        if is_true(proxy_settings.get("use_for_oauth")) and not is_true(force_proxy):
             _LOGGER.info(
                 "Skipping the usage of proxy for OAuth M2M as 'Use Proxy for OAuth' parameter is checked."
             )
@@ -367,7 +369,7 @@ def get_current_user(session_key):
         "| rest /services/authentication/current-context splunk_server=local | table username"
     )
     try:
-        service = client.connect(port=get_mgmt_port(session_key, _LOGGER), token=session_key)
+        service = create_service(sessionkey=session_key)
     except Exception as e:
         log_exception(_LOGGER, "Databricks Error: Error while connecting to splunklib client", e)
 
@@ -393,6 +395,7 @@ def get_aad_access_token(
     proxy_settings=None,
     retry=1,
     conf_update=False,
+    force_proxy=False
 ):
     """
     Method to acquire a new AAD access token.
@@ -482,12 +485,36 @@ class GetSessionKey(admin.MConfigHandler):
         self.session_key = self.getSessionKey()
 
 
+def resolve_host(hostname):
+    """Resolve hostname to IPv4/IPv6 address."""
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+        ipv4_addresses = [info for info in infos if info[0] == socket.AF_INET]
+        ipv6_addresses = [info for info in infos if info[0] == socket.AF_INET6]
+
+        if ipv4_addresses:
+            return ipv4_addresses[0][4][0]
+        elif ipv6_addresses:
+            return ipv6_addresses[0][4][0]
+        return None
+    except socket.gaierror:
+        return None
+
+
 def create_service(sessionkey=None):
     """Create Service to communicate with splunk."""
-    mgmt_port = splunk.clilib.cli_common.getMgmtUri().split(":")[-1]
+    mgmt_uri = splunk.clilib.cli_common.getMgmtUri()
+    hostname = mgmt_uri.split("//")[-1].split(":")[0]
+    mgmt_port = mgmt_uri.split(":")[-1]
+
+    ip_address = resolve_host(hostname)
+    if not ip_address:
+        raise Exception("Failed to resolve Splunk management URI to an IP address.")
+
     if not sessionkey:
         sessionkey = GetSessionKey().session_key
-    service = client.connect(port=mgmt_port, token=sessionkey, app=APP_NAME)
+
+    service = client.connect(host=ip_address, port=mgmt_port, token=sessionkey, app=APP_NAME)
     return service
 
 

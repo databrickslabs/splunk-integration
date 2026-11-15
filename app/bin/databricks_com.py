@@ -32,11 +32,12 @@ class DatabricksClient(object):
         self.account_name = account_name
         databricks_instance = databricks_configs.get("databricks_instance")
         self.auth_type = databricks_configs.get("auth_type")
+        self.force_proxy = databricks_configs.get("force_proxy")
         self.session_key = session_key
         self.session = self.get_requests_retry_session()
         self.session.proxies = databricks_configs.get("proxy_uri")
         if self.session.proxies:
-            if is_true(self.session.proxies.get("use_for_oauth")):
+            if is_true(self.session.proxies.get("use_for_oauth")) and not is_true(self.force_proxy):
                 _LOGGER.info(
                     "Skipping the usage of proxy for running query as 'Use Proxy for OAuth' parameter is checked."
                 )
@@ -137,7 +138,9 @@ class DatabricksClient(object):
         Databricks API may return different status codes for expired tokens:
         - 403 Forbidden (legacy)
         - 401 Unauthorized with "Token is expired"
-        - 400 Bad Request with "ExpiredJwtException"
+        - 400 Bad Request with "ExpiredJwtException",
+        - 400 Bad Request with "SignatureException",
+        - 400 Bad Request with "JWT signature does not match"
 
         :param response: requests.Response object
         :return: Boolean - True if response indicates expired token
@@ -162,10 +165,16 @@ class DatabricksClient(object):
             return True  # Treat all 401s as potentially expired tokens
 
         # 400 Bad Request - check for ExpiredJwtException
+        # if a query is run on another SHC member, we can receive a 400 with JWT-related errors indicating token expiration
         if status_code == 400:
             try:
                 response_text = response.text.lower()
-                if "expiredjwtexception" in response_text or "expired" in response_text:
+                if (
+                    "expiredjwtexception" in response_text
+                    or "expired" in response_text
+                    or "signatureexception" in response_text
+                    or "jwt signature does not match" in response_text
+                ):
                     return True
             except Exception:
                 pass
@@ -185,7 +194,8 @@ class DatabricksClient(object):
             self.aad_client_secret,
             proxy_config,
             retry=const.RETRIES,
-            conf_update=True
+            conf_update=True,
+            force_proxy=self.force_proxy
         )
 
         if isinstance(result, tuple) and result[1] == False:
@@ -207,7 +217,8 @@ class DatabricksClient(object):
             self.oauth_client_secret,
             proxy_config,
             retry=const.RETRIES,
-            conf_update=True
+            conf_update=True,
+            force_proxy=self.force_proxy
         )
 
         if isinstance(result, tuple) and result[1] == False:
@@ -254,12 +265,12 @@ class DatabricksClient(object):
                 status_code = response.status_code
                 # Check if token is expired and needs refresh (handles 403, 401, 400 with expiry messages)
                 if self._is_token_expired_response(response) and self.auth_type == "AAD" and run_again:
-                    _LOGGER.info(f"Token expired (status: {status_code}). Refreshing AAD token.")
+                    _LOGGER.info(f"Token expired/JWT signature error (status: {status_code}). Refreshing AAD token.")
                     response = None
                     run_again = False
                     self._refresh_aad_token()
                 elif self._is_token_expired_response(response) and self.auth_type == "OAUTH_M2M" and run_again:
-                    _LOGGER.info(f"Token expired (status: {status_code}). Refreshing OAuth M2M token.")
+                    _LOGGER.info(f"Token expired/JWT signature error (status: {status_code}). Refreshing OAuth M2M token.")
                     response = None
                     run_again = False
                     self._refresh_oauth_token()
@@ -277,13 +288,19 @@ class DatabricksClient(object):
                 "Please validate the provided Databricks and Proxy configurations or check the network connectivity."
             )
             if "response" in locals() and response is not None:
+                try:
+                    response_json = response.json()
+                    _LOGGER.error(f"Response JSON: {response_json}")
+                except requests.exceptions.JSONDecodeError as e2:
+                    _LOGGER.error(f"Failed to parse response JSON: {e2}")
+                    response_json = {"error": response.text.lower(), "message": response.text.lower()}
                 status_code_messages = {
-                    400: response.json().get("message", "Bad request. The request is malformed."),
+                    400: response_json.get("message", "Bad request. The request is malformed."),
                     401: "Unauthorized. Access token may be invalid or expired.",
                     403: "Invalid access token. Please enter the valid access token.",
                     404: "Invalid API endpoint.",
                     429: "API limit exceeded. Please try again after some time.",
-                    500: response.json().get("error", "Internal server error."),
+                    500: response_json.get("error", "Internal server error."),
                 }
 
                 msg = status_code_messages.get(response.status_code, msg)

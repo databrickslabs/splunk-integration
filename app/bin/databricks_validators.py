@@ -37,7 +37,8 @@ class ValidateDatabricksInstance(Validator):
         """
         databricks_instance = data.get("databricks_instance").strip("/")
         databricks_pat = data.get("databricks_pat")
-        return self.validate_db_instance(databricks_instance, databricks_pat)
+        force_proxy = data.get("force_proxy")
+        return self.validate_db_instance(databricks_instance, databricks_pat, force_proxy)
 
     def validate_aad(self, data):
         """
@@ -52,9 +53,11 @@ class ValidateDatabricksInstance(Validator):
         client_sec = data.get("aad_client_secret").strip()
         aad_tenant_id = data.get("aad_tenant_id").strip()
         account_name = data.get("name")
+        force_proxy = data.get("force_proxy", False)
         result = utils.get_aad_access_token(
             self._splunk_session_key, account_name,
-            aad_tenant_id, aad_client_id, client_sec, self._proxy_settings)
+            aad_tenant_id, aad_client_id, client_sec, self._proxy_settings,
+            force_proxy=force_proxy)
 
         if isinstance(result, tuple) and result[1] == False:
             _LOGGER.error(result[0])
@@ -64,7 +67,7 @@ class ValidateDatabricksInstance(Validator):
         access_token, expires_in = result
         _LOGGER.info('Obtained Azure Active Directory access token Successfully.')
         databricks_instance = data.get("databricks_instance").strip("/")
-        valid_instance = self.validate_db_instance(databricks_instance, access_token)
+        valid_instance = self.validate_db_instance(databricks_instance, access_token, force_proxy)
         if valid_instance:
             data["aad_access_token"] = access_token
             data["aad_token_expiration"] = str(time.time() + expires_in)
@@ -86,6 +89,7 @@ class ValidateDatabricksInstance(Validator):
         oauth_client_secret = data.get("oauth_client_secret").strip()
         databricks_instance = data.get("databricks_instance").strip("/")
         account_name = data.get("name")
+        force_proxy = data.get("force_proxy", False)
 
         result = utils.get_oauth_access_token(
             self._splunk_session_key,
@@ -93,7 +97,8 @@ class ValidateDatabricksInstance(Validator):
             databricks_instance,
             oauth_client_id,
             oauth_client_secret,
-            self._proxy_settings
+            self._proxy_settings,
+            force_proxy=force_proxy
         )
 
         if isinstance(result, tuple) and result[1] == False:
@@ -104,7 +109,7 @@ class ValidateDatabricksInstance(Validator):
         access_token, expires_in = result
         _LOGGER.info('Obtained OAuth M2M access token successfully.')
 
-        valid_instance = self.validate_db_instance(databricks_instance, access_token)
+        valid_instance = self.validate_db_instance(databricks_instance, access_token, force_proxy)
         if valid_instance:
             data["oauth_access_token"] = access_token
             data["oauth_token_expiration"] = str(time.time() + expires_in)
@@ -114,18 +119,21 @@ class ValidateDatabricksInstance(Validator):
         else:
             return False
 
-    def validate_db_instance(self, instance_url, access_token):
+    def validate_db_instance(self, instance_url, access_token, force_proxy=False):
         """
         Method to validate databricks instance.
 
         :param instance_url: Databricks instance
         :param access_token: AAD access token | Personal access token
+        :param force_proxy: Boolean indicating whether to force the usage of proxy for validation
         """
         _LOGGER.info('Validating Databricks instance')
         req_url = f"https://{instance_url}{const.CLUSTER_ENDPOINT}"
         self._proxy_settings = utils.get_proxy_uri(self._splunk_session_key)
         if self._proxy_settings:
-            if is_true(self._proxy_settings.get("use_for_oauth")):
+            if force_proxy:
+                _LOGGER.info("Forcing the usage of proxy for validation.")
+            if is_true(self._proxy_settings.get("use_for_oauth")) and not force_proxy:
                 _LOGGER.info(
                     "Skipping the usage of proxy for validation as 'Use Proxy for OAuth' parameter is checked."
                 )

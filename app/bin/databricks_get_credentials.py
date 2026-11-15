@@ -120,7 +120,8 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             'admin_command_timeout': None,
             'query_result_limit': None,
             'index': None,
-            'thread_count': None
+            'thread_count': None,
+            'force_proxy': None
         }
         try:
             _LOGGER.info("Retrieving account and settings configurations.")
@@ -141,6 +142,7 @@ class DatabricksGetCredentials(PersistentServerConnectionApplication):
             config_dict['config_for_dbquery'] = account_config.get('config_for_dbquery')
             config_dict['cluster_name'] = account_config.get('cluster_name')
             config_dict['warehouse_id'] = account_config.get('warehouse_id')
+            config_dict['force_proxy'] = account_config.get('force_proxy')
 
             # Get clear account password from passwords.conf
             account_manager = CredentialManager(
